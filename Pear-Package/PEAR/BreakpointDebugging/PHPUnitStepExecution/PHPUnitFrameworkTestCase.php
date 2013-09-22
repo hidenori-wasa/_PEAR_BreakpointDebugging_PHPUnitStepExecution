@@ -250,6 +250,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
                 PHP_EOL
                 . $errorMessage . '"@covers ...<extended>" annotation' . PHP_EOL
                 . "\t" . 'because we may use code coverage report of base abstract class.' . PHP_EOL
+                . "\t" . 'Also, a test-class method calls a base class method, then its base class method may call a test-class method.' . PHP_EOL
             );
         }
     }

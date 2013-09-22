@@ -51,7 +51,7 @@
  * @author     Sebastian Bergmann <sb@sebastian-bergmann.de>
  * @copyright  2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @version    Release: 1.1.2
+ * @version    Release: 1.1.4
  * @link       http://github.com/sebastianbergmann/php-code-coverage
  * @since      Class available since Release 1.0.0
  */
@@ -132,6 +132,10 @@ class PHP_CodeCoverage_Report_HTML
         $target = PHP_CodeCoverage_Util::getDirectory($target);
         $report = $coverage->getReport();
         unset($coverage);
+
+        if (!isset($_SERVER['REQUEST_TIME'])) {
+            $_SERVER['REQUEST_TIME'] = time();
+        }
 
         $date = date('D M j G:i:s T Y', $_SERVER['REQUEST_TIME']);
 

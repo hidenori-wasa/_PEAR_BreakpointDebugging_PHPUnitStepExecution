@@ -1,5 +1,4 @@
 <?php
-
 /**
  * PHPUnit
  *
@@ -43,6 +42,7 @@
  * @link       http://www.phpunit.de/
  * @since      File available since Release 3.4.0
  */
+
 /**
  *
  *
@@ -51,7 +51,7 @@
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
  * @copyright  2001-2012 Sebastian Bergmann <sebastian@phpunit.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @version    Release: 3.6.11
+ * @version    Release: 3.6.12
  * @link       http://www.phpunit.de/
  * @since      Class available since Release 3.4.0
  */
@@ -60,36 +60,36 @@ class PHPUnit_Util_GlobalState
     /**
      * @var array
      */
-    protected static $globals = array ();
+    protected static $globals = array();
 
     /**
      * @var array
      */
-    protected static $staticAttributes = array ();
+    protected static $staticAttributes = array();
 
     /**
      * @var array
      */
-    protected static $superGlobalArrays = array (
-        '_ENV',
-        '_POST',
-        '_GET',
-        '_COOKIE',
-        '_SERVER',
-        '_FILES',
-        '_REQUEST'
+    protected static $superGlobalArrays = array(
+      '_ENV',
+      '_POST',
+      '_GET',
+      '_COOKIE',
+      '_SERVER',
+      '_FILES',
+      '_REQUEST'
     );
 
     /**
      * @var array
      */
-    protected static $superGlobalArraysLong = array (
-        'HTTP_ENV_VARS',
-        'HTTP_POST_VARS',
-        'HTTP_GET_VARS',
-        'HTTP_COOKIE_VARS',
-        'HTTP_SERVER_VARS',
-        'HTTP_POST_FILES'
+    protected static $superGlobalArraysLong = array(
+      'HTTP_ENV_VARS',
+      'HTTP_POST_VARS',
+      'HTTP_GET_VARS',
+      'HTTP_COOKIE_VARS',
+      'HTTP_SERVER_VARS',
+      'HTTP_POST_FILES'
     );
 
     /**
@@ -99,7 +99,7 @@ class PHPUnit_Util_GlobalState
 
     public static function backupGlobals(array $blacklist)
     {
-        self::$globals = array ();
+        self::$globals     = array();
         $superGlobalArrays = self::getSuperGlobalArrays();
 
         foreach ($superGlobalArrays as $superGlobalArray) {
@@ -122,7 +122,7 @@ class PHPUnit_Util_GlobalState
     {
         if (ini_get('register_long_arrays') == '1') {
             $superGlobalArrays = array_merge(
-                self::$superGlobalArrays, self::$superGlobalArraysLong
+              self::$superGlobalArrays, self::$superGlobalArraysLong
             );
         } else {
             $superGlobalArrays = self::$superGlobalArrays;
@@ -140,7 +140,7 @@ class PHPUnit_Util_GlobalState
                 !in_array($key, $blacklist)) {
                 if (isset(self::$globals['GLOBALS'][$key])) {
                     $GLOBALS[$key] = unserialize(
-                        self::$globals['GLOBALS'][$key]
+                      self::$globals['GLOBALS'][$key]
                     );
                 } else {
                     unset($GLOBALS[$key]);
@@ -148,12 +148,12 @@ class PHPUnit_Util_GlobalState
             }
         }
 
-        self::$globals = array ();
+        self::$globals = array();
     }
 
     protected static function backupSuperGlobalArray($superGlobalArray)
     {
-        self::$globals[$superGlobalArray] = array ();
+        self::$globals[$superGlobalArray] = array();
 
         if (isset($GLOBALS[$superGlobalArray]) &&
             is_array($GLOBALS[$superGlobalArray])) {
@@ -169,15 +169,15 @@ class PHPUnit_Util_GlobalState
             is_array($GLOBALS[$superGlobalArray]) &&
             isset(self::$globals[$superGlobalArray])) {
             $keys = array_keys(
-                array_merge(
-                    $GLOBALS[$superGlobalArray], self::$globals[$superGlobalArray]
-                )
+              array_merge(
+                $GLOBALS[$superGlobalArray], self::$globals[$superGlobalArray]
+              )
             );
 
             foreach ($keys as $key) {
                 if (isset(self::$globals[$superGlobalArray][$key])) {
                     $GLOBALS[$superGlobalArray][$key] = unserialize(
-                        self::$globals[$superGlobalArray][$key]
+                      self::$globals[$superGlobalArray][$key]
                     );
                 } else {
                     unset($GLOBALS[$superGlobalArray][$key]);
@@ -185,14 +185,14 @@ class PHPUnit_Util_GlobalState
             }
         }
 
-        self::$globals[$superGlobalArray] = array ();
+        self::$globals[$superGlobalArray] = array();
     }
 
     public static function getIncludedFilesAsString()
     {
         $blacklist = self::phpunitFiles();
-        $files = get_included_files();
-        $result = '';
+        $files     = get_included_files();
+        $result    = '';
 
         for ($i = count($files) - 1; $i > 0; $i--) {
             if (!isset($blacklist[$files[$i]]) && is_file($files[$i])) {
@@ -206,12 +206,15 @@ class PHPUnit_Util_GlobalState
     public static function getConstantsAsString()
     {
         $constants = get_defined_constants(TRUE);
-        $result = '';
+        $result    = '';
 
         if (isset($constants['user'])) {
             foreach ($constants['user'] as $name => $value) {
                 $result .= sprintf(
-                    'if (!defined(\'%s\')) define(\'%s\', %s);' . "\n", $name, $name, self::exportVariable($value)
+                  'if (!defined(\'%s\')) define(\'%s\', %s);' . "\n",
+                  $name,
+                  $name,
+                  self::exportVariable($value)
                 );
             }
         }
@@ -221,7 +224,7 @@ class PHPUnit_Util_GlobalState
 
     public static function getGlobalsAsString()
     {
-        $result = '';
+        $result            = '';
         $superGlobalArrays = self::getSuperGlobalArrays();
 
         foreach ($superGlobalArrays as $superGlobalArray) {
@@ -233,20 +236,25 @@ class PHPUnit_Util_GlobalState
                     }
 
                     $result .= sprintf(
-                        '$GLOBALS[\'%s\'][\'%s\'] = %s;' . "\n", $superGlobalArray, $key, self::exportVariable($GLOBALS[$superGlobalArray][$key])
+                      '$GLOBALS[\'%s\'][\'%s\'] = %s;' . "\n",
+                      $superGlobalArray,
+                      $key,
+                      self::exportVariable($GLOBALS[$superGlobalArray][$key])
                     );
                 }
             }
         }
 
-        $blacklist = $superGlobalArrays;
+        $blacklist   = $superGlobalArrays;
         $blacklist[] = 'GLOBALS';
         $blacklist[] = '_PEAR_Config_instance';
 
         foreach (array_keys($GLOBALS) as $key) {
             if (!in_array($key, $blacklist) && !$GLOBALS[$key] instanceof Closure) {
                 $result .= sprintf(
-                    '$GLOBALS[\'%s\'] = %s;' . "\n", $key, self::exportVariable($GLOBALS[$key])
+                  '$GLOBALS[\'%s\'] = %s;' . "\n",
+                  $key,
+                  self::exportVariable($GLOBALS[$key])
                 );
             }
         }
@@ -258,7 +266,7 @@ class PHPUnit_Util_GlobalState
     {
         if (ini_get('register_long_arrays') == '1') {
             return array_merge(
-                    self::$superGlobalArrays, self::$superGlobalArraysLong
+              self::$superGlobalArrays, self::$superGlobalArraysLong
             );
         } else {
             return self::$superGlobalArrays;
@@ -267,9 +275,9 @@ class PHPUnit_Util_GlobalState
 
     public static function backupStaticAttributes(array $blacklist)
     {
-        self::$staticAttributes = array ();
-        $declaredClasses = get_declared_classes();
-        $declaredClassesNum = count($declaredClasses);
+        self::$staticAttributes = array();
+        $declaredClasses        = get_declared_classes();
+        $declaredClassesNum     = count($declaredClasses);
 
         for ($i = $declaredClassesNum - 1; $i >= 0; $i--) {
             if (strpos($declaredClasses[$i], 'PHPUnit') !== 0 &&
@@ -280,20 +288,21 @@ class PHPUnit_Util_GlobalState
                 strpos($declaredClasses[$i], 'PHP_TokenStream') !== 0 &&
                 strpos($declaredClasses[$i], 'sfYaml') !== 0 &&
                 strpos($declaredClasses[$i], 'Text_Template') !== 0 &&
-                !$declaredClasses[$i] instanceof PHPUnit_Framework_Test
-            ) {
+                !$declaredClasses[$i] instanceof PHPUnit_Framework_Test) {
                 $class = new ReflectionClass($declaredClasses[$i]);
+
                 if (!$class->isUserDefined()) {
                     break;
                 }
 
-                $backup = array ();
+                $backup = array();
 
                 foreach ($class->getProperties() as $attribute) {
                     if ($attribute->isStatic()) {
                         $name = $attribute->getName();
+
                         if (!isset($blacklist[$declaredClasses[$i]]) ||
-                            !in_array($name, $blacklist[$declaredClasses[$i]])) {
+                           !in_array($name, $blacklist[$declaredClasses[$i]])) {
                             $attribute->setAccessible(TRUE);
                             $value = $attribute->getValue();
 
@@ -321,19 +330,19 @@ class PHPUnit_Util_GlobalState
             }
         }
 
-        self::$staticAttributes = array ();
+        self::$staticAttributes = array();
     }
 
     protected static function exportVariable($variable)
     {
         if (is_scalar($variable) || is_null($variable) ||
-            (is_array($variable) && self::arrayOnlyContainsScalars($variable))) {
+           (is_array($variable) && self::arrayOnlyContainsScalars($variable))) {
             return var_export($variable, TRUE);
         }
 
         return 'unserialize(\'' .
-            str_replace("'", "\'", serialize($variable)) .
-            '\')';
+                str_replace("'", "\'", serialize($variable)) .
+                '\')';
     }
 
     protected static function arrayOnlyContainsScalars(array $array)
@@ -343,7 +352,9 @@ class PHPUnit_Util_GlobalState
         foreach ($array as $element) {
             if (is_array($element)) {
                 $result = self::arrayOnlyContainsScalars($element);
-            } else if (!is_scalar($element) && !is_null($element)) {
+            }
+
+            else if (!is_scalar($element) && !is_null($element)) {
                 $result = FALSE;
             }
 
@@ -363,36 +374,42 @@ class PHPUnit_Util_GlobalState
     {
         if (self::$phpunitFiles === NULL) {
             self::$phpunitFiles = array_merge(
-                phpunit_autoload(), phpunit_mockobject_autoload(), file_iterator_autoload(), php_codecoverage_autoload(), php_timer_autoload(), php_tokenstream_autoload(), text_template_autoload()
+              phpunit_autoload(),
+              phpunit_mockobject_autoload(),
+              file_iterator_autoload(),
+              php_codecoverage_autoload(),
+              php_timer_autoload(),
+              php_tokenstream_autoload(),
+              text_template_autoload()
             );
 
             if (function_exists('phpunit_dbunit_autoload')) {
                 self::$phpunitFiles = array_merge(
-                    self::$phpunitFiles, phpunit_dbunit_autoload()
+                  self::$phpunitFiles, phpunit_dbunit_autoload()
                 );
             }
 
             if (function_exists('phpunit_selenium_autoload')) {
                 self::$phpunitFiles = array_merge(
-                    self::$phpunitFiles, phpunit_selenium_autoload()
+                  self::$phpunitFiles, phpunit_selenium_autoload()
                 );
             }
 
             if (function_exists('phpunit_story_autoload')) {
                 self::$phpunitFiles = array_merge(
-                    self::$phpunitFiles, phpunit_story_autoload()
+                  self::$phpunitFiles, phpunit_story_autoload()
                 );
             }
 
             if (function_exists('php_invoker_autoload')) {
                 self::$phpunitFiles = array_merge(
-                    self::$phpunitFiles, php_invoker_autoload()
+                  self::$phpunitFiles, php_invoker_autoload()
                 );
             }
 
             foreach (self::$phpunitFiles as $key => $value) {
                 self::$phpunitFiles[$key] = str_replace(
-                    '/', DIRECTORY_SEPARATOR, $value
+                  '/', DIRECTORY_SEPARATOR, $value
                 );
             }
 
@@ -401,5 +418,4 @@ class PHPUnit_Util_GlobalState
 
         return self::$phpunitFiles;
     }
-
 }

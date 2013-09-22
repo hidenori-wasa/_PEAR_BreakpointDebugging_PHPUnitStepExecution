@@ -51,7 +51,7 @@
  * @author     Sebastian Bergmann <sb@sebastian-bergmann.de>
  * @copyright  2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @version    Release: 1.1.2
+ * @version    Release: 1.1.4
  * @link       http://github.com/sebastianbergmann/php-code-coverage
  * @since      Class available since Release 1.1.0
  */
@@ -228,7 +228,7 @@ abstract class PHP_CodeCoverage_Report_HTML_Renderer
             'link'             => $link,
             'charset'          => $this->charset,
             'date'             => $this->date,
-            'version'          => '1.1.2',
+            'version'          => '1.1.4',
             'php_version'      => PHP_VERSION,
             'generator'        => $this->generator,
             'low_upper_bound'  => $this->lowUpperBound,

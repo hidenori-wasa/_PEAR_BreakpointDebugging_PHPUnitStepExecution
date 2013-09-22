@@ -52,7 +52,7 @@
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
  * @copyright  2001-2012 Sebastian Bergmann <sebastian@phpunit.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @version    Release: 3.6.11
+ * @version    Release: 3.6.12
  * @link       http://www.phpunit.de/
  * @since      Class available since Release 3.0.0
  */
@@ -970,8 +970,6 @@ Usage: phpunit [switches] UnitTest [UnitTest.php]
 
   -h|--help                 Prints this usage information.
   --version                 Prints the version and exits.
-
-  --debug                   Output debugging information.
 
 EOT;
     }

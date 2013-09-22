@@ -51,7 +51,7 @@
  * @author     Sebastian Bergmann <sb@sebastian-bergmann.de>
  * @copyright  2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @version    Release: 1.1.2
+ * @version    Release: 1.1.4
  * @link       http://github.com/sebastianbergmann/php-code-coverage
  * @since      Class available since Release 1.1.0
  */
@@ -136,7 +136,9 @@ abstract class PHP_CodeCoverage_Report_Node implements Countable
     public function getPath()
     {
         if ($this->path === NULL) {
-            if ($this->parent === NULL) {
+            if ($this->parent === NULL ||
+                $this->parent->getPath() == NULL
+                    ) {
                 $this->path = $this->name;
             } else {
                 $this->path = $this->parent->getPath() . '/' . $this->name;

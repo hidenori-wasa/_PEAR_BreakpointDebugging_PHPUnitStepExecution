@@ -64,7 +64,7 @@ if (!function_exists('trait_exists')) {
  * @author     Sebastian Bergmann <sb@sebastian-bergmann.de>
  * @copyright  2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @version    Release: 1.1.2
+ * @version    Release: 1.1.4
  * @link       http://github.com/sebastianbergmann/php-code-coverage
  * @since      Class available since Release 1.0.0
  */
@@ -190,8 +190,12 @@ class PHP_CodeCoverage_Util
             $methodName = substr($methodName, 0, $pos);
         }
         // @codeCoverageIgnoreEnd
-        $class      = new ReflectionClass($className);
-        $method     = new ReflectionMethod($className, $methodName);
+        $class = new ReflectionClass($className);
+        try {
+            $method = new ReflectionMethod($className, $methodName);
+        } catch (ReflectionException $e) {
+            return array();
+        }
         $docComment = $class->getDocComment() . $method->getDocComment();
 
         foreach (self::$templateMethods as $templateMethod) {

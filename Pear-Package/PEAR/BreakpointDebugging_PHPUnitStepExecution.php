@@ -41,7 +41,6 @@
  * @package  BreakpointDebugging_PHPUnitStepExecution
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
- * @version  SVN: $Id$
  * @link     http://pear.php.net/package/BreakpointDebugging
  */
 // File to have "use" keyword does not inherit scope into a file including itself,
@@ -451,15 +450,17 @@ class BreakpointDebugging_PHPUnitStepExecution
      *
      * @return void
      *
-     * Please, follow rule, then, we can use unit test's "--static-backup" command line switch. Also, those rule violation is detected.
-     * The rule 1: We must use private static property instead of use local static variable of class static method
+     * Please, follow rule, then, we can use unit test's "--static-backup" command line switch for execution with IDE. Also, those rule violation is detected.
+     * The rule 1: Code which is tested must use private static property instead of use local static variable of static class method
      *      because "php" version 5.3.0 cannot restore its value.
-     * The rule 2: We must use public static property instead of use global variable inside unit test file (*Test.php)
+     * The rule 2: Unit test file (*Test.php) must use public static property instead of use global variable
      *      because "php" version 5.3.0 cannot detect global variable definition except unit test file realtime.
-     * The rule 3: We must use autoload by "new" instead of include "*.php" file which defines static status inside unit test class method
+     * The rule 3: Unit test file (*Test.php) must use autoload by "new" instead of include "*.php" file which defines static status
      *      because "php" version 5.3.0 cannot detect an included static status definition realtime.
-     * The rule 4: We must not register autoload function by "spl_autoload_register()" at top of stack
-     *      because we cannot store static status.
+     * The rule 4: Code which is tested must not register autoload function by "spl_autoload_register()" at top of stack
+     *      because its case cannot store static status.
+     *      Example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
+     *      Instead, unit test file (*Test.php) can include its file at "setUpBeforeClass()" if global variable is not defined and "spl_autoload_register()" executes at include.
      * Also, we should not use global variable to avoid variable crash in all "php" code.
      *
      * Also, we must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
@@ -517,10 +518,11 @@ class BreakpointDebugging_PHPUnitStepExecution
      *
      * ### Running procedure. ###
      * Please, run the following procedure.
-     * Procedure 1: Make "page like example page" and unit test files.
-     * Procedure 2: Run "page like example page" with IDE.
+     * Procedure 1: Make page like "@Example page which runs unit test files (*Test.php)" and pages like "@Example page of unit test file (*Test.php)".
+     * Procedure 2: Run page like "example page which runs unit tests" with IDE.
+     * Option Procedure: Copy from "PEAR/BreakpointDebugging/" directory and "PEAR/BreakpointDebugging_*.php" files to the project directory of remote server if you want remote unit test.
      *
-     * @Example page which runs unit tests.
+     * @Example page which runs unit test files (*Test.php).
      *  <?php
      *
      *  chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
@@ -541,7 +543,7 @@ class BreakpointDebugging_PHPUnitStepExecution
      *
      *  ?>
      *
-     * @Example of unit test file.
+     * @Example page of unit test file (*Test.php).
      *  <?php
      *
      *  use \BreakpointDebugging as B;

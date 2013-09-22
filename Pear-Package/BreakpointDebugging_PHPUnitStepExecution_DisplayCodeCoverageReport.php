@@ -40,10 +40,9 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @category PHP
- * @package  BreakpointDebugging
+ * @package  BreakpointDebugging_PHPUnitStepExecution
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
- * @version  SVN: $Id$
  * @link     http://pear.php.net/package/BreakpointDebugging
  */
 require_once './BreakpointDebugging_Inclusion.php';
@@ -58,7 +57,7 @@ B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php');
  * Class to display code coverage report.
  *
  * @category PHP
- * @package  BreakpointDebugging
+ * @package  BreakpointDebugging_PHPUnitStepExecution
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
  * @version  Release: @package_version@
@@ -66,7 +65,7 @@ B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php');
  * @codeCoverageIgnore
  * Because "phpunit" command cannot run during "phpunit" command running.
  */
-class BreakpointDebugging_DisplayCodeCoverageReport
+class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
 {
     /**
      * Displays the code coverage report in browser.
@@ -148,6 +147,6 @@ EOD;
 
 }
 
-new \BreakpointDebugging_DisplayCodeCoverageReport();
+new \BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport();
 
 ?>
