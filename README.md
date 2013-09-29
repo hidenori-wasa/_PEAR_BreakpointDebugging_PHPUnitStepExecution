@@ -17,11 +17,16 @@ The dependences
 
 * Requires `BreakpointDebugging` package.
 * OS requires `Linux` or `Windows`, but may be able to require `Unix`.
-* PHP version >= 5.3.0
+* PHP version >= `5.3.0`
 * Requires `Xdebug extension`.
+
+Change log
+----------
+
+* Implemented static backup feature completely.
+* Added the breakpoint feature at "BreakpointDebugging::assert()" in case of "DEBUG_UNIT_TEST" mode.
 
 Notice
 ------
 
-I coded all feature of this package.
-Then, I have been coding the unit tests.
+I will code the unit tests.

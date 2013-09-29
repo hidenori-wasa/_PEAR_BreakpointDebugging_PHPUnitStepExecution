@@ -461,6 +461,7 @@ class BreakpointDebugging_PHPUnitStepExecution
      *      because its case cannot store static status.
      *      Example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
      *      Instead, unit test file (*Test.php) can include its file at "setUpBeforeClass()" if global variable is not defined and "spl_autoload_register()" executes at include.
+     * Also, we must destruct a test instance per test in "tearDown()" because it cuts down on actual server memory use.
      * Also, we should not use global variable to avoid variable crash in all "php" code.
      *
      * Also, we must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
@@ -593,7 +594,7 @@ class BreakpointDebugging_PHPUnitStepExecution
      *          // This is required at top of "setUp()".
      *          parent::setUp();
      *
-     *          // Constructs an instance per test.
+     *          // Constructs a test instance per test.
      *          // We must construct test instance here
      *          // because we want to initialize class auto attribute (auto class method's local static and auto property).
      *          $this->_pSomething = &BreakpointDebugging_LockByFlock::singleton();
@@ -615,7 +616,7 @@ class BreakpointDebugging_PHPUnitStepExecution
      *          //
      *          // include_once __DIR__ . '/AFileWhichHasGlobalVariable.php'; // We must not include a file which has global variable here. (Autodetects)
      *          //
-     *          // Destructs the instance.
+     *          // We must destruct a test instance per test because it cuts down on actual server memory use.
      *          $this->_pSomething = null;
      *          // This is required at bottom of "tearDown()".
      *          parent::tearDown();
@@ -727,10 +728,8 @@ class BreakpointDebugging_PHPUnitStepExecution
                 continue;
             }
             self::_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $unitTestFilePath);
+            gc_collect_cycles();
         }
-        /*         * ***
-          }
-         * *** */
         echo self::$_separator;
         echo '<b>Unit tests have done.</b></pre>';
     }

@@ -66,34 +66,192 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
      */
     private static $_prevDeclaredClassesNumber = 0;
 
-    /**
-     * @var array Global variable serialization-keys storage.
-     */
-    private static $_globalSerializationKeysStorage = array ();
-
-    /**
-     * @var array Static attributes serialization-keys storage.
-     */
-    private static $_staticAttributesSerializationKeysStorage = array ();
-
+//    /**
+//     * This is reference variable?
+//     *
+//     * @param mixed  &$variable     A variable to examine.
+//     * @param string &$variableInfo A variable information result.
+//     *
+//     * @return bool This is reference variable?
+//     * @author Hidenori Wasa <public@hidenori-wasa.com>
+//     */
+//    private static function _getVariableInfo(&$variable, &$variableInfo)
+//    {
+//        static $onceFlag = true;
+//
+//        if ($onceFlag) {
+//            $onceFlag = false;
+//            $a = new \Exception();
+//            $b = &$a;
+//            ob_start();
+//            xdebug_debug_zval('b');
+//            $outputs = explode("\n", strip_tags(ob_get_clean()));
+//            // Expected format: "object(TestClassA)[2]"
+//            if (strpos($outputs[0], ' is_ref=1)') === false
+//                || preg_match('`^ object \( [_[:alpha:]] [_[:alnum:]]* \) \[ [[:digit:]]+ \] $`xX', $outputs[1]) !== 1
+//            ) {
+//                throw new \BreakpointDebugging_ErrorException('"xdebug_debug_zval()" result format error.');
+//            }
+//        }
+//
+//        ob_start();
+//        xdebug_debug_zval('variable');
+//        $outputs = explode("\n", strip_tags(ob_get_clean()));
+//        $variableInfo = $outputs[1];
+//        // If this is not reference variable.
+//        if (strpos($outputs[0], ' is_ref=1)') === false) {
+//            return false;
+//        }
+//        return true;
+//    }
+//
+//    /**
+//     * This is recursive array?
+//     *
+//     * @param array $array          An array variable to store.
+//     * @param array $parentElements Parent elements.
+//     *
+//     * @return bool This is recursive array?
+//     * @author Hidenori Wasa <public@hidenori-wasa.com>
+//     */
+//    private static function _isRecursiveArray($array, $parentElements)
+//    {
+//        B::assert(is_array($array));
+//        B::assert(is_array($parentElements));
+//
+//        if (!self::_getVariableInfo($array, $dummy)) {
+//            return false;
+//        }
+//        foreach ($parentElements as &$parentElement) {
+//            if (is_array($parentElement)) {
+//                $elementNumber = count($parentElement);
+//                array_push($array, '');
+//                $currentElementNumber = count($parentElement);
+//                array_pop($array);
+//                if ($elementNumber + 1 === $currentElementNumber) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * This is recursive object?
+//     *
+//     * @param object $object         An array variable to store.
+//     * @param array  $parentElements Parent elements.
+//     *
+//     * @return bool This is recursive object?
+//     * @author Hidenori Wasa <public@hidenori-wasa.com>
+//     */
+//    private static function _isRecursiveObject($object, $parentElements)
+//    {
+//        B::assert(is_object($object));
+//        B::assert(is_array($parentElements));
+//
+//        $objectInfo = null;
+//        if (self::_getVariableInfo($object, $objectInfo) === false) {
+//            return false;
+//        }
+//        foreach ($parentElements as &$parentElement) {
+//            if (is_object($parentElement)) {
+//                self::_getVariableInfo($parentElement, $objectInfo2);
+//                // If object is reference variable.
+//                if ($objectInfo2 === $objectInfo) {
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
+//
+//    /**
+//     * Stores variables in array.
+//     *
+//     * @param array $array                   An array variable to store.
+//     * @param mixed &$parentVariablesStorage Parent variables storage.
+//     * @param array $parentElements          Parent elements.
+//     *
+//     * @return void
+//     * @author Hidenori Wasa <public@hidenori-wasa.com>
+//     */
+//    private static function _storeVariablesInArray($array, &$parentVariablesStorage, $parentElements)
+//    {
+//        B::assert(is_array($array));
+//        B::assert(is_array($parentElements));
+//
+//        if (empty($array)) {
+//            $variablesStorage = $array;
+//        } else {
+//            foreach ($array as $key => $value) {
+//                $variablesStorage[$key] = array ('array');
+//                if (is_array($value)) { // In case of array.
+//                    $parentElements[] = &$value;
+//                    if (!self::_isRecursiveArray($value, $parentElements)) {
+//                        self::_storeVariablesInArray($value, $variablesStorage[$key], $parentElements);
+//                    }
+//                } else if (is_object($value)) { // In case of object.
+//                    $parentElements[] = &$value;
+//                    if (!self::_isRecursiveObject($value, $parentElements)) {
+//                        self::_storeVariablesInObject($value, $variablesStorage[$key], $parentElements);
+//                    }
+//                } else { // In case of scalar.
+//                    $variablesStorage[$key] = array ('scalar', $value);
+//                }
+//            }
+//        }
+//        $parentVariablesStorage = array ('array', $variablesStorage);
+//    }
+//
+//    /**
+//     * Stores variables in object.
+//     *
+//     * @param object $object                  An object to store.
+//     * @param mixed  &$parentVariablesStorage Variables storage.
+//     * @param array  $parentElements          Parent elements.
+//     *
+//     * @return void
+//     * @author Hidenori Wasa <public@hidenori-wasa.com>
+//     */
+//    private static function _storeVariablesInObject($object, &$parentVariablesStorage, $parentElements)
+//    {
+//        B::assert(is_object($object));
+//        B::assert(is_array($parentElements));
+//
+//        $objectReflection = new \ReflectionObject($object);
+//        foreach ($objectReflection->getStaticProperties() as $key => $value) {
+//            $variablesStorage[$key] = array ('object');
+//            if (is_array($value)) { // In case of array.
+//                $parentElements[] = &$value;
+//                if (!self::_isRecursiveArray($value, $parentElements)) {
+//                    self::_storeVariablesInArray($value, $variablesStorage[$key], $parentElements);
+//                }
+//            } else if (is_object($value)) { // In case of object.
+//                $parentElements[] = &$value;
+//                if (!self::_isRecursiveObject($value, $parentElements)) {
+//                    self::_storeVariablesInObject($value, $variablesStorage[$key], $parentElements);
+//                }
+//            } else { // In case of scalar.
+//                $variablesStorage[$key] = array ('scalar', $value);
+//            }
+//        }
+//        $parentVariablesStorage = array ('object', $variablesStorage);
+//    }
     /**
      * Stores variables.
-     * NOTICE: A referenced value is not stored. It is until two-dimensional array element that a reference ID is stored.
      *
-     * We should not store by serialization because serialization cannot store resource and array element reference variable.
-     * However, we may store by serialization because we cannot detect recursive array without changing array and we take time to search deep nest array.
-     * Also, we must store by serialization in case of object because we may not be able to clone object by "__clone()" class method.
-     *
+     * NOTICE: Reference setting inside "__construct()" is not broken by "unset()" because it is reset.
+     *         However, reference setting inside file scope of "autoload or including" is broken by "unset()".
      * @param array $blacklist                 The list to except from doing variables backup.
      * @param array $variables                 Array variable to store.
      * @param array &$variablesStorage         Variables storage.
-     * @param array &$serializationKeysStorage Serialization-keys storage.
      * @param bool  $isGlobal                  Is this the global variables?
      *
      * @return void
      * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
-    private static function _storeVariables(array $blacklist, array $variables, array &$variablesStorage, array &$serializationKeysStorage, $isGlobal = false)
+    private static function _storeVariables(array $blacklist, array $variables, array &$variablesStorage, $isGlobal = false)
     {
         if ($isGlobal) {
             // Deletes "unset()" variable from storage because we can do "unset()" except property.
@@ -104,75 +262,101 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
             }
         }
 
+//        $originalXdebugVarDisplayMaxDepth = ini_set('xdebug.var_display_max_depth', 0);
         // Stores new variable by autoload or initialization.
         foreach ($variables as $key => $value) {
             if (in_array($key, $blacklist)
                 || array_key_exists($key, $variablesStorage)
                 || $value instanceof Closure
+                || $key === 'GLOBALS' && $isGlobal
             ) {
                 continue;
             }
-            if (($key === 'GLOBALS' && $isGlobal)
-                || (!is_object($value) && !is_array($value))
-            ) {
-                $variablesStorage[$key] = $value;
-                continue;
-            }
-            do {
-                if (is_array($value)) {
-                    foreach ($value as $value2) {
-                        if (is_object($value2)) {
-                            break 2;
-                        }
-                        if (is_array($value2)) {
-                            // For example, increases the speed by searching until "deepest array of super global variable" like "$GLOBALS['_SERVER']['argv']".
-                            // Also, supports recursive array by searching until there.
-                            foreach ($value2 as $value3) {
-                                if (is_object($value3)
-                                    || is_array($value3)
-                                ) {
-                                    break 3;
-                                }
-                            }
-                        }
-                    }
-                    $variablesStorage[$key] = $value;
-                    continue 2;
+//            if ($key === 'GLOBALS' && $isGlobal) {
+//                continue;
+//            }
+//            $parentElements = array (&$value);
+//            if (is_array($value)) { // In case of array.
+//                self::_storeVariablesInArray($value, $variablesStorage[$key], $parentElements);
+//            } else if (is_object($value)) { // In case of object.
+//                self::_storeVariablesInObject($value, $variablesStorage[$key], $parentElements);
+//            } else {
+//                $variablesStorage[$key] = $value;
+//            }
+            $variablesStorage[$key] = $value;
+        }
+//        ini_set('xdebug.var_display_max_depth', $originalXdebugVarDisplayMaxDepth);
+    }
+
+    /**
+     * Restores variables by elements. We must not restore by reference copy because variable ID changes.
+     *
+     * @param mixed &$variable        Variable to restore.
+     * @param array $variablesStorage Variables storage.
+     *
+     * @return void
+     * @author Hidenori Wasa <public@hidenori-wasa.com>
+     */
+    private static function _restoreVariablesByElements(&$variable, $variablesStorage)
+    {
+        B::assert(is_array($variablesStorage));
+        B::assert(count($variablesStorage) >= 2);
+
+        $kind = current($variablesStorage);
+        $variablesStorage2 = next($variablesStorage);
+        switch ($kind) {
+            case 'array':
+                B::assert(is_array($variablesStorage2));
+                if (empty($variablesStorage2)) {
+                    $variable = $variablesStorage2;
+                    break;
                 }
-            } while (false);
-            $variablesStorage[$key] = serialize($value);
-            $serializationKeysStorage[$key] = null;
+                foreach ($variablesStorage2 as $key => $variableStorage) {
+                    if (is_array($variableStorage)) {
+                        self::_restoreVariablesByElements($variable[$key], $variableStorage);
+                    }
+                }
+                break;
+            case 'object':
+                B::assert(is_object($variablesStorage2));
+                $objectReflection = new \ReflectionObject($variablesStorage2);
+                foreach ($objectReflection->getStaticProperties() as $key => $variableStorage) {
+                    if (is_array($variableStorage)) {
+                        self::_restoreVariablesByElements($variable[$key], $variableStorage);
+                    }
+                }
+                break;
+            case 'scalar':
+                B::assert(!is_array($variablesStorage2) && !is_object($variablesStorage2));
+                $variable = $variablesStorage2;
+                break;
+            default:
+                B::assert(false);
         }
     }
 
     /**
      * Restores variables. We must not restore by reference copy because variable ID changes.
      *
-     * @param array &$variables               Array variable to restore.
-     * @param array $variablesStorage         Variables storage.
-     * @param array $serializationKeysStorage Serialization-keys storage.
+     * @param array &$variables       Array variable to restore.
+     * @param array $variablesStorage Variables storage.
      *
      * @return void
      * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
-    private static function _restoreVariables(array &$variables, array $variablesStorage, array $serializationKeysStorage)
+    private static function _restoreVariables(array &$variables, array $variablesStorage)
     {
         if (empty($variablesStorage)) {
             return;
         }
-        // This loop will not need.
-        foreach ($variables as $key => $value) {
-            if (!array_key_exists($key, $variablesStorage)) {
-                xdebug_break(); // For debug. Will not stop.
-            }
-        }
         // Judges serialization or copy, and overwrites array variable to restore or adds.
         foreach ($variablesStorage as $key => $value) {
-            if (array_key_exists($key, $serializationKeysStorage)) {
-                $variables[$key] = unserialize($value);
-            } else {
-                $variables[$key] = $value;
-            }
+//            if (is_array($value)) {
+//                self::_restoreVariablesByElements($variables[$key], $value);
+//            } else {
+//                $variables[$key] = $value;
+//            }
+            $variables[$key] = $value;
         }
     }
 
@@ -187,6 +371,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
     static function checkGlobals($testMethodName = '')
     {
         $additionalVariable = array_diff_key($GLOBALS, parent::$globals);
+        unset($additionalVariable['GLOBALS']);
         $deletionalVariable = array_diff_key(parent::$globals, $GLOBALS);
         $isError = false;
         if (!empty($additionalVariable)) {
@@ -231,7 +416,6 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
     static function resetGlobals()
     {
         parent::$globals = array ();
-        self::$_globalSerializationKeysStorage = array ();
     }
 
     /**
@@ -244,7 +428,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
      */
     static function backupGlobals(array $blacklist)
     {
-        self::_storeVariables($blacklist, $GLOBALS, parent::$globals, self::$_globalSerializationKeysStorage, true);
+        self::_storeVariables($blacklist, $GLOBALS, parent::$globals, true);
     }
 
     /**
@@ -257,7 +441,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
      */
     static function restoreGlobals(array $blacklist = array ())
     {
-        self::_restoreVariables($GLOBALS, parent::$globals, self::$_globalSerializationKeysStorage);
+        self::_restoreVariables($GLOBALS, parent::$globals);
     }
 
     /**
@@ -345,7 +529,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
             if (!empty($backup)) {
                 parent::$staticAttributes[$declaredClassName] = array ();
                 // Stores static class properties.
-                self::_storeVariables(array (), $backup, parent::$staticAttributes[$declaredClassName], self::$_staticAttributesSerializationKeysStorage);
+                self::_storeVariables(array (), $backup, parent::$staticAttributes[$declaredClassName]);
             }
 
             // Checks existence of local static variable of static class method.
@@ -380,7 +564,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
     {
         foreach (parent::$staticAttributes as $className => $staticAttributes) {
             $properties = array ();
-            self::_restoreVariables($properties, $staticAttributes, self::$_staticAttributesSerializationKeysStorage);
+            self::_restoreVariables($properties, $staticAttributes);
             foreach ($staticAttributes as $name => $value) {
                 $reflector = new ReflectionProperty($className, $name);
                 $reflector->setAccessible(TRUE);
