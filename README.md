@@ -23,8 +23,9 @@ The dependences
 Change log
 ----------
 
-* Implemented static backup feature completely.
-* Added the breakpoint feature at "BreakpointDebugging::assert()" in case of "DEBUG_UNIT_TEST" mode.
+* Added the feature to autodetect local static variable inside function.
+* Repaired the bug of global variable backup.
+* Changed unit test example.
 
 Notice
 ------

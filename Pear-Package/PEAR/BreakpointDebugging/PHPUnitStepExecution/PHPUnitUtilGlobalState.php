@@ -243,10 +243,10 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
      *
      * NOTICE: Reference setting inside "__construct()" is not broken by "unset()" because it is reset.
      *         However, reference setting inside file scope of "autoload or including" is broken by "unset()".
-     * @param array $blacklist                 The list to except from doing variables backup.
-     * @param array $variables                 Array variable to store.
-     * @param array &$variablesStorage         Variables storage.
-     * @param bool  $isGlobal                  Is this the global variables?
+     * @param array $blacklist         The list to except from doing variables backup.
+     * @param array $variables         Array variable to store.
+     * @param array &$variablesStorage Variables storage.
+     * @param bool  $isGlobal          Is this the global variables?
      *
      * @return void
      * @author Hidenori Wasa <public@hidenori-wasa.com>
@@ -288,55 +288,54 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
 //        ini_set('xdebug.var_display_max_depth', $originalXdebugVarDisplayMaxDepth);
     }
 
+//    /**
+//     * Restores variables by elements. We must not restore by reference copy because variable ID changes.
+//     *
+//     * @param mixed &$variable        Variable to restore.
+//     * @param array $variablesStorage Variables storage.
+//     *
+//     * @return void
+//     * @author Hidenori Wasa <public@hidenori-wasa.com>
+//     */
+//    private static function _restoreVariablesByElements(&$variable, $variablesStorage)
+//    {
+//        B::assert(is_array($variablesStorage));
+//        B::assert(count($variablesStorage) >= 2);
+//
+//        $kind = current($variablesStorage);
+//        $variablesStorage2 = next($variablesStorage);
+//        switch ($kind) {
+//            case 'array':
+//                B::assert(is_array($variablesStorage2));
+//                if (empty($variablesStorage2)) {
+//                    $variable = $variablesStorage2;
+//                    break;
+//                }
+//                foreach ($variablesStorage2 as $key => $variableStorage) {
+//                    if (is_array($variableStorage)) {
+//                        self::_restoreVariablesByElements($variable[$key], $variableStorage);
+//                    }
+//                }
+//                break;
+//            case 'object':
+//                B::assert(is_object($variablesStorage2));
+//                $objectReflection = new \ReflectionObject($variablesStorage2);
+//                foreach ($objectReflection->getStaticProperties() as $key => $variableStorage) {
+//                    if (is_array($variableStorage)) {
+//                        self::_restoreVariablesByElements($variable[$key], $variableStorage);
+//                    }
+//                }
+//                break;
+//            case 'scalar':
+//                B::assert(!is_array($variablesStorage2) && !is_object($variablesStorage2));
+//                $variable = $variablesStorage2;
+//                break;
+//            default:
+//                B::assert(false);
+//        }
+//    }
     /**
-     * Restores variables by elements. We must not restore by reference copy because variable ID changes.
-     *
-     * @param mixed &$variable        Variable to restore.
-     * @param array $variablesStorage Variables storage.
-     *
-     * @return void
-     * @author Hidenori Wasa <public@hidenori-wasa.com>
-     */
-    private static function _restoreVariablesByElements(&$variable, $variablesStorage)
-    {
-        B::assert(is_array($variablesStorage));
-        B::assert(count($variablesStorage) >= 2);
-
-        $kind = current($variablesStorage);
-        $variablesStorage2 = next($variablesStorage);
-        switch ($kind) {
-            case 'array':
-                B::assert(is_array($variablesStorage2));
-                if (empty($variablesStorage2)) {
-                    $variable = $variablesStorage2;
-                    break;
-                }
-                foreach ($variablesStorage2 as $key => $variableStorage) {
-                    if (is_array($variableStorage)) {
-                        self::_restoreVariablesByElements($variable[$key], $variableStorage);
-                    }
-                }
-                break;
-            case 'object':
-                B::assert(is_object($variablesStorage2));
-                $objectReflection = new \ReflectionObject($variablesStorage2);
-                foreach ($objectReflection->getStaticProperties() as $key => $variableStorage) {
-                    if (is_array($variableStorage)) {
-                        self::_restoreVariablesByElements($variable[$key], $variableStorage);
-                    }
-                }
-                break;
-            case 'scalar':
-                B::assert(!is_array($variablesStorage2) && !is_object($variablesStorage2));
-                $variable = $variablesStorage2;
-                break;
-            default:
-                B::assert(false);
-        }
-    }
-
-    /**
-     * Restores variables. We must not restore by reference copy because variable ID changes.
+     * Restores variables.
      *
      * @param array &$variables       Array variable to restore.
      * @param array $variablesStorage Variables storage.
@@ -349,13 +348,14 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
         if (empty($variablesStorage)) {
             return;
         }
-        // Judges serialization or copy, and overwrites array variable to restore or adds.
+        //// Judges serialization or copy, and overwrites array variable to restore or adds.
         foreach ($variablesStorage as $key => $value) {
 //            if (is_array($value)) {
 //                self::_restoreVariablesByElements($variables[$key], $value);
 //            } else {
 //                $variables[$key] = $value;
 //            }
+            // We must not restore by reference copy because variable ID changes.
             $variables[$key] = $value;
         }
     }
@@ -389,21 +389,25 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
             return;
         }
 
-        $message = '<pre><b>';
+        //$message = '<pre><b>';
+        $message = '<pre>';
         if ($testMethodName === '') {
-            $message .= 'Global variable had been ' . $definedOrDeleted . ' outside unit test class or function! Or, inside of "setUpBeforeClass()"!' . PHP_EOL;
+            //$message .= 'Global variable had been ' . $definedOrDeleted . ' outside unit test class or function! Or, inside of "setUpBeforeClass()"!' . PHP_EOL;
+            $message .= 'Global variable had been <b>' . $definedOrDeleted . ' outside</b> unit test class or function! Or, inside of "setUpBeforeClass()"!' . PHP_EOL;
         } else {
-            $message .= 'Global variable had been ' . $definedOrDeleted . ' inside unit test class method "' . $testMethodName . '", "setUp()" or "tearDown()"!' . PHP_EOL;
+            //$message .= 'Global variable had been ' . $definedOrDeleted . ' inside unit test class method "' . $testMethodName . '", "setUp()" or "tearDown()"!' . PHP_EOL;
+            $message .= 'Global variable had been <b>' . $definedOrDeleted . ' inside</b> unit test class method <b>"' . $testMethodName . '"</b>, "setUp()" or "tearDown()"!' . PHP_EOL;
         }
         $message .= PHP_EOL;
         if (!empty($additionalVariable)) {
-            $message .= 'We must use public static property instead of use global variable inside unit test file (*Test.php)' . PHP_EOL;
+            $message .= 'Unit test file (*Test.php) must use public static property instead of use global variable' . PHP_EOL;
         } else if (!empty($deletionalVariable)) {
-            $message .= 'We must not delete global variable by "unset()" inside unit test file (*Test.php).' . PHP_EOL;
+            $message .= 'Unit test file (*Test.php) must not delete global variable by "unset()".' . PHP_EOL;
         }
         $message .= "\t" . 'because "php" version 5.3.0 cannot detect ' . $definedOrDeleted . ' global variable except unit test file realtime.' . PHP_EOL
-            . 'Or, we must use autoload by "new" instead of include "*.php" file which ' . $definesOrDeletes . ' static status inside unit test class method' . PHP_EOL
-            . "\t" . 'because "php" version 5.3.0 cannot detect an included static status ' . $definitionOrDeletion . ' realtime.</b></pre>';
+            . 'Or, unit test class method must use autoload by "new" instead of include "*.php" file which ' . $definesOrDeletes . ' static status' . PHP_EOL
+            //. "\t" . 'because "php" version 5.3.0 cannot detect an included static status ' . $definitionOrDeletion . ' realtime.</b></pre>';
+            . "\t" . 'because "php" version 5.3.0 cannot detect an included static status ' . $definitionOrDeletion . ' realtime.</pre>';
         exit($message);
     }
 
@@ -540,8 +544,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
                     if (!empty($result)) {
                         B::exitForError(
                             PHP_EOL
-                            . 'We must use private static property instead of use local static variable of class static method' . PHP_EOL
-                            . "\t" . 'because "php" version 5.3.0 cannot restore its value.' . PHP_EOL
+                            . 'Code which is tested must use private static property instead of use local static variable of static class method' . PHP_EOL
+                            . 'because "php" version 5.3.0 cannot restore its value.' . PHP_EOL
                             . "\t" . 'FILE: ' . $methodReflection->getFileName() . PHP_EOL
                             . "\t" . 'LINE: ' . $methodReflection->getStartLine() . PHP_EOL
                             . "\t" . 'CLASS: ' . $methodReflection->class . PHP_EOL

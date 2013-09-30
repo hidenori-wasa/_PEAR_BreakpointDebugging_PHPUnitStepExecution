@@ -121,6 +121,11 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
     private $_obLevel;
 
     /**
+     * @var bool Once flag per test file.
+     */
+    private static $_onceFlagPerTestFile = true;
+
+    /**
      * Stores static status inside autoload handler because static status may be changed.
      *
      * @param string $className The class name which calls class member of static.
@@ -136,8 +141,11 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
 
         // If class file has been loaded first.
         if ($nestLevel === 0) {
-            // Checks justice.
-            BGS::checkGlobals(self::$_testMethodName);
+            if (self::$_onceFlagPerTestFile) {
+                // Checks justice.
+                BGS::checkGlobals(self::$_testMethodName);
+            }
+            // Checks that number of static attributes is not changed.
             BGS::checkStaticAttributes();
             $nestLevel = 1;
             try {
@@ -146,9 +154,11 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
                 $forBreakpoint = 0;
             }
             $nestLevel = 0;
-            // If class file has been loaded completely including dependency files.
-            // Stores global variables and static attributes before variable value is changed.
-            BGS::backupGlobals(self::$_backupGlobalsBlacklist);
+            if (self::$_onceFlagPerTestFile) {
+                // If class file has been loaded completely including dependency files.
+                // Stores global variables and static attributes before variable value is changed.
+                BGS::backupGlobals(self::$_backupGlobalsBlacklist);
+            }
             BGS::backupStaticAttributes(self::$_backupStaticAttributesBlacklist);
             if (isset($exception)) {
                 throw $exception;
@@ -281,16 +291,19 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
             // For autoload.
             self::$_testMethodName = $this->getName();
             if ($onceFlagPerTestFile) {
-                $onceFlagPerTestFile = false;
+                //$onceFlagPerTestFile = false;
+                self::$_onceFlagPerTestFile = &$onceFlagPerTestFile;
                 // For autoload.
                 self::$_backupGlobalsBlacklist = $this->backupGlobalsBlacklist;
                 self::$_backupStaticAttributesBlacklist = $this->backupStaticAttributesBlacklist;
                 // Checks definition change violation of global variables when unit test file was included.
+                // And, checks definition change violation of global variables inside "setUpBeforeClass()".
                 BGS::checkGlobals();
-                // Resets global variables storage.
-                BGS::resetGlobals();
-                // Stores the value change of global variables at "self::setUpBeforeClass()".
-                BGS::backupGlobals(self::$_backupGlobalsBlacklist);
+                //// Resets global variables storage.
+                //BGS::resetGlobals();
+                //// Stores the value change of global variables inside "self::setUpBeforeClass()".
+                //// And, for definition-change-violation-check of global variables at autoload inside "setUp()".
+                //BGS::backupGlobals(self::$_backupGlobalsBlacklist);
                 // Stores static attributes.
                 BGS::backupStaticAttributes(self::$_backupStaticAttributesBlacklist);
                 // Registers autoload class method to store static status.
@@ -307,14 +320,26 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
         clearstatcache();
 
         try {
-            if ($this->inIsolation) {
-                $this->setUpBeforeClass();
-            }
-
+            //if ($this->inIsolation) {
+            //    $this->setUpBeforeClass();
+            //}
+            // Checks an annotation.
             $this->_checkAnnotation();
 
             $this->setExpectedExceptionFromAnnotation();
             $this->setUp();
+
+            if ($onceFlagPerTestFile) {
+                $onceFlagPerTestFile = false;
+                // Resets global variables storage.
+                BGS::resetGlobals();
+                // Stores definition and value change of global variables inside "self::setUp()" by autoload.
+                BGS::backupGlobals(self::$_backupGlobalsBlacklist);
+            } else {
+                // Restores "$GLOBALS" if those have been stored.
+                BGS::restoreGlobals($this->backupGlobalsBlacklist);
+            }
+
             $this->checkRequirements();
             $this->assertPreConditions();
             $this->testResult = $this->runTest();
@@ -337,9 +362,9 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
         // caught and passed on when no exception was raised before.
         try {
             $this->tearDown();
-            if ($this->inIsolation) {
-                $this->tearDownAfterClass();
-            }
+            //if ($this->inIsolation) {
+            //    $this->tearDownAfterClass();
+            //}
         } catch (Exception $_e) {
             B::exitForError($_e); // Displays error call stack information.
         }
@@ -357,11 +382,13 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
         // Clean up stat cache.
         clearstatcache();
 
-        // Checks justice of static status which had been defined inside unit test method.
-        BGS::checkGlobals(self::$_testMethodName);
+        //// Checks justice of static status which had been defined inside unit test method.
+        //BGS::checkGlobals(self::$_testMethodName);
+        // Checks that number of static attributes is not changed.
         BGS::checkStaticAttributes();
-        // Restores "$GLOBALS" and static attributes if those have been stored.
-        BGS::restoreGlobals($this->backupGlobalsBlacklist);
+        //// Restores "$GLOBALS" and static attributes if those have been stored.
+        //BGS::restoreGlobals($this->backupGlobalsBlacklist);
+        // Restores static attributes if those have been stored.
         BGS::restoreStaticAttributes();
 
         // Clean up INI settings.

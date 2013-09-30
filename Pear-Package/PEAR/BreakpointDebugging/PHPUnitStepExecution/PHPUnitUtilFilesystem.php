@@ -62,21 +62,22 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilFilesystem extends \PH
     /**
      * Uses this class method instead of "stream_resolve_include_path()" before "php" version 5.3.2.
      *
-     * @param string $filePath Relative file-path for inclusion path.
+     * @param string $relativePath Relative path for inclusion path.
      *
-     * @return mixed Full file path or false.
+     * @return mixed Full path or false.
      * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
-    public static function streamResolveIncludePath($filePath)
+    public static function streamResolveIncludePath($relativePath)
     {
-        if (empty($filePath)) {
+        if (empty($relativePath)) {
             return false;
         }
         $includePaths = explode(PATH_SEPARATOR, get_include_path());
         foreach ($includePaths as $includePath) {
             // Resolves "//" and "DIRECTORY_SEPARATOR".
-            $fullpath = realpath($includePath . DIRECTORY_SEPARATOR . $filePath);
-            if (is_file($fullpath)) {
+            $fullpath = realpath($includePath . DIRECTORY_SEPARATOR . $relativePath);
+            // If file or directory exists.
+            if (file_exists($fullpath)) {
                 return $fullpath;
             }
         }
