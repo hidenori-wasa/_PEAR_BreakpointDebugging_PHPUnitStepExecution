@@ -23,8 +23,9 @@ The dependences
 Change log
 ----------
 
-* Added the feature to autodetect local static variable inside function.
-* Repaired the bug of global variable backup.
+* Repaired the bug of static backup. (I have not been testing)
+* Added auto-detection of global variable backup inside "setUp()".
+* Changed execution rule.
 * Changed unit test example.
 
 Notice
