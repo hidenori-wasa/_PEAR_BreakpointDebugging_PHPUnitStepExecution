@@ -157,12 +157,13 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
     /**
      * Checks definition deletion violation of global variables to keep reference.
      *
-     * @param string $testMethodName The test class method name.
+     * @//param string $testMethodName The test class method name.
      *
      * @return void
      * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
-    static function checkGlobals($testMethodName = '')
+    //static function checkGlobals($testMethodName = '')
+    static function checkGlobals()
     {
         $deletionalVariable = array_diff_key(parent::$globals, $GLOBALS);
         if (empty($deletionalVariable)) {
@@ -170,11 +171,13 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState extends \P
         }
 
         $message = '<pre><b>';
-        if ($testMethodName === '') {
-            $message .= 'Global variable has been deleted outside unit test class or function! Or, inside of "setUpBeforeClass()"! Or, inside of bootstrap file!' . PHP_EOL;
-        } else {
-            $message .= 'Global variable has been deleted inside unit test class method "setUp()"!' . PHP_EOL;
-        }
+        //if ($testMethodName === '') {
+        //    $message .= 'Global variable has been deleted outside unit test class or function! Or, inside of "setUpBeforeClass()"! Or, inside of bootstrap file!' . PHP_EOL;
+        //} else {
+        //    $message .= 'Global variable has been deleted inside unit test class method "setUp()"!' . PHP_EOL;
+        //}
+        $message .= 'Global variable has been deleted outside class or function of unit test file (*Test.php)!' . PHP_EOL;
+        $message .= 'Or, in "setUpBeforeClass()"! Or, in bootstrap file!' . PHP_EOL;
         $message .= '</b>' . PHP_EOL;
         $message .= 'Unit test file (*Test.php) must not delete global variable by "unset()".' . PHP_EOL;
         $message .= "\t" . 'because "php" version 5.3.0 cannot detect deleted global variable except unit test file realtime.' . PHP_EOL

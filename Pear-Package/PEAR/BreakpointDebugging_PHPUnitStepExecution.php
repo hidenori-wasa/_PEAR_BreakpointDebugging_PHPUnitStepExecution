@@ -166,6 +166,11 @@ class BreakpointDebugging_PHPUnitStepExecution
     private static $_globalsSnapshot = array ();
 
     /**
+     * @var bool Flag of once per test file.
+     */
+    private static $_onceFlagPerTestFile = true;
+
+    /**
      * Limits static properties accessing.
      *
      * @return void
@@ -255,6 +260,26 @@ class BreakpointDebugging_PHPUnitStepExecution
         }
     }
 
+//    /**
+//     * Gets flag of once per test file.
+//     *
+//     * @return bool Default is true.
+//     */
+//    static function getOnceFlagPerTestFile()
+//    {
+//        return self::$_onceFlagPerTestFile;
+//    }
+//    /**
+//     * Sets the flag of once per test file.
+//     *
+//     * @return void
+//     */
+//    static function setOnceFlagPerTestFile($flagStatus)
+//    {
+//        B::limitAccess('BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php', true);
+//
+//        self::$_onceFlagPerTestFile = $flagStatus;
+//    }
     /**
      * Runs "phpunit" command.
      *
@@ -264,10 +289,9 @@ class BreakpointDebugging_PHPUnitStepExecution
      */
     private static function _runPHPUnitCommand($command)
     {
-        //static $globalsSnapshot = array ();
-
-        if (self::$_inclusionPathSettingFlag) {
-            self::$_inclusionPathSettingFlag = false;
+        //if (self::$_inclusionPathSettingFlag) {
+        //    self::$_inclusionPathSettingFlag = false;
+        if (empty(self::$_globalsSnapshot)) {
             // Sets component pear package inclusion paths.
             $includePath = ini_get('include_path');
             ini_set('include_path', __DIR__ . '/BreakpointDebugging/Component' . PATH_SEPARATOR . getenv('PHP_PEAR_INSTALL_DIR') . '/BreakpointDebugging/Component' . PATH_SEPARATOR . $includePath);
@@ -279,30 +303,35 @@ class BreakpointDebugging_PHPUnitStepExecution
         $testFileName = array_pop($commandElements);
         array_push($commandElements, self::$unitTestDir . $testFileName);
         array_unshift($commandElements, 'dummy');
+        // Checks command line switches.
+        if (in_array('--process-isolation', $commandElements)) {
+            throw new \BreakpointDebugging_ErrorException('You must not use "--process-isolation" command line switch because this unit test is run in other process.' . PHP_EOL . 'So, you cannot debug unit test code with IDE.', 101);
+        }
         include_once 'PHPUnit/Autoload.php';
         $pPHPUnit_TextUI_Command = new \PHPUnit_TextUI_Command();
+        self::$_onceFlagPerTestFile = true;
         if (empty(self::$_globalsSnapshot)) {
-            // Stores snapshot of global variables to check definition deletion violation.
-            // So, executes before bootstrap file is included.
-            // And, executes before unit test file is included.
-            // And, executes before "setUpBeforeClass()" is called.
-            //\BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState::backupGlobals(array ());
+            // References other class private property.
+            self::$_onceFlagPerTestFile = &\BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase::refOnceFlagPerTestFile();
+            //// Stores snapshot of global variables to check definition deletion violation.
+            // Stores snapshot of global variables to check definition deletion violation of global variables in bootstrap file, unit test file (*Test.php) and "setUpBeforeClass()".
+            //// So, executes before bootstrap file is included.
+            //// And, executes before unit test file is included.
+            //// And, executes before "setUpBeforeClass()" is called.
             BGS::backupGlobals(array ());
             self::$_globalsSnapshot = BGS::getGlobalProperty();
+            // Registers autoload class method to check definition deletion violation of global variables in bootstrap file, unit test file (*Test.php) and "setUpBeforeClass()".
+            // And, to store static class attributes.
+            $result = spl_autoload_register('\BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase::autoload', true, true);
+            B::assert($result);
         } else {
             // Keeps global variable same status since second time.
             BGS::setGlobalProperty(self::$_globalsSnapshot);
             BGS::restoreGlobals();
-
             // Keeps static attributes same status since second time.
             BGS::swapsSnapshotAndStaticAttributes();
-            // Executes behind "BGS::restoreGlobals()" function to restore a reference to global variable.
             BGS::restoreStaticAttributes();
             BGS::swapsSnapshotAndStaticAttributes();
-        }
-        // Checks command line switches.
-        if (in_array('--process-isolation', $commandElements)) {
-            throw new \BreakpointDebugging_ErrorException('You must not use "--process-isolation" command line switch because this unit test is run in other process.' . PHP_EOL . 'So, you cannot debug unit test code with IDE.', 101);
         }
         // Uses "PHPUnit" package error handler.
         restore_error_handler();
@@ -478,9 +507,10 @@ class BreakpointDebugging_PHPUnitStepExecution
      * Please, follow rule, then, we can use unit test's "--static-backup" command line switch for execution with IDE. Also, those rule violation is detected.
      * The rule 1: Code which is tested must use private static property instead of use local static variable of static class method
      *      because "php" version 5.3.0 cannot restore its value.
-     * The rule 2: Bootstrap file, "setUpBeforeClass()" and "setUp()" must use autoload by "new" instead of include "*.php" file which deletes static status
+     * The rule 2: Bootstrap file, unit test file (*Test.php) and "setUpBeforeClass()" must use autoload by "new" instead of include "*.php" file which deletes static status
      *      because "php" version 5.3.0 cannot detect an included static status definition realtime.
-     * The rule 3: Code which is tested must not register autoload function by "spl_autoload_register()" at top of stack if we call code which is tested inside of "setUp()"
+     * The rule 3: Code which is tested must not register autoload function by "spl_autoload_register()" at top of stack if we call code which is tested
+     *      in (bootstrap file, unit test file (*Test.php) and "setUpBeforeClass()")
      *      because its case cannot store static status.
      *      Example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
      * Also, we must destruct a test instance per test in "tearDown()" because it cuts down on actual server memory use.
@@ -536,9 +566,6 @@ class BreakpointDebugging_PHPUnitStepExecution
      *
      *  class UnstoringTest
      *  {
-     *      // We can define static property in "*Test.php" because static property is not stored in "*Test.php".
-     *      static $staticProperty = null;
-     *
      *      static function localStaticVariable()
      *      {
      *          // static $localStatic = 'Local static value.'; // We must not define local static variable of static class method. (Autodetects)
@@ -565,32 +592,25 @@ class BreakpointDebugging_PHPUnitStepExecution
      *          // self::$_pStaticSomething = &BreakpointDebugging_LockByFlock::singleton();
      *      }
      *
-     *      // A function after "setUp()" does not detect global variable definition violation because here is after global-variable-backup.
+     *      // A function after "setUpBeforeClass()" does not detect global variable definition violation because here is after global-variable-backup.
      *      static function tearDownAfterClass()
      *      {
      *
      *      }
      *
+     *      // A function after "setUpBeforeClass()" does not detect global variable definition violation because here is after global-variable-backup.
      *      protected function setUp()
      *      {
      *          // This is required at top.
      *          parent::setUp();
      *          //
-     *          // unset($_FILES); // We must not delete global variable here. (Autodetects)
-     *          //
-     *          // include_once __DIR__ . '/AFileWhichDeleteGlobalVariable.php'; // We must not include a file which deletes global variable here. (Autodetects)
-     *          //
      *          // Constructs an instance per test.
      *          // We must construct test instance here
      *          // because we want to initialize class auto attribute (auto class method's local static and auto property).
      *          $this->_pSomething = &BreakpointDebugging_LockByFlock::singleton();
-     *          //
-     *          // unset($_FILES); // We must not delete global variable here. (Autodetects)
-     *          //
-     *          // include_once __DIR__ . '/AFileWhichDeleteGlobalVariable.php'; // We must not include a file which deletes global variable here. (Autodetects)
      *      }
      *
-     *      // A function after "setUp()" does not detect global variable definition violation because here is after global-variable-backup.
+     *      // A function after "setUpBeforeClass()" does not detect global variable definition violation because here is after global-variable-backup.
      *      protected function tearDown()
      *      {
      *          // We must destruct a test instance per test because it cuts down on actual server memory use.
@@ -605,7 +625,7 @@ class BreakpointDebugging_PHPUnitStepExecution
      *      }
      *
      *      /**
-     *       * A function after "setUp()" does not detect global variable definition violation because here is after global-variable-backup.
+     *       * A function after "setUpBeforeClass()" does not detect global variable definition violation because here is after global-variable-backup.
      *       *
      *       * @covers \Example<extended>
      *       *
@@ -624,7 +644,7 @@ class BreakpointDebugging_PHPUnitStepExecution
      *      }
      *
      *      /**
-     *       * A function after "setUp()" does not detect global variable definition violation because here is after global-variable-backup.
+     *       * A function after "setUpBeforeClass()" does not detect global variable definition violation because here is after global-variable-backup.
      *       *
      *       * @covers \Example<extended>
      *       * /
@@ -645,6 +665,8 @@ class BreakpointDebugging_PHPUnitStepExecution
      *      }
      *
      *  }
+     *
+     *  ?>
      *
      * @codeCoverageIgnore
      * Because "phpunit" command cannot run during "phpunit" command running.
@@ -696,7 +718,6 @@ class BreakpointDebugging_PHPUnitStepExecution
             gc_collect_cycles();
         }
         echo self::$_separator;
-        //self::_checkFunctionLocalStaticVariable();
         BGS::checkFunctionLocalStaticVariable();
         BGS::checkMethodLocalStaticVariable();
         echo '<b>Unit tests have done.</b></pre>';

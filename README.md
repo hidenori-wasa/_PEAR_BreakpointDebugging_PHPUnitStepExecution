@@ -23,8 +23,7 @@ The dependences
 Change log
 ----------
 
-* Repaired the bug of static backup. (I have not been testing)
-* Added auto-detection of global variable backup inside "setUp()".
+* Repaired the bug of static backup. (I tested except reference backup and more than one unit test files)
 * Changed execution rule.
 * Changed unit test example.
 
