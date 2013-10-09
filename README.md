@@ -23,9 +23,11 @@ The dependences
 Change log
 ----------
 
-* Repaired the bug of static backup. (I tested except reference backup and more than one unit test files)
-* Changed execution rule.
-* Changed unit test example.
+* I repaired storing of super global variable. ("--static-backup" command line switch)
+* I repaired reference storing of global variable and static property. ("--static-backup" command line switch)
+* I repaired continuous execution of unit test files. ("--static-backup" command line switch)
+* I changed execution rule.
+* I changed unit test example.
 
 Notice
 ------

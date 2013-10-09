@@ -43,6 +43,8 @@
  * @since      File available since Release 2.0.0
  */
 
+use \BreakpointDebugging as B; // Hidenori Wasa added.
+
 /**
  * Base class for all test runners.
  *
@@ -105,19 +107,21 @@ abstract class PHPUnit_Runner_BaseTestRunner
         }
 
         catch (Exception $e) {
-            $this->runFailed($e->getMessage());
-            return NULL;
+            // $this->runFailed($e->getMessage());
+            // return NULL;
+            B::exitForError($e); // Hidenori Wasa added.
         }
 
         try {
             $suiteMethod = $testClass->getMethod(self::SUITE_METHODNAME);
 
             if (!$suiteMethod->isStatic()) {
-                $this->runFailed(
-                  'suite() method must be static.'
-                );
-
-                return NULL;
+                // $this->runFailed(
+                //   'suite() method must be static.'
+                // );
+                //
+                // return NULL;
+                B::exitForError('suite() method must be static.'); // Hidenori Wasa added.
             }
 
             try {
@@ -125,15 +129,16 @@ abstract class PHPUnit_Runner_BaseTestRunner
             }
 
             catch (ReflectionException $e) {
-                $this->runFailed(
-                  sprintf(
-                    "Failed to invoke suite() method.\n%s",
-
-                    $e->getMessage()
-                  )
-                );
-
-                return NULL;
+                // $this->runFailed(
+                //   sprintf(
+                //     "Failed to invoke suite() method.\n%s",
+                //
+                //     $e->getMessage()
+                //   )
+                // );
+                //
+                // return NULL;
+                B::exitForError('suite() method must be static.'); // Hidenori Wasa added.
             }
         }
 

@@ -35,7 +35,6 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @category   PHP
  * @package    PHPUnit
  * @subpackage Util
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
@@ -47,13 +46,12 @@
 /**
  * PHPUnit's file system general class methods. Supports "php" version 5.3.0 since then.
  *
- * @category   PHP
  * @package    PHPUnit
  * @subpackage Util
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
  * @copyright  2001-2013 Sebastian Bergmann <sebastian@phpunit.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @version    Release: 3.6.11
+ * @version    Release: 3.6.12
  * @link       http://www.phpunit.de/
  * @since      Class available since Release 3.0.0
  */

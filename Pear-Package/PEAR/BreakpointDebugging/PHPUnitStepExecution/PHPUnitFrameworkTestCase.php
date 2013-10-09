@@ -7,7 +7,7 @@
  * Also, we can execute unit test with remote server without installing "PHPUnit".
  *
  * ### About "PHPUnit" package component. ###
- * I copied following "PHPUnit" package files into "PEAR/BreakpointDebugging/Component/" directory
+ * I copied following "PHPUnit" package files into "BreakpointDebugging/Component/" directory
  * because it avoids "PHPUnit" package version control.
  *      PEAR/PHP/CodeCoverage.php
  *      PEAR/PHP/CodeCoverage/
@@ -23,17 +23,7 @@
  *          Copyright (c) 2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
  *      PEAR/PHPUnit/
  *          Copyright (c) 2001-2012 Sebastian Bergmann <sebastian@phpunit.de>
- * Then, I added following into "\PHPUnit_Framework_TestCase" class because this class needed private property.
- *      function __get($propertyName)
- *      {
- *          return $this->$propertyName;
- *      }
- *
- *      function __set($propertyName, $value)
- *      {
- *          \BreakpointDebugging::limitAccess('BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php', true);
- *          $this->$propertyName = $value;
- *      }
+ * Then, I added "// Hidenori Wasa added." to line which I coded into "BreakpointDebugging/Component/" directory.
  *
  * PHP version 5.3
  *
@@ -69,7 +59,6 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @category   PHP
  * @package    PHPUnit
  * @subpackage Framework
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
@@ -89,32 +78,56 @@ use \BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState as BGS;
 /**
  * Debugs unit tests code continuously by IDE. With "\BreakpointDebugging::executeUnitTest()" class method. Supports "php" version 5.3.0 since then.
  *
- * @category   PHP
  * @package    PHPUnit
  * @subpackage Framework
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
  * @copyright  2001-2013 Sebastian Bergmann <sebastian@phpunit.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
- * @version    Release: 3.6.11
+ * @version    Release: 3.6.12
  * @link       http://www.phpunit.de/
  * @since      Class available since Release 2.0.0
  */
 abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var string The test class method name.
-     */
-    private static $_testMethodName;
-
-    /**
      * @var array List to except to store global variable.
      */
     private static $_backupGlobalsBlacklist = array ();
 
     /**
-     * @var array List to except to store static attributes.
+     * @var array List to except to store static properties values.
      */
-    private static $_backupStaticAttributesBlacklist = array ();
+    private static $_backupStaticPropertiesBlacklist = array ();
+
+    /**
+     * @var array Global variables.
+     */
+    private static $_globals = array ();
+
+    /**
+     * @var array Snapshot of global variables.
+     */
+    private static $_globalsSnapshot = array ();
+
+    /**
+     * @var array Global variable references.
+     */
+    private static $_globalRefs = array ();
+
+    /**
+     * @var array Snapshot of global variables references.
+     */
+    private static $_globalRefsSnapshot = array ();
+
+    /**
+     * @var array Static properties.
+     */
+    private static $_staticProperties = array ();
+
+    /**
+     * @var array Static properties's snapshot.
+     */
+    private static $_staticPropertiesSnapshot = array ();
 
     /**
      * @var int The output buffering level.
@@ -139,6 +152,64 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
     }
 
     /**
+     * Checks the autoload functions.
+     *
+     * @param string $testMethodName The test class method name.
+     *
+     * @return void
+     * @author Hidenori Wasa <public@hidenori-wasa.com>
+     */
+    private function _checkAutoloadFunctions($testMethodName = null)
+    {
+        // Checks the autoload functions.
+        $autoloadFunctions = spl_autoload_functions();
+        if ($autoloadFunctions[0] !== array ('BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase', 'autoload')) {
+            if (is_array($autoloadFunctions[0])) {
+                $autoloadFunction = $autoloadFunctions[0][0] . '::' . $autoloadFunctions[0][1];
+            }
+            $className = get_class($this);
+            $message = '<pre><b>You must not register autoload function "' . $autoloadFunction . '" at top of stack by "spl_autoload_register()" in all code.' . PHP_EOL;
+            if ($testMethodName) {
+                $message .= 'Inside of "' . $className . '::' . $testMethodName . '()".' . PHP_EOL;
+            } else {
+                $message .= 'In "bootstrap file", "file of (class ' . $className . ') which is executed at autoload" or "' . $className . '::setUpBeforeClass()"' . '.' . PHP_EOL;
+            }
+            $message .= '</b>Because it cannot store static status.</pre>';
+            exit($message);
+        }
+    }
+
+    /**
+     * It references "self::$_globalRefs".
+     */
+    static function &refGlobalRefs()
+    {
+        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+
+        return self::$_globalRefs;
+    }
+
+    /**
+     * It references "self::$_globals".
+     */
+    static function &refGlobals()
+    {
+        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+
+        return self::$_globals;
+    }
+
+    /**
+     * It references "self::$_staticProperties".
+     */
+    static function &refStaticProperties2()
+    {
+        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+
+        return self::$_staticProperties;
+    }
+
+    /**
      * Stores static status inside autoload handler because static status may be changed.
      *
      * @param string $className The class name which calls class member of static.
@@ -152,14 +223,28 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
     {
         static $nestLevel = 0;
 
+        // Excepts unit test classes.
+        if (BGS::isUnitTestClass($className)) {
+            B::autoload($className);
+            return;
+        }
+
         // If class file has been loaded first.
         if ($nestLevel === 0) {
-            //B::assert(self::$_onceFlagPerTestFile);
             if (self::$_onceFlagPerTestFile) {
-                //// Checks definition deletion violation of global variables to keep reference inside "setUp()".
-                // Checks definition deletion violation of global variables to keep reference in bootstrap file and "setUpBeforeClass()".
-                //BGS::checkGlobals(self::$_testMethodName);
-                BGS::checkGlobals();
+                // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
+                BGS::checkGlobals(self::$_globalRefs, self::$_globals, true);
+                // Checks the change violation of static properties and static property child element references.
+                BGS::checkProperties(self::$_staticProperties);
+            } else {
+                // Snapshots global variables.
+                BGS::storeGlobals(self::$_globalRefsSnapshot, self::$_globalsSnapshot, self::$_backupGlobalsBlacklist, true);
+                // Snapshots static properties.
+                BGS::storeProperties(self::$_staticPropertiesSnapshot, self::$_backupStaticPropertiesBlacklist, true);
+                // Restores global variables.
+                BGS::restoreGlobals(self::$_globalRefs, self::$_globals);
+                // Restores static properties.
+                BGS::restoreProperties(self::$_staticProperties);
             }
             $nestLevel = 1;
             try {
@@ -169,13 +254,20 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
             }
             // If class file has been loaded completely including dependency files.
             $nestLevel = 0;
-            //B::assert(self::$_onceFlagPerTestFile);
-            if (self::$_onceFlagPerTestFile) {
-                // Stores global variables before variable value is changed in bootstrap file and "setUpBeforeClass()".
-                BGS::backupGlobals(self::$_backupGlobalsBlacklist);
+            // Checks deletion and change violation of global variables and global variable references during autoload.
+            BGS::checkGlobals(self::$_globalRefs, self::$_globals);
+            // Checks the change violation of static properties and static property child element references.
+            BGS::checkProperties(self::$_staticProperties);
+            // Stores global variables before variable value is changed in bootstrap file and "setUpBeforeClass()".
+            BGS::storeGlobals(self::$_globalRefs, self::$_globals, self::$_backupGlobalsBlacklist);
+            // Stores static properties before variable value is changed.
+            BGS::storeProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
+            if (!self::$_onceFlagPerTestFile) {
+                // Restores global variables snapshot.
+                BGS::restoreGlobals(self::$_globalRefsSnapshot, self::$_globalsSnapshot);
+                // Restores static properties snapshot.
+                BGS::restoreProperties(self::$_staticPropertiesSnapshot);
             }
-            // Stores static attributes before variable value is changed.
-            BGS::backupStaticAttributes(self::$_backupStaticAttributesBlacklist);
             if (isset($exception)) {
                 throw $exception;
             }
@@ -256,14 +348,15 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
 
     /**
      * Overrides "\PHPUnit_Framework_TestCase::runBare()" to display call stack when error occurred.
-     * And, sets autoload class method to store static status by "spl_autoload_register()".
+     * Also, I changed storing and restoring class method.
+     * And, I changed location which calls those.
+     * So, it is "--static-backup" command line switch for continuous execution by IDE.
      *
      * @return void
      * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
     public function runBare()
     {
-        //static $onceFlagPerTestFile = true;
         // Displays the progress.
         for ($count = 0; ob_get_level() > 0; $count++) {
             ob_end_flush();
@@ -275,56 +368,18 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
 
         $this->numAssertions = 0;
 
-        // For autoload.
-        self::$_testMethodName = $this->getName();
-        //if ($onceFlagPerTestFile) {
         if (self::$_onceFlagPerTestFile) {
+            // For autoload.
             self::$_onceFlagPerTestFile = false;
-            //self::$_onceFlagPerTestFile = &$onceFlagPerTestFile;
             // For autoload.
             self::$_backupGlobalsBlacklist = $this->backupGlobalsBlacklist;
-            self::$_backupStaticAttributesBlacklist = $this->backupStaticAttributesBlacklist;
-            //// Checks definition deletion violation of global variables to keep reference in the following description.
-            //// Therefore, when bootstrap file was included.
-            //// And, when unit test file was included.
-            //// And, inside of "setUpBeforeClass()".
-            //BGS::checkGlobals();
-            //// Registers autoload class method to check definition deletion violation of global variables inside "setUp()".
-            //$result = spl_autoload_register('\BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase::autoload', true, true);
-            //B::assert($result);
+            self::$_backupStaticPropertiesBlacklist = $this->backupStaticAttributesBlacklist;
             // Checks the autoload functions.
-            $autoloadFunctions = spl_autoload_functions();
-            if ($autoloadFunctions[0] !== array ('BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase', 'autoload')) {
-                if (is_array($autoloadFunctions[0])) {
-                    $autoloadFunctions[0] = $autoloadFunctions[0][0] . '::' . $autoloadFunctions[0][1];
-                }
-                $className = get_class($this);
-                $methodName = $this->name;
-                throw new \BreakpointDebugging_ErrorException(
-                    'You must not register autoload function "' . $autoloadFunctions[0] . '" by "spl_autoload_register()"' . PHP_EOL
-                    . 'at top of stack in "' . $className . '::' . $methodName . '"' . PHP_EOL
-                    . 'because it cannot store static status.'
-                );
-            }
-            //// Unregisters autoload class method to check definition deletion violation of global variables inside "setUp()".
-            //$result = spl_autoload_unregister('\BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase::autoload');
-            //B::assert($result);
-            //// Checks definition deletion violation of global variables to keep reference inside "setUp()".
-            // Checks definition deletion violation of global variables to keep reference in bootstrap file, unit test file (*Test.php) and "setUpBeforeClass()".
-            //BGS::checkGlobals(self::$_testMethodName);
-            BGS::checkGlobals();
-            // Resets global variables storage to change value.
-            BGS::resetGlobals();
-            //// Stores definition and value change of global variables inside "setUp()" by autoload.
-            // Stores definition and value change of global variables by autoload in bootstrap file, unit test file (*Test.php) and "setUpBeforeClass()".
-            BGS::backupGlobals(self::$_backupGlobalsBlacklist);
-            // Snapshots static class attributes to restore.
-            BGS::snapshotStaticAttributes(self::$_backupStaticAttributesBlacklist);
-        } else {
-            // Restores "$GLOBALS" if those have been stored.
-            BGS::restoreGlobals($this->backupGlobalsBlacklist);
-            // Restores static attributes snapshot if those have been stored.
-            BGS::restoreStaticAttributes();
+            $this->_checkAutoloadFunctions();
+            // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
+            BGS::checkGlobals(self::$_globalRefs, self::$_globals, true);
+            // Checks the change violation of static properties and static property child element references.
+            BGS::checkProperties(self::$_staticProperties, false);
         }
 
         // Start output buffering.
@@ -335,56 +390,40 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
         clearstatcache();
 
         try {
+            $this->setExpectedExceptionFromAnnotation();
+
             // Checks an annotation.
             $this->_checkAnnotation();
+            // Restores global variables.
+            BGS::restoreGlobals(self::$_globalRefs, self::$_globals);
+            // Restores static properties.
+            BGS::restoreProperties(self::$_staticProperties);
 
-            $this->setExpectedExceptionFromAnnotation();
             $this->setUp();
 
-//            if ($onceFlagPerTestFile) {
-//                $onceFlagPerTestFile = false;
-//                // Checks the autoload functions.
-//                $autoloadFunctions = spl_autoload_functions();
-//                if ($autoloadFunctions[0] !== array ('BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase', 'autoload')) {
-//                    if (is_array($autoloadFunctions[0])) {
-//                        $autoloadFunctions[0] = $autoloadFunctions[0][0] . '::' . $autoloadFunctions[0][1];
-//                    }
-//                    $className = get_class($this);
-//                    $methodName = $this->name;
-//                    throw new \BreakpointDebugging_ErrorException(
-//                        'You must not register autoload function "' . $autoloadFunctions[0] . '" by "spl_autoload_register()"' . PHP_EOL
-//                        . 'at top of stack in "' . $className . '::' . $methodName . '"' . PHP_EOL
-//                        . 'because it cannot store static status.'
-//                    );
-//                }
-//                // Unregisters autoload class method to check definition deletion violation of global variables inside "setUp()".
-//                $result = spl_autoload_unregister('\BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase::autoload');
-//                B::assert($result);
-//                // Checks definition deletion violation of global variables to keep reference inside "setUp()".
-//                BGS::checkGlobals(self::$_testMethodName);
-//                // Resets global variables storage to change value.
-//                BGS::resetGlobals();
-//                // Stores definition and value change of global variables inside "setUp()" by autoload.
-//                BGS::backupGlobals(self::$_backupGlobalsBlacklist);
-//                // Snapshots static class attributes to restore.
-//                BGS::snapshotStaticAttributes(self::$_backupStaticAttributesBlacklist);
-//            } else {
-//                // Restores "$GLOBALS" if those have been stored.
-//                BGS::restoreGlobals($this->backupGlobalsBlacklist);
-//                // Restores static attributes snapshot if those have been stored.
-//                BGS::restoreStaticAttributes();
-//            }
+            // Checks the autoload functions.
+            $this->_checkAutoloadFunctions('setUp');
 
             $this->checkRequirements();
             $this->assertPreConditions();
             $this->testResult = $this->runTest();
+
+            // Checks the autoload functions.
+            $this->_checkAutoloadFunctions($this->getName());
+
             $this->verifyMockObjects();
             $this->assertPostConditions();
             $this->status = PHPUnit_Runner_BaseTestRunner::STATUS_PASSED;
         } catch (PHPUnit_Framework_IncompleteTest $e) {
+            // Checks the autoload functions.
+            $this->_checkAutoloadFunctions($this->getName());
+
             $this->status = PHPUnit_Runner_BaseTestRunner::STATUS_INCOMPLETE;
             $this->statusMessage = $e->getMessage();
         } catch (PHPUnit_Framework_SkippedTest $e) {
+            // Checks the autoload functions.
+            $this->_checkAutoloadFunctions($this->getName());
+
             $this->status = PHPUnit_Runner_BaseTestRunner::STATUS_SKIPPED;
             $this->statusMessage = $e->getMessage();
         } catch (PHPUnit_Framework_AssertionFailedError $e) {
@@ -397,6 +436,8 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
         // caught and passed on when no exception was raised before.
         try {
             $this->tearDown();
+            // Checks the autoload functions.
+            $this->_checkAutoloadFunctions('tearDown');
         } catch (Exception $_e) {
             B::exitForError($_e); // Displays error call stack information.
         }

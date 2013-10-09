@@ -1831,12 +1831,27 @@ abstract class PHPUnit_Framework_TestCase extends PHPUnit_Framework_Assert imple
     {
     }
 
-    function __get($propertyName)
+    /**
+     * Magic method to get property value.
+     *
+     * @param string $propertyName Property name to get value.
+     *
+     * @return mixed Property value.
+     */
+    function __get($propertyName) // Hidenori Wasa added.
     {
         return $this->$propertyName;
     }
 
-    function __set($propertyName, $value)
+    /**
+     * Magic method to set property value.
+     *
+     * @param string $propertyName Property name to set value.
+     * @param mixed  $value        The value to set.
+     *
+     * @return mixed Property value.
+     */
+    function __set($propertyName, $value) // Hidenori Wasa added.
     {
         \BreakpointDebugging::limitAccess('BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php', true);
         $this->$propertyName = $value;
