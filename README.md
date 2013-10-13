@@ -23,13 +23,14 @@ The dependences
 Change log
 ----------
 
-* I repaired storing of super global variable. ("--static-backup" command line switch)
-* I repaired reference storing of global variable and static property. ("--static-backup" command line switch)
-* I repaired continuous execution of unit test files. ("--static-backup" command line switch)
-* I changed execution rule.
-* I changed unit test example.
+* I repaired the check of recursive global variable and recursive static property. ("--static-backup" command line switch)
+* I added code coverage report deletion button for security.
+* I repaired it to "\BreakpointDebugging::chmod()" which is not overwritten if permission is same.
+* I displayed how to repair if "php" command path does not exist.
+* I repaired the order of include path of unit test.
+* I executed regression test on Linux. (However not all unit tests)
 
 Notice
 ------
 
-I will code the unit tests.
+I have been coding the unit tests or "*.phpt" tests.

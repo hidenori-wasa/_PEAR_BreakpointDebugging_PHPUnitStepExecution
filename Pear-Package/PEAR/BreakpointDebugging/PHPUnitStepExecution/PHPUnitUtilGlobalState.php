@@ -357,19 +357,30 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
                     if (!isset($blacklist[$declaredClassName])
                         || !in_array($propertyName, $blacklist[$declaredClassName])
                     ) {
-                        $property->setAccessible(TRUE);
+                        $property->setAccessible(true);
                         $propertyValue = $property->getValue();
                         if (!$propertyValue instanceof Closure) {
                             // Checks static property and static property child element references.
-                            if ($staticPropertiesOfClass[$propertyName] !== $propertyValue) {
-                                $message = '<pre><b>';
-                                $message .= 'In "class ' . $declaredClassName . '".' . PHP_EOL;
-                                $message .= '"$' . $propertyName . '" static property or reference has been overwritten in the following place!' . PHP_EOL;
-                                $message .= $message2;
-                                $message .= 'We must not overwrite static property or reference in the above place.' . PHP_EOL;
-                                $message .= 'Because "php" version 5.3.0 cannot detect overwritten static property or reference realtime.</pre>';
-                                exit($message);
+                            if (is_array($staticPropertiesOfClass[$propertyName])) {
+                                if (is_array($propertyValue)) {
+                                    if (count(array_diff($staticPropertiesOfClass[$propertyName], $propertyValue)) === 0
+                                        && count(array_diff($propertyValue, $staticPropertiesOfClass[$propertyName])) === 0
+                                    ) {
+                                        continue;
+                                    }
+                                }
+                            } else if (!is_array($propertyValue)
+                                && $staticPropertiesOfClass[$propertyName] === $propertyValue
+                            ) {
+                                continue;
                             }
+                            $message = '<pre><b>';
+                            $message .= 'In "class ' . $declaredClassName . '".' . PHP_EOL;
+                            $message .= '"$' . $propertyName . '" static property or reference has been overwritten in the following place!' . PHP_EOL;
+                            $message .= $message2;
+                            $message .= 'We must not overwrite static property or reference in the above place.' . PHP_EOL;
+                            $message .= 'Because "php" version 5.3.0 cannot detect overwritten static property or reference realtime.</pre>';
+                            exit($message);
                         }
                     }
                 }

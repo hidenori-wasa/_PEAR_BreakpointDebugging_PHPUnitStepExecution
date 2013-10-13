@@ -74,6 +74,11 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
      */
     function __construct()
     {
+        if (isset($_GET['codeCoverageReportDeletion'])) {
+            \BreakpointDebugging_PHPUnitStepExecution::deleteCodeCoverageReport();
+            echo file_get_contents('BreakpointDebugging/css/FontStyle.html', true);
+            exit('<pre><b>Code coverage report was deleted.</b></pre>');
+        }
         // If we pushed "Code coverage report" button.
         if (isset($_GET['codeCoverageReportPath'])) {
             $codeCoverageReportPath = $_GET['codeCoverageReportPath'];
@@ -142,6 +147,13 @@ EOD;
 </form>
 EOD;
             }
+
+            echo <<<EOD
+<br/><br/>
+<form method="post" action="$thisFileURI?codeCoverageReportDeletion">
+    <input type="submit" value="Code coverage report deletion."/>
+</form>
+EOD;
         }
     }
 

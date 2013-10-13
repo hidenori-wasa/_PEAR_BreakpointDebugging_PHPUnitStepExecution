@@ -268,7 +268,13 @@ class BreakpointDebugging_PHPUnitStepExecution
         if (self::$_onceFlag) {
             // Sets component pear package inclusion paths.
             $includePath = ini_get('include_path');
-            ini_set('include_path', __DIR__ . '/BreakpointDebugging/Component' . PATH_SEPARATOR . getenv('PHP_PEAR_INSTALL_DIR') . '/BreakpointDebugging/Component' . PATH_SEPARATOR . $includePath);
+            $pearDir = `pear config-get php_dir`;
+            if (isset($pearDir)) {
+                $componentDir = PATH_SEPARATOR . rtrim($pearDir) . '/BreakpointDebugging/Component';
+            } else {
+                $componentDir = '';
+            }
+            ini_set('include_path', $includePath . PATH_SEPARATOR . __DIR__ . '/BreakpointDebugging/Component' . $componentDir);
         }
         $command = ltrim($command);
         echo self::$_separator;
@@ -511,22 +517,22 @@ class BreakpointDebugging_PHPUnitStepExecution
      *          Except those, Reference copy must use "&<official class name>::".
      *          Those is same about "$this".
      *
-     * Autodetecting rule 2: We must not delete or change static status by the autoload
+     * Autodetecting rule 4: We must not delete or change static status by the autoload
      *      because autoload is executed only once per file.
-     * Autodetecting rule 2: We must use private static property instead of use local static variable in static class method
+     * Autodetecting rule 5: We must use private static property instead of use local static variable in static class method
      *      because "php" version 5.3.0 cannot restore its value.
-     * Autodetecting rule 3: We must use private static property in class method instead of use local static variable in function
+     * Autodetecting rule 6: We must use private static property in class method instead of use local static variable in function
      *      because "php" version 5.3.0 cannot restore its value.
-     * Autodetecting rule 4: We must operate any variable and any property inside "setUp()", test class methods or "tearDown()" about test code.
+     * Autodetecting rule 7: We must operate any variable and any property inside "setUp()", test class methods or "tearDown()" about test code.
      *      Because we must test with same condition.
      *      So, global variables or static properties is restored with initial value before "setUp()".
-     * Autodetecting rule 5: We must not register autoload function at top of stack by "spl_autoload_register()" in all code
+     * Autodetecting rule 8: We must not register autoload function at top of stack by "spl_autoload_register()" in all code
      *      because server stores static status by autoload function.
      *      @Example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
-     * Autodetecting rule 6: We must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
+     * Autodetecting rule 9: We must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
      *      Because we cannot debug unit test code with IDE.
      *
-     * Recommendation rule 7: We should destruct a test instance per test in "tearDown()" because it cuts down on actual server memory use.
+     * Recommendation rule 10: We should destruct a test instance per test in "tearDown()" because it cuts down on actual server memory use.
      *      @Example:
      *          protected function tearDown()
      *          {
@@ -536,7 +542,7 @@ class BreakpointDebugging_PHPUnitStepExecution
      *              // This is required at bottom.
      *              parent::tearDown();
      *          }
-     * Recommendation rule 8: We should not use global variable to avoid variable crash.
+     * Recommendation rule 11: We should not use global variable to avoid variable crash.
      *
      * Caution: Don't test an unit when practical use server has been running with synchronization file because synchronization is destroyed.
      *
@@ -743,10 +749,10 @@ class BreakpointDebugging_PHPUnitStepExecution
         }
 
         foreach ($unitTestFilePaths as $unitTestFilePath) {
-            if (in_array($unitTestFilePath, self::$_unitTestFilePathsStorage, true)) {
+            if (array_key_exists($unitTestFilePath, self::$_unitTestFilePathsStorage)) {
                 throw new \BreakpointDebugging_ErrorException('Unit test file path must be unique.', 101);
             }
-            self::$_unitTestFilePathsStorage[] = $unitTestFilePath;
+            self::$_unitTestFilePathsStorage[$unitTestFilePath] = true;
         }
 
         echo file_get_contents('BreakpointDebugging/css/FontStyle.html', true);
@@ -786,6 +792,27 @@ class BreakpointDebugging_PHPUnitStepExecution
         BGS::checkFunctionLocalStaticVariable();
         BGS::checkMethodLocalStaticVariable();
         echo '<b>Unit tests have done.</b></pre>';
+    }
+
+    /**
+     * Deletes code coverage report.
+     *
+     * @return string Code coverage report path.
+     */
+    static function deleteCodeCoverageReport()
+    {
+        $codeCoverageReportPath = B::getStatic('$_workDir') . '/CodeCoverageReport/';
+        // Deletes code coverage report directory files.
+        if (is_dir($codeCoverageReportPath)) {
+            foreach (scandir($codeCoverageReportPath) as $codeCoverageReportDirElement) {
+                $errorLogDirElementPath = $codeCoverageReportPath . $codeCoverageReportDirElement;
+                if (is_file($errorLogDirElementPath)) {
+                    // Deletes a file.
+                    B::unlink(array ($errorLogDirElementPath));
+                }
+            }
+        }
+        return $codeCoverageReportPath;
     }
 
     /**
@@ -829,18 +856,8 @@ class BreakpointDebugging_PHPUnitStepExecution
         if (!extension_loaded('xdebug')) {
             B::exitForError('"BreakpointDebugging::displayCodeCoverageReport()" needs "xdebug" extention.');
         }
-        $codeCoverageReportPath = B::getStatic('$_workDir') . '/CodeCoverageReport/';
-        // Deletes code coverage report directory files.
-        if (is_dir($codeCoverageReportPath)) {
-            foreach (scandir($codeCoverageReportPath) as $codeCoverageReportDirElement) {
-                $errorLogDirElementPath = $codeCoverageReportPath . $codeCoverageReportDirElement;
-                if (is_file($errorLogDirElementPath)) {
-                    // Deletes a file.
-                    B::unlink(array ($errorLogDirElementPath));
-                }
-            }
-        }
-
+        // Deletes code coverage report.
+        $codeCoverageReportPath = self::deleteCodeCoverageReport();
         self::_getUnitTestDir();
         // Creates code coverage report.
         $displayErrorsStorage = ini_get('display_errors');
