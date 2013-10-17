@@ -24,11 +24,10 @@ Change log
 ----------
 
 * I repaired the check of recursive global variable and recursive static property. ("--static-backup" command line switch)
-* I added code coverage report deletion button for security.
-* I repaired it to "\BreakpointDebugging::chmod()" which is not overwritten if permission is same.
-* I displayed how to repair if "php" command path does not exist.
-* I repaired the order of include path of unit test.
-* I executed regression test on Linux. (However not all unit tests)
+* I added autodetecting rule 4.
+* I added how to develop by this package.
+* I changed error display header.
+* I completed coding except unit test of this package.
 
 Notice
 ------

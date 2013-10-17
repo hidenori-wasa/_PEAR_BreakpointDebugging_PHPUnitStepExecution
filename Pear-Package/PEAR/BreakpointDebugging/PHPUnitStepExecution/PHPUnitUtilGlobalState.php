@@ -78,8 +78,13 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
      * @return void
      * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
-    private static function _storeVariables(array $blacklist, array $variables, array &$variableRefsStorage, array &$variablesStorage, $isGlobal = false)
+    private static function _storeVariables($blacklist, $variables, &$variableRefsStorage, &$variablesStorage, $isGlobal = false)
     {
+        B::assert(is_array($blacklist));
+        B::assert(is_array($variables));
+        B::assert(is_array($variableRefsStorage));
+        B::assert(is_array($variablesStorage));
+
         if ($isGlobal) {
             // Deletes "unset()" variable from storage because we can do "unset()" except property definition.
             foreach ($variablesStorage as $key => $value) {
@@ -361,17 +366,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
                         $propertyValue = $property->getValue();
                         if (!$propertyValue instanceof Closure) {
                             // Checks static property and static property child element references.
-                            if (is_array($staticPropertiesOfClass[$propertyName])) {
-                                if (is_array($propertyValue)) {
-                                    if (count(array_diff($staticPropertiesOfClass[$propertyName], $propertyValue)) === 0
-                                        && count(array_diff($propertyValue, $staticPropertiesOfClass[$propertyName])) === 0
-                                    ) {
-                                        continue;
-                                    }
-                                }
-                            } else if (!is_array($propertyValue)
-                                && $staticPropertiesOfClass[$propertyName] === $propertyValue
-                            ) {
+                            if (B::clearRecursiveArrayElement($staticPropertiesOfClass[$propertyName]) === B::clearRecursiveArrayElement($propertyValue)) {
                                 continue;
                             }
                             $message = '<pre><b>';
