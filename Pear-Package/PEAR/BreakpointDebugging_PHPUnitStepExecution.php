@@ -542,14 +542,16 @@ class BreakpointDebugging_PHPUnitStepExecution
     {
         if (self::$_onceFlag) {
             // Sets component pear package inclusion paths.
-            $includePath = ini_get('include_path');
             $pearDir = `pear config-get php_dir`;
             if (isset($pearDir)) {
                 $componentDir = PATH_SEPARATOR . rtrim($pearDir) . '/BreakpointDebugging/Component';
             } else {
                 $componentDir = '';
             }
-            ini_set('include_path', $includePath . PATH_SEPARATOR . __DIR__ . '/BreakpointDebugging/Component' . $componentDir);
+            $includePaths = explode(PATH_SEPARATOR, ini_get('include_path'));
+            array_unshift($includePaths, $includePaths[0]);
+            $includePaths[1] = __DIR__ . '/BreakpointDebugging/Component' . $componentDir;
+            ini_set('include_path', implode(PATH_SEPARATOR, $includePaths));
         }
         $command = ltrim($command);
         echo self::$_separator;
