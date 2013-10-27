@@ -209,6 +209,7 @@
  *
  *  ?>
  *
+ * ### Coding rule. ###
  * Please, follow rule, then, we can use unit test's "--static-backup" command line switch for execution with IDE.
  *
  * The rule 1: We must overwrite "null" to variable if we call "__destruct()" on the way in all code.
@@ -230,10 +231,12 @@
  *      Because server cannot get property reference by reflection in "PHP version 5.3.0".
  *      @Example of rule violation:
  *          ::$something = &
+ *          or ::$something = array (&
  *      Instead:
  *          ::$something[0] = &
+ *          or ::$something[0] = array (&
  *      Please, search the rule violation of file by the following regular expression.
- *          ::\$[_a-zA-Z][_a-zA-Z0-9]*[\x20\t\r\n]*=[\x20\t\r\n]*&
+ *          ::\$[_a-zA-Z][_a-zA-Z0-9]*[\x20\t\r\n]*=[^=;]*&
  *      About reference copy.
  *          Reference copy must use "&self::" in case of self class.
  *          Reference copy must use "&parent::" in case of parent class above one hierarchy.
@@ -352,10 +355,10 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
      */
     function __construct($message, $id = null, $previous = null, $omissionCallStackLevel = 0)
     {
-        B::assert(func_num_args() <= 4, 1);
-        B::assert(is_string($message), 2);
-        B::assert(is_int($id) || $id === null, 3);
-        B::assert($previous instanceof \Exception || $previous === null, 4);
+        B::assert(func_num_args() <= 4);
+        B::assert(is_string($message));
+        B::assert(is_int($id) || $id === null);
+        B::assert($previous instanceof \Exception || $previous === null);
 
         if (mb_detect_encoding($message, 'utf8', true) === false) {
             throw new \BreakpointDebugging_ErrorException('Exception message is not "UTF8".', 101);
@@ -363,7 +366,7 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
 
         // Adds "[[[CLASS=<class name>] FUNCTION=<function name>] ID=<identification number>]" to message in case of unit test.
         if (B::getStatic('$exeMode') & B::UNIT_TEST) {
-            B::assert(is_int($omissionCallStackLevel) && $omissionCallStackLevel >= 0, 5);
+            B::assert(is_int($omissionCallStackLevel) && $omissionCallStackLevel >= 0);
 
             if ($id === null) {
                 $idString = '.';
@@ -448,14 +451,14 @@ class BreakpointDebugging_PHPUnitStepExecution
      */
     static function initialize()
     {
-        B::assert(func_num_args() === 0, 1);
+        B::assert(func_num_args() === 0);
 
         self::$exeMode = &B::refStatic('$exeMode'); // This is not rule violation because this property is not stored.
         $staticProperties = &B::refStaticProperties();
         $staticProperties['$_classFilePaths'] = &self::$_classFilePaths;
 
-        self::$_classFilePaths = 'TestA';
-        B::assert(B::getStatic('$_classFilePaths') === 'TestA');
+        //self::$_classFilePaths = 'TestA';
+        //B::assert(B::getStatic('$_classFilePaths') === 'TestA');
 
         $staticProperties['$_codeCoverageReportPath'] = &self::$_codeCoverageReportPath;
         $staticPropertyLimitings = &B::refStaticPropertyLimitings();
@@ -476,8 +479,8 @@ class BreakpointDebugging_PHPUnitStepExecution
      */
     static function displaysException($pException)
     {
-        B::assert(func_num_args() === 1, 1);
-        B::assert($pException instanceof \Exception, 2);
+        B::assert(func_num_args() === 1);
+        B::assert($pException instanceof \Exception);
 
         $callStack = debug_backtrace();
         if (!array_key_exists(1, $callStack)
@@ -499,8 +502,8 @@ class BreakpointDebugging_PHPUnitStepExecution
      */
     static function handleUnitTestException($pException)
     {
-        B::assert(func_num_args() === 1, 1);
-        B::assert($pException instanceof \Exception, 2);
+        B::assert(func_num_args() === 1);
+        B::assert($pException instanceof \Exception);
 
         $callStack = $pException->getTrace();
         $call = array_key_exists(0, $callStack) ? $callStack[0] : array ();
@@ -640,9 +643,9 @@ class BreakpointDebugging_PHPUnitStepExecution
      */
     static function getPropertyForTest($objectOrClassName, $propertyName)
     {
-        B::assert(func_num_args() === 2, 1);
-        B::assert(is_string($propertyName), 2);
-        B::assert(is_object($objectOrClassName) || is_string($objectOrClassName), 3);
+        B::assert(func_num_args() === 2);
+        B::assert(is_string($propertyName));
+        B::assert(is_object($objectOrClassName) || is_string($objectOrClassName));
 
         if (is_object($objectOrClassName)) {
             $className = get_class($objectOrClassName);
@@ -688,9 +691,9 @@ class BreakpointDebugging_PHPUnitStepExecution
      */
     static function setPropertyForTest($objectOrClassName, $propertyName, $value)
     {
-        B::assert(func_num_args() === 3, 1);
-        B::assert(is_string($propertyName), 2);
-        B::assert(is_object($objectOrClassName) || is_string($objectOrClassName), 3);
+        B::assert(func_num_args() === 3);
+        B::assert(is_string($propertyName));
+        B::assert(is_object($objectOrClassName) || is_string($objectOrClassName));
 
         if (is_object($objectOrClassName)) {
             $className = get_class($objectOrClassName);
@@ -742,7 +745,7 @@ class BreakpointDebugging_PHPUnitStepExecution
      */
     static function checkExeMode($isUnitTest = false)
     {
-        B::assert(is_bool($isUnitTest), 1);
+        B::assert(is_bool($isUnitTest));
 
         if (func_num_args() === 0
             || !$isUnitTest
@@ -789,10 +792,10 @@ class BreakpointDebugging_PHPUnitStepExecution
             echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
         }
 
-        B::assert(func_num_args() <= 2, 1);
-        B::assert(is_array($unitTestFilePaths), 2);
-        B::assert(!empty($unitTestFilePaths), 3);
-        B::assert(is_string($commandLineSwitches), 4);
+        B::assert(func_num_args() <= 2);
+        B::assert(is_array($unitTestFilePaths));
+        B::assert(!empty($unitTestFilePaths));
+        B::assert(is_string($commandLineSwitches));
 
         self::_getUnitTestDir();
         foreach ($unitTestFilePaths as $unitTestFilePath) {
@@ -872,9 +875,9 @@ class BreakpointDebugging_PHPUnitStepExecution
             B::exitForError();
         }
 
-        B::assert(func_num_args() === 2, 1);
-        B::assert(is_string($unitTestFilePath), 2);
-        B::assert(is_string($classFilePaths) || is_array($classFilePaths), 3);
+        B::assert(func_num_args() === 2);
+        B::assert(is_string($unitTestFilePath));
+        B::assert(is_string($classFilePaths) || is_array($classFilePaths));
 
         echo file_get_contents('BreakpointDebugging/css/FontStyle.html', true);
 

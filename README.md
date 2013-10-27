@@ -12,6 +12,8 @@ The features list
 * Executes unit test files continuously, and debugs with IDE.
 * Creates code coverage report, then displays in browser.
 
+Please, read the file level document block of `PEAR/BreakpointDebugging_PHPUnitStepExecution.php`.
+
 The dependences
 ---------------
 
@@ -23,13 +25,11 @@ The dependences
 Change log
 ----------
 
-* I repaired the check of recursive global variable and recursive static property. ("--static-backup" command line switch)
-* I added autodetecting rule 4.
-* I added how to develop by this package.
-* I changed error display header.
-* I completed coding except unit test of this package.
+* I changed to "include_path" which includes default "PEAR" path.
+* I deleted parameter 2 of B::asseert() call for breakpoint debugging.
+* I repaired bug which does not delete synchronization file at "setUp()" by unit test.
 
 Notice
 ------
 
-I have been coding the unit tests or "*.phpt" tests.
+I have been coding the unit tests and "*.phpt" tests.

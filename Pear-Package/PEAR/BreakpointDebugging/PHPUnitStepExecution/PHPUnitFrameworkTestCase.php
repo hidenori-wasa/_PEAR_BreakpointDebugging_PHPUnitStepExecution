@@ -296,9 +296,11 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
         );
         $workDir = B::getStatic('$_workDir');
         foreach ($lockFilePaths as $lockFilePath) {
+            $lockFilePath = $workDir . '/' . $lockFilePath;
             if (is_file($lockFilePath)) {
-                B::unlink(array (realpath($workDir . '/' . $lockFilePath)));
+                B::unlink(array (realpath($lockFilePath)));
             }
+            B::assert(!is_file(realpath($lockFilePath)));
         }
         // Stores the output buffering level.
         $this->_obLevel = ob_get_level();
@@ -317,6 +319,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
         while (ob_get_level() > $this->_obLevel) {
             ob_end_clean();
         }
+        B::assert(ob_get_level() === $this->_obLevel);
     }
 
     /**
@@ -575,8 +578,8 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
      */
     static function assertTrue($condition, $message = '')
     {
-        B::assert(is_bool($condition), 1);
-        B::assert(is_string($message), 2);
+        B::assert(is_bool($condition));
+        B::assert(is_string($message));
 
         try {
             parent::assertTrue($condition, $message);
@@ -596,7 +599,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
      */
     public static function fail($message = '')
     {
-        B::assert(is_string($message), 1);
+        B::assert(is_string($message));
 
         try {
             parent::fail($message);
