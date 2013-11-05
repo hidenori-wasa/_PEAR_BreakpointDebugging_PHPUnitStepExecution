@@ -23,7 +23,7 @@
  *          Copyright (c) 2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
  *      PEAR/PHPUnit/
  *          Copyright (c) 2001-2012 Sebastian Bergmann <sebastian@phpunit.de>
- * Then, I added "// Hidenori Wasa added." to line which I coded into "BreakpointDebugging/Component/" directory.
+ * Then, I added "Hidenori Wasa added." to line which I coded into "BreakpointDebugging/Component/" directory.
  *
  * PHP version 5.3
  *
@@ -175,7 +175,8 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
                 $message .= 'In "bootstrap file", "file of (class ' . $className . ') which is executed at autoload" or "' . $className . '::setUpBeforeClass()"' . '.' . PHP_EOL;
             }
             $message .= '</b>Because it cannot store static status.</pre>';
-            exit($message);
+            B::displayText($message);
+            exit;
         }
     }
 
@@ -291,16 +292,14 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
         $lockFilePaths = array (
             'LockByFileExistingOfInternal.txt',
             'LockByFileExisting.txt',
-            'LockByFlock.txt',
-            'LockByShmop.txt',
         );
         $workDir = B::getStatic('$_workDir');
         foreach ($lockFilePaths as $lockFilePath) {
-            $lockFilePath = $workDir . '/' . $lockFilePath;
+            $lockFilePath = realpath($workDir . '/' . $lockFilePath);
             if (is_file($lockFilePath)) {
-                B::unlink(array (realpath($lockFilePath)));
+                B::unlink(array ($lockFilePath));
             }
-            B::assert(!is_file(realpath($lockFilePath)));
+            B::assert(!is_file($lockFilePath));
         }
         // Stores the output buffering level.
         $this->_obLevel = ob_get_level();

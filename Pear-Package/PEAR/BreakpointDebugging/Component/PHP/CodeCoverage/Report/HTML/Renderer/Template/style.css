@@ -38,7 +38,8 @@ td.title
   font-family: sans-serif;
   font-style: italic;
   font-weight: bold;
-  font-size: 1.6em;
+  /* font-size: 1.6em; Hidenori Wasa added. */
+  font-size: 0.7em;
 }
 
 /* All views: header item format */

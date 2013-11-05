@@ -74,10 +74,10 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
      */
     function __construct()
     {
+        echo '<body style="background-color:black;color:white">';
         if (isset($_GET['codeCoverageReportDeletion'])) {
             \BreakpointDebugging_PHPUnitStepExecution::deleteCodeCoverageReport();
-            echo file_get_contents('BreakpointDebugging/css/FontStyle.html', true);
-            exit('<pre><b>Code coverage report was deleted.</b></pre>');
+            exit('<pre><b>Code coverage report was deleted.</b></pre></body>');
         }
         // If we pushed "Code coverage report" button.
         if (isset($_GET['codeCoverageReportPath'])) {
@@ -91,11 +91,10 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
                     echo $line;
                     break;
                 }
-
                 // $line = '    <link rel="stylesheet" type="text/css" href="style.css">    <link rel="stylesheet" type="text/css" href="other_style.css">'; // For debug.
                 $matches = array ();
                 // Embeds its content if cascading style sheet file path exists.
-                if (preg_match_all('`(.*) (<link [[:blank:]] .* href [[:blank:]]* = [[:blank:]]* "(.* \.css)" [[:blank:]]* >)`xXiU', $line, $matches)) {
+                if (preg_match_all('`(.*) (<link [[:blank:]] .* href [[:blank:]]* = [[:blank:]]* "(.* style\.css)" [[:blank:]]* >)`xXiU', $line, $matches)) {
                     $lastStrlen = 0;
                     for ($count = 0; $count < count($matches[1]); $count++) {
                         echo $matches[1][$count];
@@ -103,7 +102,8 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
                         if (is_file($cssFilePath)) {
                             echo '<style type="text/css">' . PHP_EOL
                             . '<!--' . PHP_EOL;
-                            readfile($cssFilePath);
+                            // echo preg_replace('`([^_[:alnum:]] (td [[:space:]]* \. (?!title) [_[:alnum:]]+ | pre [[:space:]]* \.source) [[:space:]]* { .*) }`xXisU', "\${1}" . '  font-size: 0.4em;' . PHP_EOL . '}', file_get_contents($cssFilePath));
+                            readfile('BreakpointDebugging/css/PHP_CodeCoverage_Report_HTML_Renderer_Template_style.css', true);
                             echo '-->' . PHP_EOL
                             . '</style>' . PHP_EOL;
                         } else {
@@ -111,13 +111,14 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
                         }
                         $lastStrlen += strlen($matches[0][$count]);
                     }
-                    echo substr($line, $lastStrlen);
-                } else {
-                    echo $line;
+                    $line = substr($line, $lastStrlen);
                 }
+                echo $line;
             }
             while (!feof($pFile)) {
-                echo fread($pFile, 4096);
+                $line = rtrim(fgets($pFile));
+                // "hear document" and "Nowdoc" does not support.
+                echo preg_replace('`(^<span\x20class="lineNum" .* </span>) (.* (@codeCoverageIgnore | @codeCoverageIgnoreStart | @codeCoverageIgnoreEnd) [[:blank:]]* $)`xXi', '${1}<span class="annotation">${2}</span>', $line) . PHP_EOL;
             }
             fclose($pFile);
         } else { // In case of first time when this page was called.
@@ -126,6 +127,7 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
             if (!is_array($classFilePaths)) {
                 $classFilePaths = array ($classFilePaths);
             }
+            $fontStyle = 'style="font-size: 1em; font-weight: bold;"';
             // Makes the "Code coverage report" buttons.
             foreach ($classFilePaths as $classFilePath) {
                 $classFileName = str_replace(array ('/', '\\'), '_', $classFilePath);
@@ -133,7 +135,7 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
                 if (!is_file($codeCoverageReportPath)) {
                     echo <<<EOD
 <form>
-    <input type="submit" value="Code coverage report of ($classFilePath)." disabled="disabled"/>
+    <input type="submit" value="Code coverage report of ($classFilePath)." disabled="disabled" $fontStyle/>
 </form>
 EOD;
                     continue;
@@ -143,7 +145,7 @@ EOD;
                 $data = http_build_query($data);
                 echo <<<EOD
 <form method="post" action="$thisFileURI?$data">
-    <input type="submit" value="Code coverage report of ($classFilePath)."/>
+    <input type="submit" value="Code coverage report of ($classFilePath)." $fontStyle/>
 </form>
 EOD;
             }
@@ -151,10 +153,11 @@ EOD;
             echo <<<EOD
 <br/><br/>
 <form method="post" action="$thisFileURI?codeCoverageReportDeletion">
-    <input type="submit" value="Code coverage report deletion."/>
+    <input type="submit" value="Code coverage report deletion." $fontStyle/>
 </form>
 EOD;
         }
+        echo '</body>';
     }
 
 }

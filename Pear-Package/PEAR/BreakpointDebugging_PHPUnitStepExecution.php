@@ -199,7 +199,7 @@
  *              B::assert(true, 101);
  *              B::assert(false, 102);
  *          } catch (\BreakpointDebugging_ErrorException $e) {
- *              $this->assertTrue(preg_match('`CLASS=ExampleTest FUNCTION=testSomething_B ID=102\.$`X', $e->getMessage()) === 1);
+ *              parent::assertTrue(preg_match('`CLASS=ExampleTest FUNCTION=testSomething_B ID=102\.$`X', $e->getMessage()) === 1);
  *              return;
  *          }
  *          $this->fail();
@@ -231,10 +231,10 @@
  *      Because server cannot get property reference by reflection in "PHP version 5.3.0".
  *      @Example of rule violation:
  *          ::$something = &
- *          or ::$something = array (&
+ *          or recursive array ::$something = array (&
  *      Instead:
  *          ::$something[0] = &
- *          or ::$something[0] = array (&
+ *          or recursive array ::$something[0] = array (&
  *      Please, search the rule violation of file by the following regular expression.
  *          ::\$[_a-zA-Z][_a-zA-Z0-9]*[\x20\t\r\n]*=[^=;]*&
  *      About reference copy.
@@ -456,10 +456,6 @@ class BreakpointDebugging_PHPUnitStepExecution
         self::$exeMode = &B::refStatic('$exeMode'); // This is not rule violation because this property is not stored.
         $staticProperties = &B::refStaticProperties();
         $staticProperties['$_classFilePaths'] = &self::$_classFilePaths;
-
-        //self::$_classFilePaths = 'TestA';
-        //B::assert(B::getStatic('$_classFilePaths') === 'TestA');
-
         $staticProperties['$_codeCoverageReportPath'] = &self::$_codeCoverageReportPath;
         $staticPropertyLimitings = &B::refStaticPropertyLimitings();
         $staticPropertyLimitings['$_includePaths'] = '';
@@ -488,7 +484,9 @@ class BreakpointDebugging_PHPUnitStepExecution
             || strripos($callStack[1]['file'], 'PHPUnitFrameworkTestCase.php') === strlen($callStack[1]['file']) - strlen('PHPUnitFrameworkTestCase.php')
         ) {
             B::iniSet('xdebug.var_display_max_depth', '5', false);
+            ob_start();
             var_dump($pException);
+            B::displayText(ob_get_clean());
             B::exitForError();
         }
     }
@@ -540,6 +538,9 @@ class BreakpointDebugging_PHPUnitStepExecution
      * @param string $command The command character-string which excepted "phpunit".
      *
      * @return void
+     *
+     * @codeCoverageIgnore
+     * Because "phpunit" command cannot run during "phpunit" command running.
      */
     private static function _runPHPUnitCommand($command)
     {
@@ -742,20 +743,20 @@ class BreakpointDebugging_PHPUnitStepExecution
      *          .
      *          .
      *          .
+     *
+     * @codeCoverageIgnore
+     * Because this exits.
      */
     static function checkExeMode($isUnitTest = false)
     {
         B::assert(is_bool($isUnitTest));
 
-        if (func_num_args() === 0
-            || !$isUnitTest
-        ) {
-            echo file_get_contents('BreakpointDebugging/css/FontStyle.html', true);
-            echo '<pre><b>You must not set "$_BreakpointDebugging_EXE_MODE = BreakpointDebugging_setExecutionModeFlags(\'..._UNIT_TEST\');"' . PHP_EOL
-            . "\t" . ' into "' . BREAKPOINTDEBUGGING_PEAR_SETTING_DIR_NAME . 'BreakpointDebugging_MySetting.php".' . PHP_EOL
-            . 'Or, you mistook start "php" page.</b></pre>';
-            self::$exeMode |= B::IGNORING_BREAK_POINT;
-            throw new \BreakpointDebugging_ErrorException('', 101);
+        if (!$isUnitTest) {
+            B::displayText('<b>You must not set "$_BreakpointDebugging_EXE_MODE = BreakpointDebugging_setExecutionModeFlags(\'..._UNIT_TEST\');"' . PHP_EOL
+                . "\t" . ' into "' . BREAKPOINTDEBUGGING_PEAR_SETTING_DIR_NAME . 'BreakpointDebugging_MySetting.php".' . PHP_EOL
+                . 'Or, you mistook start "php" page.</b>'
+            );
+            exit;
         }
     }
 
@@ -783,7 +784,7 @@ class BreakpointDebugging_PHPUnitStepExecution
             self::$_unitTestFilePathsStorage[$unitTestFilePath] = true;
         }
 
-        echo file_get_contents('BreakpointDebugging/css/FontStyle.html', true);
+        echo '<body style="background-color:black;color:white">';
         echo '<pre>';
 
         if (self::$exeMode & B::RELEASE) {
@@ -819,7 +820,7 @@ class BreakpointDebugging_PHPUnitStepExecution
         echo self::$_separator;
         BGS::checkFunctionLocalStaticVariable();
         BGS::checkMethodLocalStaticVariable();
-        echo '<b>Unit tests have done.</b></pre>';
+        echo '<b>Unit tests have done.</b></pre></body>';
     }
 
     /**
@@ -879,7 +880,7 @@ class BreakpointDebugging_PHPUnitStepExecution
         B::assert(is_string($unitTestFilePath));
         B::assert(is_string($classFilePaths) || is_array($classFilePaths));
 
-        echo file_get_contents('BreakpointDebugging/css/FontStyle.html', true);
+        echo '<body style="background-color:black;color:white">';
 
         if (!extension_loaded('xdebug')) {
             B::exitForError('"BreakpointDebugging::displayCodeCoverageReport()" needs "xdebug" extention.');

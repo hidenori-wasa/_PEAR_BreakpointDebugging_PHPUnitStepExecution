@@ -25,9 +25,13 @@ The dependences
 Change log
 ----------
 
-* I changed to "include_path" which includes default "PEAR" path.
-* I deleted parameter 2 of B::asseert() call for breakpoint debugging.
-* I repaired bug which does not delete synchronization file at "setUp()" by unit test.
+* I repaired "\BreakpointDebugging_InAllCase::clearRecursiveArrayElement()" to display the elements of "$GLOBALS".
+* I repaired "\BreakpointDebugging_LockByFlock::__destruct()" to close of file stream resource.
+* I repaired for 0% display color of code coverage report inside component directory.
+* I changed for code coverage report display which adjusts to error display size.
+* I changed for code coverage report display and error display which does not tire.
+* I added highlight display feature of "@codeCoverageIgnore", "@codeCoverageIgnoreStart" and "@codeCoverageIgnoreEnd" to code coverage report.
+* I added "NetBeans" IDE setting to "./PEAR/misc/" directory.
 
 Notice
 ------

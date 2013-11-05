@@ -269,7 +269,16 @@ class PHP_CodeCoverage_Util
                     case 'PHP_Token_FUNCTION': {
                         $docblock = $token->getDocblock();
 
-                        if (strpos($docblock, '@codeCoverageIgnore')) {
+                        // if (strpos($docblock, '@codeCoverageIgnore')) {
+                        // Hidenori Wasa added. ===>
+                        if (BREAKPOINTDEBUGGING_IS_WINDOWS) {
+                            $phpEol = '\\r\\n';
+                        } else {
+                            $phpEol = '\\n';
+                        }
+                        // To except '@codeCoverageIgnore' and "@codeCoverageIgnore" of character string in code coverage report parse.
+                        if (preg_match("`@codeCoverageIgnore [[:blank:]]* $phpEol`xX", $docblock) === 1) {
+                        // <=== Hidenori Wasa added.
                             $endLine = $token->getEndLine();
 
                             for ($i = $token->getLine(); $i <= $endLine; $i++) {

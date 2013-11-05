@@ -113,6 +113,12 @@ abstract class PHP_CodeCoverage_Report_HTML_Renderer
      */
     protected function getColorLevel($percent)
     {
+        // Hidenori Wasa added. ===>
+        if ($percent <= 0) {
+            $color = 'snow';
+            $level = 'None';
+        } else
+        // <=== Hidenori Wasa added.
         if ($percent < $this->lowUpperBound) {
             $color = 'scarlet_red';
             $level = 'Lo';

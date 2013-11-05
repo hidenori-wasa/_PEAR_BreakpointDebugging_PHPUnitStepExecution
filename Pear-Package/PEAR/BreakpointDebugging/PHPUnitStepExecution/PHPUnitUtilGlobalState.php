@@ -180,7 +180,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
             $message .= $message2;
             $message .= 'We must not ' . $defineOrDelete . ' global variable in the above place.' . PHP_EOL;
             $message .= 'Because "php" version 5.3.0 cannot detect ' . $defineOrDelete . 'd global variable realtime.</pre>';
-            exit($message);
+            B::displayText($message);
+            exit;
         }
 
         // Checks global variables values and global variables child element references.
@@ -215,7 +216,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
             $message .= $message2;
             $message .= 'We must not overwrite global variable ' . $message3 . ' in the above place.' . PHP_EOL;
             $message .= 'Because "php" version 5.3.0 cannot detect overwritten global variable ' . $message3 . ' realtime.</pre>';
-            exit($message);
+            B::displayText($message);
+            exit;
         }
     }
 
@@ -375,7 +377,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
                             $message .= $message2;
                             $message .= 'We must not overwrite static property or reference in the above place.' . PHP_EOL;
                             $message .= 'Because "php" version 5.3.0 cannot detect overwritten static property or reference realtime.</pre>';
-                            exit($message);
+                            B::displayText($message);
+                            exit;
                         }
                     }
                 }
