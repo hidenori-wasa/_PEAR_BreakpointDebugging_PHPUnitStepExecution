@@ -44,6 +44,7 @@
  * @since      File available since Release 3.4.0
  */
 use \BreakpointDebugging as B;
+use \BreakpointDebugging_PHPUnitStepExecution as BU;
 
 /**
  * Utility for static state. Supports "php" version 5.3.0 since then.
@@ -175,12 +176,12 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
 
         if ($isError) {
             // Displays definition or deletion error.
-            $message = '<pre><b>';
+            $message = '<b>';
             $message .= 'Global variable has been ' . $defineOrDelete . 'd in the following place!' . PHP_EOL;
             $message .= $message2;
             $message .= 'We must not ' . $defineOrDelete . ' global variable in the above place.' . PHP_EOL;
-            $message .= 'Because "php" version 5.3.0 cannot detect ' . $defineOrDelete . 'd global variable realtime.</pre>';
-            B::displayText($message);
+            $message .= 'Because "php" version 5.3.0 cannot detect ' . $defineOrDelete . 'd global variable realtime.';
+            B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, $message);
             exit;
         }
 
@@ -211,12 +212,12 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
         }
         if ($isError) {
             // Displays error of overwritten value or overwritten reference.
-            $message = '<pre><b>';
+            $message = '<b>';
             $message .= 'Global variable ' . $message3 . ' has been overwritten in the following place!' . PHP_EOL;
             $message .= $message2;
             $message .= 'We must not overwrite global variable ' . $message3 . ' in the above place.' . PHP_EOL;
-            $message .= 'Because "php" version 5.3.0 cannot detect overwritten global variable ' . $message3 . ' realtime.</pre>';
-            B::displayText($message);
+            $message .= 'Because "php" version 5.3.0 cannot detect overwritten global variable ' . $message3 . ' realtime.';
+            B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, $message);
             exit;
         }
     }
@@ -371,13 +372,13 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
                             if (B::clearRecursiveArrayElement($staticPropertiesOfClass[$propertyName]) === B::clearRecursiveArrayElement($propertyValue)) {
                                 continue;
                             }
-                            $message = '<pre><b>';
+                            $message = '<b>';
                             $message .= 'In "class ' . $declaredClassName . '".' . PHP_EOL;
                             $message .= '"$' . $propertyName . '" static property or reference has been overwritten in the following place!' . PHP_EOL;
                             $message .= $message2;
                             $message .= 'We must not overwrite static property or reference in the above place.' . PHP_EOL;
-                            $message .= 'Because "php" version 5.3.0 cannot detect overwritten static property or reference realtime.</pre>';
-                            B::displayText($message);
+                            $message .= 'Because "php" version 5.3.0 cannot detect overwritten static property or reference realtime.';
+                            B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, $message);
                             exit;
                         }
                     }
@@ -507,12 +508,12 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
                         continue;
                     }
                 }
-                echo '<pre>' . PHP_EOL
+                echo PHP_EOL
                 . 'Code which is tested must use private static property in class method instead of use local static variable in function' . PHP_EOL
                 . 'because "php" version 5.3.0 cannot restore its value.' . PHP_EOL
                 . "\t" . '<b>FILE: ' . $functionReflection->getFileName() . PHP_EOL
                 . "\t" . 'LINE: ' . $functionReflection->getStartLine() . PHP_EOL
-                . "\t" . 'FUNCTION: ' . $functionReflection->name . '</b></pre>';
+                . "\t" . 'FUNCTION: ' . $functionReflection->name . '</b>' . PHP_EOL;
             }
         }
     }
@@ -548,13 +549,13 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
                     $result = $methodReflection->getStaticVariables();
                     // If static variable has been existing.
                     if (!empty($result)) {
-                        echo '<pre>' . PHP_EOL
+                        echo PHP_EOL
                         . 'Code which is tested must use private static property instead of use local static variable in static class method' . PHP_EOL
                         . 'because "php" version 5.3.0 cannot restore its value.' . PHP_EOL
                         . "\t" . '<b>FILE: ' . $methodReflection->getFileName() . PHP_EOL
                         . "\t" . 'LINE: ' . $methodReflection->getStartLine() . PHP_EOL
                         . "\t" . 'CLASS: ' . $methodReflection->class . PHP_EOL
-                        . "\t" . 'METHOD: ' . $methodReflection->name . '</b></pre>';
+                        . "\t" . 'METHOD: ' . $methodReflection->name . '</b>' . PHP_EOL;
                     }
                 }
             }

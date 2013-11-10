@@ -25,13 +25,10 @@ The dependences
 Change log
 ----------
 
-* I repaired "\BreakpointDebugging_InAllCase::clearRecursiveArrayElement()" to display the elements of "$GLOBALS".
-* I repaired "\BreakpointDebugging_LockByFlock::__destruct()" to close of file stream resource.
-* I repaired for 0% display color of code coverage report inside component directory.
-* I changed for code coverage report display which adjusts to error display size.
-* I changed for code coverage report display and error display which does not tire.
-* I added highlight display feature of "@codeCoverageIgnore", "@codeCoverageIgnoreStart" and "@codeCoverageIgnoreEnd" to code coverage report.
-* I added "NetBeans" IDE setting to "./PEAR/misc/" directory.
+* I added unit test rule.
+* I modified "NetBeans" IDE setting to "./PEAR/misc/" directory.
+* I changed unit test, code coverage report, error log files manager and error display to display of other window with JavaScript.
+* I changed execution mode setting to a project execution parameter.
 
 Notice
 ------

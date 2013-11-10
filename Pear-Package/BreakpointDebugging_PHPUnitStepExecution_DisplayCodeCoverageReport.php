@@ -74,13 +74,11 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
      */
     function __construct()
     {
-        echo '<body style="background-color:black;color:white">';
         if (isset($_GET['codeCoverageReportDeletion'])) {
             \BreakpointDebugging_PHPUnitStepExecution::deleteCodeCoverageReport();
-            exit('<pre><b>Code coverage report was deleted.</b></pre></body>');
-        }
-        // If we pushed "Code coverage report" button.
-        if (isset($_GET['codeCoverageReportPath'])) {
+            // Closes this window.
+            B::windowWhichClose(__CLASS__);
+        } else if (isset($_GET['codeCoverageReportPath'])) { // If we pushed "Code coverage report" button.
             $codeCoverageReportPath = $_GET['codeCoverageReportPath'];
             // Opens code coverage report.
             $pFile = B::fopen(array ($codeCoverageReportPath, 'rb'));
@@ -91,7 +89,7 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
                     echo $line;
                     break;
                 }
-                // $line = '    <link rel="stylesheet" type="text/css" href="style.css">    <link rel="stylesheet" type="text/css" href="other_style.css">'; // For debug.
+
                 $matches = array ();
                 // Embeds its content if cascading style sheet file path exists.
                 if (preg_match_all('`(.*) (<link [[:blank:]] .* href [[:blank:]]* = [[:blank:]]* "(.* style\.css)" [[:blank:]]* >)`xXiU', $line, $matches)) {
@@ -121,7 +119,10 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
                 echo preg_replace('`(^<span\x20class="lineNum" .* </span>) (.* (@codeCoverageIgnore | @codeCoverageIgnoreStart | @codeCoverageIgnoreEnd) [[:blank:]]* $)`xXi', '${1}<span class="annotation">${2}</span>', $line) . PHP_EOL;
             }
             fclose($pFile);
+            return;
         } else { // In case of first time when this page was called.
+            ob_start();
+
             $classFilePaths = B::getStatic('$_classFilePaths');
             $thisFileURI = str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 1) . substr(str_replace('\\', '/', __FILE__), strlen($_SERVER['DOCUMENT_ROOT']) + 1);
             if (!is_array($classFilePaths)) {
@@ -144,7 +145,7 @@ EOD;
                 $data = array ('codeCoverageReportPath' => $codeCoverageReportPath);
                 $data = http_build_query($data);
                 echo <<<EOD
-<form method="post" action="$thisFileURI?$data">
+<form method="post" action="$thisFileURI?$data&{$_SERVER['QUERY_STRING']}">
     <input type="submit" value="Code coverage report of ($classFilePath)." $fontStyle/>
 </form>
 EOD;
@@ -152,12 +153,26 @@ EOD;
 
             echo <<<EOD
 <br/><br/>
-<form method="post" action="$thisFileURI?codeCoverageReportDeletion">
+<form method="post" action="$thisFileURI?codeCoverageReportDeletion&{$_SERVER['QUERY_STRING']}">
     <input type="submit" value="Code coverage report deletion." $fontStyle/>
 </form>
 EOD;
+
+            $buffer = ob_get_clean();
+            $htmlFileContent = <<<EOD
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>CodeCoverageReport</title>
+    </head>
+    <body style="background-color: black; color: white; font-size: 1.5em">
+        <pre>$buffer</pre>
+    </body>
+</html>
+EOD;
+            B::windowOpen(__CLASS__, $htmlFileContent);
         }
-        echo '</body>';
     }
 
 }

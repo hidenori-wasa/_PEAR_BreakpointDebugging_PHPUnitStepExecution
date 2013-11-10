@@ -227,7 +227,7 @@
  *              $this->_pTestObject = &BreakpointDebugging_LockByFlock::singleton();
  *          }
  *
- * The file search detection rule 3: We must use property array element reference instead of property reference in all code.
+ * The file search detection rule 1: We must use property array element reference instead of property reference in all code.
  *      Because server cannot get property reference by reflection in "PHP version 5.3.0".
  *      @Example of rule violation:
  *          ::$something = &
@@ -236,36 +236,45 @@
  *          ::$something[0] = &
  *          or recursive array ::$something[0] = array (&
  *      Please, search the rule violation of file by the following regular expression.
- *          ::\$[_a-zA-Z][_a-zA-Z0-9]*[\x20\t\r\n]*=[^=;]*&
+ *          ::\$[_a-zA-Z][_a-zA-Z0-9]*[\x20\t\r\n]*=[^=;][^;]*&
  *      About reference copy.
  *          Reference copy must use "&self::" in case of self class.
  *          Reference copy must use "&parent::" in case of parent class above one hierarchy.
  *          Except those, Reference copy must use "&<official class name>::".
  *          Those is same about "$this".
+ * The file search detection rule 2: We must not code except "tab and space" behind "@codeCoverageIgnore".
+ *      Because of parsing to except '@codeCoverageIgnore' and "@codeCoverageIgnore" of code coverage report.
+ *      @Example of rule violation:
+ *          @codeCoverageIgnore A sentence.
+ *      Instead:
+ *          @codeCoverageIgnore
+ *          A sentence.
+ *      Please, search the rule violation of file by the following regular expression.
+ *          @codeCoverageIgnore[^SE\r\n][^\t\x20]*$
  *
- * Autodetecting rule 4: Follow autoload rule of PEAR in all codes
+ * Autodetecting rule 1: Follow autoload rule of PEAR in all codes
  *      because this package uses special autoload class method.
  *      @Example of class:
  *          namespace YourName;
  *          class Example_Class {
  *      @Example of file name of class above:
  *          ProjectDir/YourName/Example/Class.php
- * Autodetecting rule 5: We must not delete or change static status by the autoload
+ * Autodetecting rule 2: We must not delete or change static status by the autoload
  *      because autoload is executed only once per file.
- * Autodetecting rule 6: We must use private static property instead of use local static variable in static class method
+ * Autodetecting rule 3: We must use private static property instead of use local static variable in static class method
  *      because "php" version 5.3.0 cannot restore its value.
- * Autodetecting rule 7: We must use private static property in class method instead of use local static variable in function
+ * Autodetecting rule 4: We must use private static property in class method instead of use local static variable in function
  *      because "php" version 5.3.0 cannot restore its value.
- * Autodetecting rule 8: We must operate any variable and any property inside "setUp()", test class methods or "tearDown()" about test code.
+ * Autodetecting rule 5: We must operate any variable and any property inside "setUp()", test class methods or "tearDown()" about test code.
  *      Because we must test with same condition.
  *      So, global variables or static properties is restored with initial value before "setUp()".
- * Autodetecting rule 9: We must not register autoload function at top of stack by "spl_autoload_register()" in all code
+ * Autodetecting rule 6: We must not register autoload function at top of stack by "spl_autoload_register()" in all code
  *      because server stores static status by autoload function.
  *      @Example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
- * Autodetecting rule 10: We must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
+ * Autodetecting rule 7: We must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
  *      Because we cannot debug unit test code with IDE.
  *
- * Recommendation rule 11: We should destruct a test instance per test in "tearDown()" because it cuts down on actual server memory use.
+ * Recommendation rule 1: We should destruct a test instance per test in "tearDown()" because it cuts down on actual server memory use.
  *      @Example:
  *          protected function tearDown()
  *          {
@@ -275,7 +284,7 @@
  *              // This is required at bottom.
  *              parent::tearDown();
  *          }
- * Recommendation rule 12: We should not use global variable to avoid variable crash.
+ * Recommendation rule 2: We should not use global variable to avoid variable crash.
  *
  * Caution: Don't test an unit when practical use server has been running with synchronization file because synchronization is destroyed.
  *
@@ -405,6 +414,11 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
 class BreakpointDebugging_PHPUnitStepExecution
 {
     /**
+     * @const string Unit test window name.
+     */
+    const UNIT_TEST_WINDOW_NAME = 'BreakpointDebugging_PHPUnit';
+
+    /**
      * @var array Unit test file paths storage.
      */
     private static $_unitTestFilePathsStorage = array ();
@@ -445,6 +459,11 @@ class BreakpointDebugging_PHPUnitStepExecution
     private static $_onceFlagPerTestFile = true;
 
     /**
+     * @var string HTML file content.
+     */
+    private static $_htmlFileContent;
+
+    /**
      * Limits static properties accessing of class.
      *
      * @return void
@@ -462,6 +481,18 @@ class BreakpointDebugging_PHPUnitStepExecution
         $staticPropertyLimitings['$_valuesToTrace'] = '';
         $staticPropertyLimitings['$exeMode'] = 'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php';
         self::$_separator = PHP_EOL . '//////////////////////////////////////////////////////////////////////////' . PHP_EOL;
+        self::$_htmlFileContent = <<<EOD
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>PHPUnit</title>
+    </head>
+    <body style="background-color: black; color: white; font-size: 1.5em">
+        <pre></pre>
+    </body>
+</html>
+EOD;
     }
 
     /**
@@ -486,7 +517,8 @@ class BreakpointDebugging_PHPUnitStepExecution
             B::iniSet('xdebug.var_display_max_depth', '5', false);
             ob_start();
             var_dump($pException);
-            B::displayText(ob_get_clean());
+
+            B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, ob_get_clean());
             B::exitForError();
         }
     }
@@ -544,6 +576,14 @@ class BreakpointDebugging_PHPUnitStepExecution
      */
     private static function _runPHPUnitCommand($command)
     {
+        $commandElements = explode(' ', $command);
+        $testFileName = array_pop($commandElements);
+        array_push($commandElements, self::$unitTestDir . $testFileName);
+        array_unshift($commandElements, 'dummy');
+        // Checks command line switches.
+        if (in_array('--process-isolation', $commandElements)) {
+            throw new \BreakpointDebugging_ErrorException('You must not use "--process-isolation" command line switch because this unit test is run in other process.' . PHP_EOL . 'So, you cannot debug unit test code with IDE.', 101);
+        }
         if (self::$_onceFlag) {
             // Sets component pear package inclusion paths.
             $pearDir = `pear config-get php_dir`;
@@ -560,14 +600,6 @@ class BreakpointDebugging_PHPUnitStepExecution
         $command = ltrim($command);
         echo self::$_separator;
         echo "Runs <b>\"phpunit $command\"</b> command." . PHP_EOL;
-        $commandElements = explode(' ', $command);
-        $testFileName = array_pop($commandElements);
-        array_push($commandElements, self::$unitTestDir . $testFileName);
-        array_unshift($commandElements, 'dummy');
-        // Checks command line switches.
-        if (in_array('--process-isolation', $commandElements)) {
-            throw new \BreakpointDebugging_ErrorException('You must not use "--process-isolation" command line switch because this unit test is run in other process.' . PHP_EOL . 'So, you cannot debug unit test code with IDE.', 101);
-        }
         include_once 'PHPUnit/Autoload.php';
         $pPHPUnit_TextUI_Command = new \PHPUnit_TextUI_Command();
         self::$_onceFlagPerTestFile = true;
@@ -752,10 +784,14 @@ class BreakpointDebugging_PHPUnitStepExecution
         B::assert(is_bool($isUnitTest));
 
         if (!$isUnitTest) {
-            B::displayText('<b>You must not set "$_BreakpointDebugging_EXE_MODE = BreakpointDebugging_setExecutionModeFlags(\'..._UNIT_TEST\');"' . PHP_EOL
-                . "\t" . ' into "' . BREAKPOINTDEBUGGING_PEAR_SETTING_DIR_NAME . 'BreakpointDebugging_MySetting.php".' . PHP_EOL
-                . 'Or, you mistook start "php" page.</b>'
-            );
+            B::windowOpen(B::ERROR_WINDOW_NAME, B::getStatic('$errorHtmlFileContent'));
+            $errorMessage = <<<EOD
+You must set
+    "BREAKPOINTDEBUGGING_MODE=DEBUG" or
+    "BREAKPOINTDEBUGGING_MODE=RELEASE"
+to this project execution parameter.
+EOD;
+            B::windowHtmlAddition(B::ERROR_WINDOW_NAME, 'pre', 0, '<b>' . $errorMessage . '</b>');
             exit;
         }
     }
@@ -784,8 +820,8 @@ class BreakpointDebugging_PHPUnitStepExecution
             self::$_unitTestFilePathsStorage[$unitTestFilePath] = true;
         }
 
-        echo '<body style="background-color:black;color:white">';
-        echo '<pre>';
+        B::windowOpen(self::UNIT_TEST_WINDOW_NAME, self::$_htmlFileContent);
+        ob_start();
 
         if (self::$exeMode & B::RELEASE) {
             echo '<b>\'RELEASE_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
@@ -820,7 +856,10 @@ class BreakpointDebugging_PHPUnitStepExecution
         echo self::$_separator;
         BGS::checkFunctionLocalStaticVariable();
         BGS::checkMethodLocalStaticVariable();
-        echo '<b>Unit tests have done.</b></pre></body>';
+        echo '<b>Unit tests have done.</b>';
+
+        B::windowHtmlAddition(self::UNIT_TEST_WINDOW_NAME, 'pre', 0, ob_get_clean());
+        exit;
     }
 
     /**
@@ -880,8 +919,6 @@ class BreakpointDebugging_PHPUnitStepExecution
         B::assert(is_string($unitTestFilePath));
         B::assert(is_string($classFilePaths) || is_array($classFilePaths));
 
-        echo '<body style="background-color:black;color:white">';
-
         if (!extension_loaded('xdebug')) {
             B::exitForError('"BreakpointDebugging::displayCodeCoverageReport()" needs "xdebug" extention.');
         }
@@ -891,14 +928,20 @@ class BreakpointDebugging_PHPUnitStepExecution
         // Creates code coverage report.
         $displayErrorsStorage = ini_get('display_errors');
         ini_set('display_errors', '');
-        echo '<pre>';
+
+        B::windowOpen(self::UNIT_TEST_WINDOW_NAME, self::$_htmlFileContent);
+        ob_start();
+
         if (self::$exeMode & B::RELEASE) {
             echo '<b>\'RELEASE_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
         } else {
             echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
         }
+
         self::_runPHPUnitCommand($commandLineSwitches . ' --static-backup --coverage-html ' . $codeCoverageReportPath . ' ' . $unitTestFilePath);
-        echo '</pre>';
+
+        B::windowHtmlAddition(self::UNIT_TEST_WINDOW_NAME, 'pre', 0, ob_get_clean());
+
         ini_set('display_errors', $displayErrorsStorage);
         // Displays the code coverage report in browser.
         $documentRoot = $_SERVER['DOCUMENT_ROOT'];
@@ -911,8 +954,6 @@ class BreakpointDebugging_PHPUnitStepExecution
         self::$_classFilePaths = $classFilePaths;
         self::$_codeCoverageReportPath = $codeCoverageReportPath;
         include_once './BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport.php';
-        echo '</body></html>';
-        exit;
     }
 
 }

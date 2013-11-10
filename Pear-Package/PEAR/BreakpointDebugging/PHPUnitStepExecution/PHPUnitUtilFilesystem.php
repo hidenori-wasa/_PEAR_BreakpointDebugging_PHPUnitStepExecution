@@ -60,7 +60,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilFilesystem extends \PH
     /**
      * Uses this class method instead of "stream_resolve_include_path()" before "php" version 5.3.2.
      *
-     * @param string $relativePath Relative path for inclusion path.
+     * @param string $relativePath Relative path.
      *
      * @return mixed Full path or false.
      * @author Hidenori Wasa <public@hidenori-wasa.com>

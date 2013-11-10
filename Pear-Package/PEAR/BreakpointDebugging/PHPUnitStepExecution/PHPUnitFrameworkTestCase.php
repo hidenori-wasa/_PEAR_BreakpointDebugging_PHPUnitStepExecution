@@ -168,14 +168,14 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
                 $autoloadFunction = $autoloadFunctions[0][0] . '::' . $autoloadFunctions[0][1];
             }
             $className = get_class($this);
-            $message = '<pre><b>You must not register autoload function "' . $autoloadFunction . '" at top of stack by "spl_autoload_register()" in all code.' . PHP_EOL;
+            $message = '<b>You must not register autoload function "' . $autoloadFunction . '" at top of stack by "spl_autoload_register()" in all code.' . PHP_EOL;
             if ($testMethodName) {
                 $message .= 'Inside of "' . $className . '::' . $testMethodName . '()".' . PHP_EOL;
             } else {
                 $message .= 'In "bootstrap file", "file of (class ' . $className . ') which is executed at autoload" or "' . $className . '::setUpBeforeClass()"' . '.' . PHP_EOL;
             }
             $message .= '</b>Because it cannot store static status.</pre>';
-            B::displayText($message);
+            B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, $message);
             exit;
         }
     }
@@ -360,9 +360,14 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
     public function runBare()
     {
         // Displays the progress.
+        $buffer = '';
         for ($count = 0; ob_get_level() > 0; $count++) {
-            ob_end_flush();
+            $result = ob_get_clean();
+            if (is_string($result)) {
+                $buffer .= $result;
+            }
         }
+        B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, $buffer);
         flush();
         for (; $count > 0; $count--) {
             ob_start();
@@ -524,14 +529,14 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
             }
             // If "@expectedException" annotation is not string.
             if (!is_string($this->getExpectedException())) {
-                echo '<b>It is error if this test has been not using "@expectedException" annotation, or it requires "@expectedException" annotation.</b>';
+                B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, '<b>It is error if this test has been not using "@expectedException" annotation, or it requires "@expectedException" annotation.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedException" annotation should be success.
             try {
                 $this->assertThat($e, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
             } catch (Exception $dummy) {
-                echo '<b>Is error, or this test mistook "@expectedException" annotation value.</b>';
+                B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, '<b>Is error, or this test mistook "@expectedException" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedExceptionMessage" annotation should be success.
@@ -543,7 +548,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionMessage($expectedExceptionMessage));
                 }
             } catch (Exception $dummy) {
-                echo '<b>Is error, or this test mistook "@expectedExceptionMessage" annotation value.</b>';
+                B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionMessage" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedExceptionCode" annotation should be success.
@@ -552,14 +557,15 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionCode($this->expectedExceptionCode));
                 }
             } catch (Exception $dummy) {
-                echo '<b>Is error, or this test mistook "@expectedExceptionCode" annotation value.</b>';
+                B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionCode" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             return;
         }
         if ($this->getExpectedException() !== NULL) {
             // "@expectedException" should not exist.
-            echo '<b>Is error in "' . $class->name . '::' . $name . '".</b>';
+            B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, '<b>Is error in "' . $class->name . '::' . $name . '".</b>');
+
             $this->assertThat(NULL, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
         }
 
