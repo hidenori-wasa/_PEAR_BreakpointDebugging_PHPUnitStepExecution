@@ -250,7 +250,7 @@
  *          @codeCoverageIgnore
  *          A sentence.
  *      Please, search the rule violation of file by the following regular expression.
- *          @codeCoverageIgnore[^SE\r\n][^\t\x20]*$
+ *          @codeCoverageIgnore[^SE\r\n][\t\x20]*[^\t\x20].*$
  *
  * Autodetecting rule 1: Follow autoload rule of PEAR in all codes
  *      because this package uses special autoload class method.

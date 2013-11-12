@@ -25,10 +25,11 @@ The dependences
 Change log
 ----------
 
-* I added unit test rule.
-* I modified "NetBeans" IDE setting to "./PEAR/misc/" directory.
-* I changed unit test, code coverage report, error log files manager and error display to display of other window with JavaScript.
-* I changed execution mode setting to a project execution parameter.
+* I repaired search regular expression of unit test rule.
+* I repaired execution mode security.
+* I repaired "BreakpointDebugging_InDebug.php" file level document.
+* I repaired "BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport.php" because "form" tag existed inside "pre" tag.
+* I changed for inline function from JavaScript function of "\BreakpointDebugging::windowClose()" class method.
 
 Notice
 ------

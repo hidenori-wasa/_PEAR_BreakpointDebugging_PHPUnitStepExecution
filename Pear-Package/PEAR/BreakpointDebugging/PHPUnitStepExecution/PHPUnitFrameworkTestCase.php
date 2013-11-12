@@ -174,7 +174,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
             } else {
                 $message .= 'In "bootstrap file", "file of (class ' . $className . ') which is executed at autoload" or "' . $className . '::setUpBeforeClass()"' . '.' . PHP_EOL;
             }
-            $message .= '</b>Because it cannot store static status.</pre>';
+            $message .= '</b>Because it cannot store static status.';
             B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, $message);
             exit;
         }

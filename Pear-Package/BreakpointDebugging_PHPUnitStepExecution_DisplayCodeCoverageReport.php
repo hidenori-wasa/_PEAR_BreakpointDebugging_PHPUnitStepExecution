@@ -77,7 +77,7 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
         if (isset($_GET['codeCoverageReportDeletion'])) {
             \BreakpointDebugging_PHPUnitStepExecution::deleteCodeCoverageReport();
             // Closes this window.
-            B::windowWhichClose(__CLASS__);
+            B::windowClose(__CLASS__);
         } else if (isset($_GET['codeCoverageReportPath'])) { // If we pushed "Code coverage report" button.
             $codeCoverageReportPath = $_GET['codeCoverageReportPath'];
             // Opens code coverage report.
@@ -135,9 +135,11 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
                 $codeCoverageReportPath = str_replace('\\', '/', B::getStatic('$_codeCoverageReportPath')) . $classFileName . '.html';
                 if (!is_file($codeCoverageReportPath)) {
                     echo <<<EOD
-<form>
-    <input type="submit" value="Code coverage report of ($classFilePath)." disabled="disabled" $fontStyle/>
-</form>
+		<form>
+			<input type="submit" value="Code coverage report of ($classFilePath)." disabled="disabled" $fontStyle/>
+		</form>
+		<br/>
+
 EOD;
                     continue;
                 }
@@ -145,31 +147,35 @@ EOD;
                 $data = array ('codeCoverageReportPath' => $codeCoverageReportPath);
                 $data = http_build_query($data);
                 echo <<<EOD
-<form method="post" action="$thisFileURI?$data&{$_SERVER['QUERY_STRING']}">
-    <input type="submit" value="Code coverage report of ($classFilePath)." $fontStyle/>
-</form>
+		<form method="post" action="$thisFileURI?$data&{$_SERVER['QUERY_STRING']}">
+			<input type="submit" value="Code coverage report of ($classFilePath)." $fontStyle/>
+		</form>
+		<br/>
+
 EOD;
             }
 
             echo <<<EOD
-<br/><br/>
-<form method="post" action="$thisFileURI?codeCoverageReportDeletion&{$_SERVER['QUERY_STRING']}">
-    <input type="submit" value="Code coverage report deletion." $fontStyle/>
-</form>
+		<br/>
+		<br/>
+		<form method="post" action="$thisFileURI?codeCoverageReportDeletion&{$_SERVER['QUERY_STRING']}">
+			<input type="submit" value="Code coverage report deletion." $fontStyle/>
+		</form>
 EOD;
 
             $buffer = ob_get_clean();
             $htmlFileContent = <<<EOD
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8" />
-        <title>CodeCoverageReport</title>
-    </head>
-    <body style="background-color: black; color: white; font-size: 1.5em">
-        <pre>$buffer</pre>
-    </body>
+	<head>
+		<meta charset="UTF-8" />
+		<title>CodeCoverageReport</title>
+	</head>
+	<body style="background-color: black; color: white; font-size: 1.5em">
+$buffer
+	</body>
 </html>
+
 EOD;
             B::windowOpen(__CLASS__, $htmlFileContent);
         }
