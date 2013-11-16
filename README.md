@@ -25,11 +25,7 @@ The dependences
 Change log
 ----------
 
-* I repaired search regular expression of unit test rule.
-* I repaired execution mode security.
-* I repaired "BreakpointDebugging_InDebug.php" file level document.
-* I repaired "BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport.php" because "form" tag existed inside "pre" tag.
-* I changed for inline function from JavaScript function of "\BreakpointDebugging::windowClose()" class method.
+* I repaired "$_SERVER['QUERY_STRING']".
 
 Notice
 ------
