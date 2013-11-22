@@ -177,7 +177,7 @@ $buffer
 </html>
 
 EOD;
-            B::windowOpen(__CLASS__, $htmlFileContent);
+            B::windowVirtualOpen(__CLASS__, $htmlFileContent);
         }
     }
 

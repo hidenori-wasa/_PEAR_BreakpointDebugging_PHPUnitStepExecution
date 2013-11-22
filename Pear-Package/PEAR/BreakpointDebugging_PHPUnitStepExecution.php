@@ -338,7 +338,7 @@ use \BreakpointDebugging as B;
 use \BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState as BGS;
 use \BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase as BSF;
 
-B::limitAccess(array ('BreakpointDebugging.php'));
+B::limitAccess('BreakpointDebugging.php', true);
 /**
  * Own package exception. For unit test.
  *
@@ -464,21 +464,30 @@ class BreakpointDebugging_PHPUnitStepExecution
     private static $_htmlFileContent;
 
     /**
+     * @var string Unit test result.
+     */
+    private static $_unitTestResult = 'DONE';
+
+    /**
      * Limits static properties accessing of class.
      *
      * @return void
+     * @codeCoverageIgnore
+     * Because this is code for unit test.
      */
     static function initialize()
     {
+        B::limitAccess(basename(__FILE__), true);
+
         B::assert(func_num_args() === 0);
 
-        self::$exeMode = &B::refStatic('$exeMode'); // This is not rule violation because this property is not stored.
         $staticProperties = &B::refStaticProperties();
         $staticProperties['$_classFilePaths'] = &self::$_classFilePaths;
         $staticProperties['$_codeCoverageReportPath'] = &self::$_codeCoverageReportPath;
         $staticPropertyLimitings = &B::refStaticPropertyLimitings();
         $staticPropertyLimitings['$_includePaths'] = '';
         $staticPropertyLimitings['$_valuesToTrace'] = '';
+        self::$exeMode = &B::refStatic('$exeMode'); // This is not rule violation because this property is not stored.
         $staticPropertyLimitings['$exeMode'] = 'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php';
         self::$_separator = PHP_EOL . '//////////////////////////////////////////////////////////////////////////' . PHP_EOL;
         self::$_htmlFileContent = <<<EOD
@@ -486,6 +495,12 @@ class BreakpointDebugging_PHPUnitStepExecution
 <html>
     <head>
         <meta charset="UTF-8" />
+        <style type="text/css">
+        <!--
+            b {color: aqua}
+            strong {color: fuchsia}
+        -->
+        </style>
         <title>PHPUnit</title>
     </head>
     <body style="background-color: black; color: white; font-size: 1.5em">
@@ -506,6 +521,8 @@ EOD;
      */
     static function displaysException($pException)
     {
+        B::limitAccess('BreakpointDebugging.php', true);
+
         B::assert(func_num_args() === 1);
         B::assert($pException instanceof \Exception);
 
@@ -529,9 +546,17 @@ EOD;
      * @param object $pException Exception information.
      *
      * @return void
+     * @codeCoverageIgnore
+     * Because this is code for unit test.
      */
     static function handleUnitTestException($pException)
     {
+        B::limitAccess(array (
+            basename(__FILE__),
+            'BreakpointDebugging_InDebug.php',
+            'BreakpointDebugging.php'
+            ), true);
+
         B::assert(func_num_args() === 1);
         B::assert($pException instanceof \Exception);
 
@@ -634,6 +659,70 @@ EOD;
         $pPHPUnit_TextUI_Command->run($commandElements, false);
         // Uses "BreakpointDebugging" package error handler.
         set_error_handler('\BreakpointDebugging::handleError', -1);
+    }
+
+    /**
+     * Display the progress.
+     *
+     * @param int $dy Y vector distance.
+     *
+     * @return void
+     * @codeCoverageIgnore
+     * Because this is code for unit test.
+     */
+    static function displayProgress($dy = 0)
+    {
+        B::limitAccess(array (
+            basename(__FILE__),
+            'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php'
+            ), true);
+
+        // Displays the progress.
+        $buffer = '';
+        for ($count = 0; ob_get_level() > 0; $count++) {
+            $result = ob_get_clean();
+            if (is_string($result)) {
+                if (strpos($result, 'I') === 0) {
+                    self::$_unitTestResult = 'INCOMPLETE';
+                    $result = '<strong>I</strong>' . substr($result, 1);
+                }
+                $buffer .= $result;
+            }
+        }
+        B::windowHtmlAddition(self::UNIT_TEST_WINDOW_NAME, 'pre', 0, $buffer);
+        B::windowScrollBy(self::UNIT_TEST_WINDOW_NAME, $dy);
+        B::windowScriptClearance();
+        for (; $count > 0; $count--) {
+            ob_start();
+        }
+    }
+
+    /**
+     * Deletes code coverage report.
+     *
+     * @return string Code coverage report path.
+     * @codeCoverageIgnore
+     * Because this is code for unit test.
+     */
+    static function deleteCodeCoverageReport()
+    {
+        B::limitAccess(array (
+            basename(__FILE__),
+            './BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport.php'
+            ), true);
+
+        $codeCoverageReportPath = B::getStatic('$_workDir') . '/CodeCoverageReport/';
+        // Deletes code coverage report directory files.
+        if (is_dir($codeCoverageReportPath)) {
+            foreach (scandir($codeCoverageReportPath) as $codeCoverageReportDirElement) {
+                $errorLogDirElementPath = $codeCoverageReportPath . $codeCoverageReportDirElement;
+                if (is_file($errorLogDirElementPath)) {
+                    // Deletes a file.
+                    B::unlink(array ($errorLogDirElementPath));
+                }
+            }
+        }
+        return $codeCoverageReportPath;
     }
 
     //////////////////////////////////////// For package user ////////////////////////////////////////
@@ -784,7 +873,7 @@ EOD;
         B::assert(is_bool($isUnitTest));
 
         if (!$isUnitTest) {
-            B::windowOpen(B::ERROR_WINDOW_NAME, B::getStatic('$errorHtmlFileContent'));
+            B::windowVirtualOpen(B::ERROR_WINDOW_NAME, B::getStatic('$errorHtmlFileContent'));
             $errorMessage = <<<EOD
 You must set
     "BREAKPOINTDEBUGGING_MODE=DEBUG" or
@@ -809,78 +898,73 @@ EOD;
      */
     static function executeUnitTest($unitTestFilePaths, $commandLineSwitches = '')
     {
-        if (!B::checkDevelopmentSecurity()) {
-            B::exitForError();
-        }
-
-        foreach ($unitTestFilePaths as $unitTestFilePath) {
-            if (array_key_exists($unitTestFilePath, self::$_unitTestFilePathsStorage)) {
-                throw new \BreakpointDebugging_ErrorException('Unit test file path must be unique.', 101);
+        try {
+            if (!B::checkDevelopmentSecurity()) {
+                B::exitForError();
             }
-            self::$_unitTestFilePathsStorage[$unitTestFilePath] = true;
-        }
 
-        B::windowOpen(self::UNIT_TEST_WINDOW_NAME, self::$_htmlFileContent);
-        ob_start();
-
-        if (self::$exeMode & B::RELEASE) {
-            echo '<b>\'RELEASE_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
-        } else {
-            echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
-        }
-
-        B::assert(func_num_args() <= 2);
-        B::assert(is_array($unitTestFilePaths));
-        B::assert(!empty($unitTestFilePaths));
-        B::assert(is_string($commandLineSwitches));
-
-        self::_getUnitTestDir();
-        foreach ($unitTestFilePaths as $unitTestFilePath) {
-            // If unit test file does not exist.
-            if (!is_file(self::$unitTestDir . $unitTestFilePath)) {
-                B::exitForError('Unit test file "' . $unitTestFilePath . '" does not exist.');
-            }
-            // If test file path contains '_'.
-            if (strpos($unitTestFilePath, '_') !== false) {
-                echo "You have to change from '_' of '$unitTestFilePath' to '-' because you cannot run unit tests." . PHP_EOL;
-                if (function_exists('xdebug_break')
-                    && !(self::$exeMode & B::IGNORING_BREAK_POINT)
-                ) {
-                    xdebug_break();
+            foreach ($unitTestFilePaths as $unitTestFilePath) {
+                if (array_key_exists($unitTestFilePath, self::$_unitTestFilePathsStorage)) {
+                    throw new \BreakpointDebugging_ErrorException('Unit test file path must be unique.', 101);
                 }
-                continue;
+                self::$_unitTestFilePathsStorage[$unitTestFilePath] = true;
             }
-            self::_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $unitTestFilePath);
-            gc_collect_cycles();
-        }
-        echo self::$_separator;
-        BGS::checkFunctionLocalStaticVariable();
-        BGS::checkMethodLocalStaticVariable();
-        echo '<b>Unit tests have done.</b>';
 
-        B::windowHtmlAddition(self::UNIT_TEST_WINDOW_NAME, 'pre', 0, ob_get_clean());
-        exit;
-    }
+            B::windowVirtualOpen(self::UNIT_TEST_WINDOW_NAME, self::$_htmlFileContent);
+            ob_start();
 
-    /**
-     * Deletes code coverage report.
-     *
-     * @return string Code coverage report path.
-     */
-    static function deleteCodeCoverageReport()
-    {
-        $codeCoverageReportPath = B::getStatic('$_workDir') . '/CodeCoverageReport/';
-        // Deletes code coverage report directory files.
-        if (is_dir($codeCoverageReportPath)) {
-            foreach (scandir($codeCoverageReportPath) as $codeCoverageReportDirElement) {
-                $errorLogDirElementPath = $codeCoverageReportPath . $codeCoverageReportDirElement;
-                if (is_file($errorLogDirElementPath)) {
-                    // Deletes a file.
-                    B::unlink(array ($errorLogDirElementPath));
+            if (self::$exeMode & B::RELEASE) {
+                echo '<b>\'RELEASE_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
+            } else {
+                echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
+            }
+
+            B::assert(func_num_args() <= 2);
+            B::assert(is_array($unitTestFilePaths));
+            B::assert(!empty($unitTestFilePaths));
+            B::assert(is_string($commandLineSwitches));
+
+            self::_getUnitTestDir();
+            foreach ($unitTestFilePaths as $unitTestFilePath) {
+                // If unit test file does not exist.
+                if (!is_file(self::$unitTestDir . $unitTestFilePath)) {
+                    B::exitForError('Unit test file "' . $unitTestFilePath . '" does not exist.');
                 }
+                // If test file path contains '_'.
+                if (strpos($unitTestFilePath, '_') !== false) {
+                    echo "You have to change from '_' of '$unitTestFilePath' to '-' because you cannot run unit tests." . PHP_EOL;
+                    if (function_exists('xdebug_break')
+                        && !(self::$exeMode & B::IGNORING_BREAK_POINT)
+                    ) {
+                        xdebug_break();
+                    }
+                    continue;
+                }
+                self::_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $unitTestFilePath);
+                gc_collect_cycles();
             }
+            echo self::$_separator;
+            BGS::checkFunctionLocalStaticVariable();
+            BGS::checkMethodLocalStaticVariable();
+
+            switch (self::$_unitTestResult) {
+                case 'DONE':
+                    echo '<b>Unit tests have done.</b>';
+                    break;
+                case 'INCOMPLETE':
+                    echo '<strong>Unit tests have ended incomplete.</strong>';
+                    break;
+                default:
+                    B::assert(false);
+            }
+
+            B::windowHtmlAddition(self::UNIT_TEST_WINDOW_NAME, 'pre', 0, ob_get_clean());
+            B::windowScrollBy(self::UNIT_TEST_WINDOW_NAME, 300);
+            B::windowScriptClearance();
+            exit;
+        } catch (\Exception $e) {
+            B::exitForError($e);
         }
-        return $codeCoverageReportPath;
     }
 
     /**
@@ -911,49 +995,53 @@ EOD;
      */
     static function displayCodeCoverageReport($unitTestFilePath, $classFilePaths, $commandLineSwitches = '')
     {
-        if (!B::checkDevelopmentSecurity()) {
-            B::exitForError();
-        }
-
-        B::assert(func_num_args() === 2);
-        B::assert(is_string($unitTestFilePath));
-        B::assert(is_string($classFilePaths) || is_array($classFilePaths));
-
-        if (!extension_loaded('xdebug')) {
-            B::exitForError('"BreakpointDebugging::displayCodeCoverageReport()" needs "xdebug" extention.');
-        }
-        // Deletes code coverage report.
-        $codeCoverageReportPath = self::deleteCodeCoverageReport();
-        self::_getUnitTestDir();
-        // Creates code coverage report.
-        $displayErrorsStorage = ini_get('display_errors');
-        ini_set('display_errors', '');
-
-        B::windowOpen(self::UNIT_TEST_WINDOW_NAME, self::$_htmlFileContent);
-        ob_start();
-
-        if (self::$exeMode & B::RELEASE) {
-            echo '<b>\'RELEASE_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
-        } else {
-            echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
-        }
-
-        self::_runPHPUnitCommand($commandLineSwitches . ' --static-backup --coverage-html ' . $codeCoverageReportPath . ' ' . $unitTestFilePath);
-
-        B::windowHtmlAddition(self::UNIT_TEST_WINDOW_NAME, 'pre', 0, ob_get_clean());
-
-        ini_set('display_errors', $displayErrorsStorage);
-        // Displays the code coverage report in browser.
-        $documentRoot = $_SERVER['DOCUMENT_ROOT'];
-        $dir = str_replace('\\', '/', __DIR__);
-        if (preg_match("`^$documentRoot`xX", $dir) === 0) {
-            foreach ($classFilePaths as &$classFilePath) {
-                $classFilePath = 'php/' . $classFilePath;
+        try {
+            if (!B::checkDevelopmentSecurity()) {
+                B::exitForError();
             }
+
+            B::assert(func_num_args() === 2);
+            B::assert(is_string($unitTestFilePath));
+            B::assert(is_string($classFilePaths) || is_array($classFilePaths));
+
+            if (!extension_loaded('xdebug')) {
+                B::exitForError('"BreakpointDebugging::displayCodeCoverageReport()" needs "xdebug" extention.');
+            }
+            // Deletes code coverage report.
+            $codeCoverageReportPath = self::deleteCodeCoverageReport();
+            self::_getUnitTestDir();
+            // Creates code coverage report.
+            $displayErrorsStorage = ini_get('display_errors');
+            ini_set('display_errors', '');
+
+            B::windowVirtualOpen(self::UNIT_TEST_WINDOW_NAME, self::$_htmlFileContent);
+            ob_start();
+
+            if (self::$exeMode & B::RELEASE) {
+                echo '<b>\'RELEASE_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
+            } else {
+                echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
+            }
+
+            self::_runPHPUnitCommand($commandLineSwitches . ' --static-backup --coverage-html ' . $codeCoverageReportPath . ' ' . $unitTestFilePath);
+
+            B::windowHtmlAddition(self::UNIT_TEST_WINDOW_NAME, 'pre', 0, ob_get_clean());
+
+            ini_set('display_errors', $displayErrorsStorage);
+            // Displays the code coverage report in browser.
+            $documentRoot = $_SERVER['DOCUMENT_ROOT'];
+            $dir = str_replace('\\', '/', __DIR__);
+            if (preg_match("`^$documentRoot`xX", $dir) === 0) {
+                foreach ($classFilePaths as &$classFilePath) {
+                    $classFilePath = 'php/' . $classFilePath;
+                }
+            }
+            self::$_classFilePaths = $classFilePaths;
+            self::$_codeCoverageReportPath = $codeCoverageReportPath;
+            include_once './BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport.php';
+        } catch (\Exception $e) {
+            B::exitForError($e);
         }
-        self::$_classFilePaths = $classFilePaths;
-        self::$_codeCoverageReportPath = $codeCoverageReportPath;
-        include_once './BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport.php';
     }
 
 }

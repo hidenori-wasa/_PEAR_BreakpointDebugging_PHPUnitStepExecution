@@ -359,23 +359,12 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
      */
     public function runBare()
     {
-        // Displays the progress.
-        $buffer = '';
-        for ($count = 0; ob_get_level() > 0; $count++) {
-            $result = ob_get_clean();
-            if (is_string($result)) {
-                $buffer .= $result;
-            }
-        }
-        B::windowHtmlAddition(BU::UNIT_TEST_WINDOW_NAME, 'pre', 0, $buffer);
-        flush();
-        for (; $count > 0; $count--) {
-            ob_start();
-        }
+        BU::displayProgress(5);
 
         $this->numAssertions = 0;
 
         if (self::$_onceFlagPerTestFile) {
+            BU::displayProgress(300);
             // For autoload.
             self::$_onceFlagPerTestFile = false;
             // For autoload.
