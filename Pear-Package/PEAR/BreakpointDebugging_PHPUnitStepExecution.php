@@ -692,6 +692,7 @@ EOD;
         B::windowHtmlAddition(self::UNIT_TEST_WINDOW_NAME, 'pre', 0, $buffer);
         B::windowScrollBy(self::UNIT_TEST_WINDOW_NAME, $dy);
         B::windowScriptClearance();
+        flush();
         for (; $count > 0; $count--) {
             ob_start();
         }
@@ -943,6 +944,7 @@ EOD;
                 self::_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $unitTestFilePath);
                 gc_collect_cycles();
             }
+            self::displayProgress();
             echo self::$_separator;
             BGS::checkFunctionLocalStaticVariable();
             BGS::checkMethodLocalStaticVariable();
@@ -952,7 +954,7 @@ EOD;
                     echo '<b>Unit tests have done.</b>';
                     break;
                 case 'INCOMPLETE':
-                    echo '<strong>Unit tests have ended incomplete.</strong>';
+                    echo '<strong>Unit tests have ended incompletely.</strong>';
                     break;
                 default:
                     B::assert(false);

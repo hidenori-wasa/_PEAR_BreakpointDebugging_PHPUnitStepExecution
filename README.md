@@ -25,13 +25,8 @@ The dependences
 Change log
 ----------
 
-* I repaired "$_SERVER['QUERY_STRING']" in case of actual server release.
-* I changed class method name from "\BreakpointDebugging::windowOpen()" to "\BreakpointDebugging::windowVirtualOpen()".
-* I embedded "windowOpen.js" file to "\BreakpointDebugging::windowVirtualOpen()" class method.
-* I created "\BreakpointDebugging::windowScriptClearance()" to reduce memory use in case of unit test.
-* I added color to unit test result display.
-* I repaired error display anchor from subclass of "PHPUnit_Framework_Test" to subclass of  "BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase".
-* I added auto scroll feature of unit test display.
+* I changed for readable font size by changing font size from "em" to "px".
+* I repaired for execution on Linux.
 
 Notice
 ------

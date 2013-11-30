@@ -100,7 +100,7 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
                         if (is_file($cssFilePath)) {
                             echo '<style type="text/css">' . PHP_EOL
                             . '<!--' . PHP_EOL;
-                            // echo preg_replace('`([^_[:alnum:]] (td [[:space:]]* \. (?!title) [_[:alnum:]]+ | pre [[:space:]]* \.source) [[:space:]]* { .*) }`xXisU', "\${1}" . '  font-size: 0.4em;' . PHP_EOL . '}', file_get_contents($cssFilePath));
+                            // echo preg_replace('`([^_[:alnum:]] (td [[:space:]]* \. (?!title) [_[:alnum:]]+ | pre [[:space:]]* \.source) [[:space:]]* { .*) }`xXisU', "\${1}" . '  font-size: 16px;' . PHP_EOL . '}', file_get_contents($cssFilePath));
                             readfile('BreakpointDebugging/css/PHP_CodeCoverage_Report_HTML_Renderer_Template_style.css', true);
                             echo '-->' . PHP_EOL
                             . '</style>' . PHP_EOL;
@@ -128,7 +128,7 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
             if (!is_array($classFilePaths)) {
                 $classFilePaths = array ($classFilePaths);
             }
-            $fontStyle = 'style="font-size: 1em; font-weight: bold;"';
+            $fontStyle = 'style="font-size: 24px; font-weight: bold;"';
             // Makes the "Code coverage report" buttons.
             foreach ($classFilePaths as $classFilePath) {
                 $classFileName = str_replace(array ('/', '\\'), '_', $classFilePath);
