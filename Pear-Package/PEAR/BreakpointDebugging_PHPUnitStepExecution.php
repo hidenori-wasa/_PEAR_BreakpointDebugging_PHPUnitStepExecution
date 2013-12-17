@@ -274,7 +274,7 @@
  * Autodetecting rule 7: We must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
  *      Because we cannot debug unit test code with IDE.
  *
- * Recommendation rule 1: We should destruct a test instance per test in "tearDown()" because it cuts down on actual server memory use.
+ * Recommendation rule 1: We should destruct a test instance per test in "tearDown()" because it cuts down on production server memory use.
  *      @Example:
  *          protected function tearDown()
  *          {
@@ -503,7 +503,7 @@ class BreakpointDebugging_PHPUnitStepExecution
         </style>
         <title>PHPUnit</title>
     </head>
-    <body style="background-color: black; color: white; font-size: 1.5em">
+    <body style="background-color: black; color: white; font-size: 25px">
         <pre></pre>
     </body>
 </html>

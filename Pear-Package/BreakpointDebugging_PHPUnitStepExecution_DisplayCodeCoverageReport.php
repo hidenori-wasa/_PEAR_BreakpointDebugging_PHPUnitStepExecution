@@ -128,7 +128,7 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
             if (!is_array($classFilePaths)) {
                 $classFilePaths = array ($classFilePaths);
             }
-            $fontStyle = 'style="font-size: 24px; font-weight: bold;"';
+            $fontStyle = 'style="font-size: 25px; font-weight: bold;"';
             // Makes the "Code coverage report" buttons.
             foreach ($classFilePaths as $classFilePath) {
                 $classFileName = str_replace(array ('/', '\\'), '_', $classFilePath);
@@ -144,10 +144,9 @@ EOD;
                     continue;
                 }
 
-                $data = array ('codeCoverageReportPath' => $codeCoverageReportPath);
-                $data = http_build_query($data);
+                $queryString = B::httpBuildQuery(array ('codeCoverageReportPath' => $codeCoverageReportPath));
                 echo <<<EOD
-		<form method="post" action="$thisFileURI?$data&{$_SERVER['QUERY_STRING']}">
+		<form method="post" action="$thisFileURI?$queryString">
 			<input type="submit" value="Code coverage report of ($classFilePath)." $fontStyle/>
 		</form>
 		<br/>
@@ -155,10 +154,11 @@ EOD;
 EOD;
             }
 
+            $queryString = B::httpBuildQuery(array ('codeCoverageReportDeletion' => true));
             echo <<<EOD
 		<br/>
 		<br/>
-		<form method="post" action="$thisFileURI?codeCoverageReportDeletion&{$_SERVER['QUERY_STRING']}">
+		<form method="post" action="$thisFileURI?$queryString">
 			<input type="submit" value="Code coverage report deletion." $fontStyle/>
 		</form>
 EOD;
@@ -171,7 +171,7 @@ EOD;
 		<meta charset="UTF-8" />
 		<title>CodeCoverageReport</title>
 	</head>
-	<body style="background-color: black; color: white; font-size: 1.5em">
+	<body style="background-color: black; color: white; font-size: 25px">
 $buffer
 	</body>
 </html>

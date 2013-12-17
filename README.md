@@ -25,8 +25,10 @@ The dependences
 Change log
 ----------
 
-* I changed for readable font size by changing font size from "em" to "px".
-* I repaired for execution on Linux.
+* I added "\BreakpointDebugging::$_get" like "$_GET" for both of CLI and CGI.
+* I repaired unit test with "\BreakpointDebugging::$_get".
+* I repaired URL encode and decode with "\BreakpointDebugging::httpBuildQuery()" class method.
+* I added document of recommendation file cache extention of production server into "BreakpointDebugging_InDebug.php".
 
 Notice
 ------
