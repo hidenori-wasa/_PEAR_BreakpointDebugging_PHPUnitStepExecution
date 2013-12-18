@@ -25,10 +25,10 @@ The dependences
 Change log
 ----------
 
-* I added "\BreakpointDebugging::$_get" like "$_GET" for both of CLI and CGI.
-* I repaired unit test with "\BreakpointDebugging::$_get".
-* I repaired URL encode and decode with "\BreakpointDebugging::httpBuildQuery()" class method.
-* I added document of recommendation file cache extention of production server into "BreakpointDebugging_InDebug.php".
+* I repaired "\BreakpointDebugging::$_get" when parameter does not exist.
+* I added check of recommendation file cache extention initialization of "php.ini" file into "BreakpointDebugging_MySetting.php".
+* I repaired document of recommendation file cache extention of production server into "BreakpointDebugging_InDebug.php".
+* I repaired "\BreakpointDebugging::iniCheck()" class method display.
 
 Notice
 ------
