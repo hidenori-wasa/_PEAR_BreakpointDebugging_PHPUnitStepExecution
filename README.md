@@ -19,16 +19,14 @@ The dependences
 
 * Requires `BreakpointDebugging` package.
 * OS requires `Linux` or `Windows`, but may be able to require `Unix`.
-* PHP version >= `5.3.0`
+* PHP version = `5.3.1`
 * Requires `Xdebug extension`.
 
 Change log
 ----------
 
-* I repaired "\BreakpointDebugging::$_get" when parameter does not exist.
-* I added check of recommendation file cache extention initialization of "php.ini" file into "BreakpointDebugging_MySetting.php".
-* I repaired document of recommendation file cache extention of production server into "BreakpointDebugging_InDebug.php".
-* I repaired "\BreakpointDebugging::iniCheck()" class method display.
+* I changed recommendation environment from "XAMPP 1.7.7" to "XAMPP 1.7.3" inside "BreakpointDebugging_InDebug.php" file level document.
+* I changed recommendation file cache extention document inside "BreakpointDebugging_InDebug.php" file level document.
 
 Notice
 ------
