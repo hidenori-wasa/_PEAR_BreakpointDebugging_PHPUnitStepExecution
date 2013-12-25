@@ -19,13 +19,17 @@ The dependences
 
 * Requires `BreakpointDebugging` package.
 * OS requires `Linux` or `Windows`, but may be able to require `Unix`.
-* PHP version = `5.3.1`
+* Development PHP version = `XAMPP 1.7.3` ("PHP 5.3.x" Compiled with VC++6.0 in case of windows.)
+
+                            Do not use `XAMPP 1.7.7` ("PHP 5.3.x" Compiled with VC++9.0 in case of windows.)
+
+* Production PHP version = `5.3.x`
 * Requires `Xdebug extension`.
 
 Change log
 ----------
 
-* I changed recommendation environment from "XAMPP 1.7.7" to "XAMPP 1.7.3" inside "BreakpointDebugging_InDebug.php" file level document.
+* I changed "The dependences" of this file and BreakpointDebugging package.
 * I changed recommendation file cache extention document inside "BreakpointDebugging_InDebug.php" file level document.
 
 Notice
