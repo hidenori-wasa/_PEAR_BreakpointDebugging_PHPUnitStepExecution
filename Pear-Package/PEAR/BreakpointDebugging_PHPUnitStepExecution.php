@@ -901,7 +901,7 @@ EOD;
     {
         try {
             if (!B::checkDevelopmentSecurity()) {
-                B::exitForError();
+                exit;
             }
 
             foreach ($unitTestFilePaths as $unitTestFilePath) {
@@ -999,7 +999,7 @@ EOD;
     {
         try {
             if (!B::checkDevelopmentSecurity()) {
-                B::exitForError();
+                exit;
             }
 
             B::assert(func_num_args() === 2);

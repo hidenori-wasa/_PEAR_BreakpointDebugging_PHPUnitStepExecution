@@ -29,10 +29,10 @@ The dependences
 Change log
 ----------
 
-* I changed "The dependences" of this file and BreakpointDebugging package.
-* I changed recommendation file cache extention document inside "BreakpointDebugging_InDebug.php" file level document.
+* I repaired Linux execution by remote server emulation.
 
 Notice
 ------
 
-I have been coding the unit tests and "*.phpt" tests.
+I have been developing yet.
+Also, I have been coding the unit tests and "*.phpt" tests.

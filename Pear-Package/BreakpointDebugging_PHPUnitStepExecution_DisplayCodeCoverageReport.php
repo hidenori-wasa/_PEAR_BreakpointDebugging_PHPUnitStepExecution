@@ -50,8 +50,9 @@ require_once './BreakpointDebugging_Inclusion.php';
 use \BreakpointDebugging as B;
 
 if (!B::checkDevelopmentSecurity()) {
-    return;
+    exit;
 }
+
 B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php');
 /**
  * Class to display code coverage report.
