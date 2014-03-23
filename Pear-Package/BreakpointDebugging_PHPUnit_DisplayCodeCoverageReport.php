@@ -8,7 +8,7 @@
  * by embedding its content
  * if cascading style sheet file path exists in code coverage report file.
  *
- * PHP version 5.3
+ * PHP version 5.3.x, 5.4.x
  *
  * LICENSE OVERVIEW:
  * 1. Do not change license text.
@@ -40,7 +40,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @category PHP
- * @package  BreakpointDebugging_PHPUnitStepExecution
+ * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
  * @link     http://pear.php.net/package/BreakpointDebugging
@@ -53,12 +53,12 @@ if (!B::checkDevelopmentSecurity()) {
     exit;
 }
 
-B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php');
+B::limitAccess('BreakpointDebugging_PHPUnit.php');
 /**
  * Class to display code coverage report.
  *
  * @category PHP
- * @package  BreakpointDebugging_PHPUnitStepExecution
+ * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
  * @version  Release: @package_version@
@@ -66,7 +66,7 @@ B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php');
  * @codeCoverageIgnore
  * Because "phpunit" command cannot run during "phpunit" command running.
  */
-class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
+class BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport
 {
     /**
      * Displays the code coverage report in browser.
@@ -76,7 +76,7 @@ class BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport
     function __construct()
     {
         if (isset($_GET['codeCoverageReportDeletion'])) {
-            \BreakpointDebugging_PHPUnitStepExecution::deleteCodeCoverageReport();
+            \BreakpointDebugging_PHPUnit::deleteCodeCoverageReport();
             // Closes this window.
             B::windowClose(__CLASS__);
         } else if (isset($_GET['codeCoverageReportPath'])) { // If we pushed "Code coverage report" button.
@@ -184,6 +184,6 @@ EOD;
 
 }
 
-new \BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport();
+new \BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport();
 
 ?>

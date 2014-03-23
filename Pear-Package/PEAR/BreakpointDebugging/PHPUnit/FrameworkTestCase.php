@@ -25,7 +25,7 @@
  *          Copyright (c) 2001-2012 Sebastian Bergmann <sebastian@phpunit.de>
  * Then, I added "Hidenori Wasa added." to line which I coded into "BreakpointDebugging/Component/" directory.
  *
- * PHP version 5.3
+ * PHP version 5.3.x, 5.4.x
  *
  * Copyright (c) 2001-2013, Sebastian Bergmann <sebastian@phpunit.de>.
  * All rights reserved.
@@ -72,8 +72,8 @@
 // and moreover "use" keyword alias has priority over class definition,
 // therefore "use" keyword alias does not be affected by other files.
 use \BreakpointDebugging as B;
-use \BreakpointDebugging_PHPUnitStepExecution as BU;
-use \BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState as BGS;
+use \BreakpointDebugging_PHPUnit as BU;
+use \BreakpointDebugging_PHPUnit_UtilGlobalState as BGS;
 
 /**
  * Debugs unit tests code continuously by IDE. With "\BreakpointDebugging::executeUnitTest()" class method. Supports "php" version 5.3.0 since then.
@@ -87,7 +87,7 @@ use \BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState as BGS;
  * @link       http://www.phpunit.de/
  * @since      Class available since Release 2.0.0
  */
-abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase extends \PHPUnit_Framework_TestCase
+abstract class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var array List to except to store global variable.
@@ -146,7 +146,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
      */
     static function &refOnceFlagPerTestFile()
     {
-        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+        B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
         return self::$_onceFlagPerTestFile;
     }
@@ -163,7 +163,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
     {
         // Checks the autoload functions.
         $autoloadFunctions = spl_autoload_functions();
-        if ($autoloadFunctions[0] !== array ('BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase', 'autoload')) {
+        if ($autoloadFunctions[0] !== array ('BreakpointDebugging_PHPUnit_FrameworkTestCase', 'autoload')) {
             if (is_array($autoloadFunctions[0])) {
                 $autoloadFunction = $autoloadFunctions[0][0] . '::' . $autoloadFunctions[0][1];
             }
@@ -185,7 +185,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
      */
     static function &refGlobalRefs()
     {
-        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+        B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
         return self::$_globalRefs;
     }
@@ -195,7 +195,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
      */
     static function &refGlobals()
     {
-        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+        B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
         return self::$_globals;
     }
@@ -205,7 +205,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
      */
     static function &refStaticProperties2()
     {
-        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+        B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
         return self::$_staticProperties;
     }
@@ -511,8 +511,8 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
             $testResult = $method->invokeArgs($this, array_merge($this->data, $this->dependencyInput));
         } catch (Exception $e) {
             // If "\PHPUnit_Framework_Assert::markTestIncomplete()" was called, or if "\PHPUnit_Framework_Assert::markTestSkipped()" was called.
-            if ($e instanceof PHPUnit_Framework_IncompleteTest
-                || $e instanceof PHPUnit_Framework_SkippedTest
+            if ($e instanceof PHPUnit_Framework_IncompleteTest //
+                || $e instanceof PHPUnit_Framework_SkippedTest //
             ) {
                 throw $e;
             }
@@ -531,8 +531,7 @@ abstract class BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
             // "@expectedExceptionMessage" annotation should be success.
             try {
                 $expectedExceptionMessage = $this->expectedExceptionMessage;
-                if (is_string($expectedExceptionMessage)
-                    && !empty($expectedExceptionMessage)
+                if (is_string($expectedExceptionMessage) && !empty($expectedExceptionMessage)
                 ) {
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionMessage($expectedExceptionMessage));
                 }

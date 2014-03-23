@@ -52,7 +52,7 @@
  *  <?php
  *
  *  use \BreakpointDebugging as B;
- *  use \BreakpointDebugging_PHPUnitStepExecution as BU;
+ *  use \BreakpointDebugging_PHPUnit as BU;
  *
  *  function localStaticVariable()
  *  {
@@ -88,7 +88,7 @@
  *  // spl_autoload_register('\ExampleTest::autoload', true, true); // We must not register autoload function at top of stack by "spl_autoload_register()". (Autodetects)
  *  //
  *  // include_once __DIR__ . '/AFile.php'; // We must not include a file because autoload is only once per file. (Autodetects)
- *  class ExampleTest extends \BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
+ *  class ExampleTest extends \BreakpointDebugging_PHPUnit_FrameworkTestCase
  *  {
  *      private $_pTestObject;
  *
@@ -251,6 +251,11 @@
  *          A sentence.
  *      Please, search the rule violation of file by the following regular expression.
  *          @codeCoverageIgnore[^SE\r\n][\t\x20]*[^\t\x20].*$
+ * The file search detection rule 3: We must not use "filter_input()" and "filter_input_array()".
+ *      Because we cannot execute "unit test" by super global variable change.
+ *      Please, search the rule violation of file by the following regular expression.
+ *          filter_input[\t\x20\r\n]*\(
+ *          filter_input_array[\t\x20\r\n]*\(
  *
  * Autodetecting rule 1: Follow autoload rule of PEAR in all codes
  *      because this package uses special autoload class method.
@@ -293,7 +298,7 @@
  *      Procedure 2: Judge by using "parent::assertTrue(<conditional expression>)".
  *      @See "\tests_PEAR_BreakpointDebugging_MultiprocessTest_Main::test()".
  *
- * PHP version 5.3
+ * PHP version 5.3.x, 5.4.x
  *
  * LICENSE OVERVIEW:
  * 1. Do not change license text.
@@ -325,7 +330,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @category PHP
- * @package  BreakpointDebugging_PHPUnitStepExecution
+ * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
  * @link     http://pear.php.net/package/BreakpointDebugging
@@ -335,15 +340,15 @@
 // and moreover "use" keyword alias has priority over class definition,
 // therefore "use" keyword alias does not be affected by other files.
 use \BreakpointDebugging as B;
-use \BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState as BGS;
-use \BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase as BSF;
+use \BreakpointDebugging_PHPUnit_UtilGlobalState as BGS;
+use \BreakpointDebugging_PHPUnit_FrameworkTestCase as BSF;
 
 B::limitAccess('BreakpointDebugging.php', true);
 /**
  * Own package exception. For unit test.
  *
  * @category PHP
- * @package  BreakpointDebugging_PHPUnitStepExecution
+ * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
  * @version  Release: @package_version@
@@ -405,13 +410,13 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
  * Class for unit test.
  *
  * @category PHP
- * @package  BreakpointDebugging_PHPUnitStepExecution
+ * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
  * @version  Release: @package_version@
  * @link     http://pear.php.net/package/BreakpointDebugging
  */
-class BreakpointDebugging_PHPUnitStepExecution
+class BreakpointDebugging_PHPUnit
 {
     /**
      * @const string Unit test window name.
@@ -488,7 +493,7 @@ class BreakpointDebugging_PHPUnitStepExecution
         $staticPropertyLimitings['$_includePaths'] = '';
         $staticPropertyLimitings['$_valuesToTrace'] = '';
         self::$exeMode = &B::refStatic('$exeMode'); // This is not rule violation because this property is not stored.
-        $staticPropertyLimitings['$exeMode'] = 'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php';
+        $staticPropertyLimitings['$exeMode'] = 'BreakpointDebugging/PHPUnit/FrameworkTestCase.php';
         self::$_separator = PHP_EOL . '//////////////////////////////////////////////////////////////////////////' . PHP_EOL;
         self::$_htmlFileContent = <<<EOD
 <!DOCTYPE html>
@@ -527,9 +532,7 @@ EOD;
         B::assert($pException instanceof \Exception);
 
         $callStack = debug_backtrace();
-        if (!array_key_exists(1, $callStack)
-            || !array_key_exists('file', $callStack[1])
-            || strripos($callStack[1]['file'], 'PHPUnitFrameworkTestCase.php') === strlen($callStack[1]['file']) - strlen('PHPUnitFrameworkTestCase.php')
+        if (!array_key_exists(1, $callStack) || !array_key_exists('file', $callStack[1]) || strripos($callStack[1]['file'], 'FrameworkTestCase.php') === strlen($callStack[1]['file']) - strlen('FrameworkTestCase.php')
         ) {
             B::iniSet('xdebug.var_display_max_depth', '5', false);
             ob_start();
@@ -564,8 +567,7 @@ EOD;
         $call = array_key_exists(0, $callStack) ? $callStack[0] : array ();
         // In case of direct call from "BreakpointDebugging_InAllCase::callExceptionHandlerDirectly()".
         // This call is in case of debug mode.
-        if ((array_key_exists('class', $call) && $call['class'] === 'BreakpointDebugging_InAllCase')
-            && (array_key_exists('function', $call) && $call['function'] === 'callExceptionHandlerDirectly')
+        if ((array_key_exists('class', $call) && $call['class'] === 'BreakpointDebugging_InAllCase') && (array_key_exists('function', $call) && $call['function'] === 'callExceptionHandlerDirectly')
         ) {
             throw $pException;
             // @codeCoverageIgnoreStart
@@ -642,7 +644,7 @@ EOD;
             // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php), "setUpBeforeClass()" and "setUp()".
             // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php), "setUpBeforeClass()" and "setUp()".
             // And, to store initial value of global variables and static properties.
-            $result = spl_autoload_register('\BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase::autoload', true, true);
+            $result = spl_autoload_register('\BreakpointDebugging_PHPUnit_FrameworkTestCase::autoload', true, true);
             B::assert($result);
         } else {
             // Restores global variables.
@@ -674,7 +676,7 @@ EOD;
     {
         B::limitAccess(array (
             basename(__FILE__),
-            'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php'
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php'
             ), true);
 
         // Displays the progress.
@@ -709,7 +711,7 @@ EOD;
     {
         B::limitAccess(array (
             basename(__FILE__),
-            './BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport.php'
+            './BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport.php'
             ), true);
 
         $codeCoverageReportPath = B::getStatic('$_workDir') . '/CodeCoverageReport/';
@@ -860,7 +862,7 @@ EOD;
      *
      *      B::checkExeMode(true);
      *
-     *      class SomethingTest extends \BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase
+     *      class SomethingTest extends \BreakpointDebugging_PHPUnit_FrameworkTestCase
      *      {
      *          .
      *          .
@@ -934,8 +936,7 @@ EOD;
                 // If test file path contains '_'.
                 if (strpos($unitTestFilePath, '_') !== false) {
                     echo "You have to change from '_' of '$unitTestFilePath' to '-' because you cannot run unit tests." . PHP_EOL;
-                    if (function_exists('xdebug_break')
-                        && !(self::$exeMode & B::IGNORING_BREAK_POINT)
+                    if (function_exists('xdebug_break') && !(self::$exeMode & B::IGNORING_BREAK_POINT)
                     ) {
                         xdebug_break();
                     }
@@ -1040,7 +1041,7 @@ EOD;
             }
             self::$_classFilePaths = $classFilePaths;
             self::$_codeCoverageReportPath = $codeCoverageReportPath;
-            include_once './BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport.php';
+            include_once './BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport.php';
         } catch (\Exception $e) {
             B::exitForError($e);
         }
@@ -1049,6 +1050,6 @@ EOD;
 }
 
 // Initializes static class.
-\BreakpointDebugging_PHPUnitStepExecution::initialize();
+\BreakpointDebugging_PHPUnit::initialize();
 
 ?>

@@ -55,7 +55,7 @@
  * @link       http://www.phpunit.de/
  * @since      Class available since Release 3.0.0
  */
-class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilFilesystem extends \PHPUnit_Util_Filesystem
+class BreakpointDebugging_PHPUnit_UtilFilesystem extends \PHPUnit_Util_Filesystem
 {
     /**
      * Uses this class method instead of "stream_resolve_include_path()" before "php" version 5.3.2.

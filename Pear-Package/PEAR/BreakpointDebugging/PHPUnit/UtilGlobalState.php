@@ -44,7 +44,7 @@
  * @since      File available since Release 3.4.0
  */
 use \BreakpointDebugging as B;
-use \BreakpointDebugging_PHPUnitStepExecution as BU;
+use \BreakpointDebugging_PHPUnit as BU;
 
 /**
  * Utility for static state. Supports "php" version 5.3.0 since then.
@@ -58,7 +58,7 @@ use \BreakpointDebugging_PHPUnitStepExecution as BU;
  * @link       http://www.phpunit.de/
  * @since      Class available since Release 3.4.0
  */
-class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends \PHPUnit_Util_GlobalState
+class BreakpointDebugging_PHPUnit_UtilGlobalState // extends \PHPUnit_Util_GlobalState
 {
     /**
      * @var int Previous declared classes number.
@@ -146,7 +146,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
      */
     static function checkGlobals($globalRefs, $globals, $doesDefinitionCheck = false)
     {
-        B::limitAccess('BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php', true);
+        B::limitAccess('BreakpointDebugging/PHPUnit/FrameworkTestCase.php', true);
 
         $isError = false;
         if ($doesDefinitionCheck) {
@@ -236,8 +236,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
     static function storeGlobals(array &$globalRefs, array &$globals, array $blacklist, $isSnapshot = false)
     {
         B::limitAccess(
-            array ('BreakpointDebugging_PHPUnitStepExecution.php',
-            'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php'
+            array ('BreakpointDebugging_PHPUnit.php',
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php'
             ), true
         );
 
@@ -260,8 +260,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
     static function restoreGlobals($globalRefs, $globals)
     {
         B::limitAccess(
-            array ('BreakpointDebugging_PHPUnitStepExecution.php',
-            'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php'
+            array ('BreakpointDebugging_PHPUnit.php',
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php'
             ), true
         );
 
@@ -290,14 +290,14 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
     static function isUnitTestClass($declaredClassName)
     {
         B::limitAccess(
-            array ('BreakpointDebugging/PHPUnitStepExecution/PHPUnitUtilGlobalState.php',
-            'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php'
+            array ('BreakpointDebugging/PHPUnit/UtilGlobalState.php',
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php'
             ), true
         );
 
         set_error_handler('\BreakpointDebugging::handleError', 0);
         // Excepts unit test classes.
-        if (preg_match('`^ BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xXi', $declaredClassName) === 1
+        if (preg_match('`^ BreakpointDebugging_PHPUnit_UtilGlobalState | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xXi', $declaredClassName) === 1
             || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test')
         ) {
             restore_error_handler();
@@ -318,7 +318,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
      */
     static function checkProperties($staticProperties, $forAutoload = true)
     {
-        B::limitAccess('BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php', true);
+        B::limitAccess('BreakpointDebugging/PHPUnit/FrameworkTestCase.php', true);
 
         if ($forAutoload) {
             $message2 = "\t" . 'During autoload.' . PHP_EOL;
@@ -339,8 +339,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
             if (self::isUnitTestClass($declaredClassName)
                 || $declaredClassName === 'BreakpointDebugging'
                 || $declaredClassName === 'BreakpointDebugging_InAllCase'
-                || $declaredClassName === 'BreakpointDebugging_PHPUnitStepExecution'
-                || $declaredClassName === 'BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState'
+                || $declaredClassName === 'BreakpointDebugging_PHPUnit'
+                || $declaredClassName === 'BreakpointDebugging_PHPUnit_UtilGlobalState'
                 || $declaredClassName === 'PEAR_Exception'
             ) {
                 continue;
@@ -400,8 +400,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
     static function storeProperties(array &$staticProperties, array $blacklist, $isSnapshot = false)
     {
         B::limitAccess(
-            array ('BreakpointDebugging_PHPUnitStepExecution.php',
-            'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php'
+            array ('BreakpointDebugging_PHPUnit.php',
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php'
             ), true
         );
 
@@ -467,8 +467,8 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
     static function restoreProperties($staticPropertiesStorage)
     {
         B::limitAccess(
-            array ('BreakpointDebugging_PHPUnitStepExecution.php',
-            'BreakpointDebugging/PHPUnitStepExecution/PHPUnitFrameworkTestCase.php'
+            array ('BreakpointDebugging_PHPUnit.php',
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php'
             ), true
         );
 
@@ -491,9 +491,9 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
      */
     static function checkFunctionLocalStaticVariable()
     {
-        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+        B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
-        $componentFullPath = \BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilFilesystem::streamResolveIncludePath('BreakpointDebugging/Component/') . DIRECTORY_SEPARATOR;
+        $componentFullPath = \BreakpointDebugging_PHPUnit_UtilFilesystem::streamResolveIncludePath('BreakpointDebugging/Component/') . DIRECTORY_SEPARATOR;
         $definedFunctionsName = get_defined_functions();
         foreach ($definedFunctionsName['user'] as $definedFunctionName) {
             $functionReflection = new ReflectionFunction($definedFunctionName);
@@ -526,7 +526,7 @@ class BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState // extends
      */
     static function checkMethodLocalStaticVariable()
     {
-        B::limitAccess('BreakpointDebugging_PHPUnitStepExecution.php', true);
+        B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
         // Scans the declared classes.
         $declaredClasses = get_declared_classes();
