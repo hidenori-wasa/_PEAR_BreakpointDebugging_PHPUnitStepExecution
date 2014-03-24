@@ -532,7 +532,9 @@ EOD;
         B::assert($pException instanceof \Exception);
 
         $callStack = debug_backtrace();
-        if (!array_key_exists(1, $callStack) || !array_key_exists('file', $callStack[1]) || strripos($callStack[1]['file'], 'FrameworkTestCase.php') === strlen($callStack[1]['file']) - strlen('FrameworkTestCase.php')
+        if (!array_key_exists(1, $callStack) //
+            || !array_key_exists('file', $callStack[1]) //
+            || strripos($callStack[1]['file'], 'FrameworkTestCase.php') === strlen($callStack[1]['file']) - strlen('FrameworkTestCase.php') //
         ) {
             B::iniSet('xdebug.var_display_max_depth', '5', false);
             ob_start();
@@ -567,7 +569,8 @@ EOD;
         $call = array_key_exists(0, $callStack) ? $callStack[0] : array ();
         // In case of direct call from "BreakpointDebugging_InAllCase::callExceptionHandlerDirectly()".
         // This call is in case of debug mode.
-        if ((array_key_exists('class', $call) && $call['class'] === 'BreakpointDebugging_InAllCase') && (array_key_exists('function', $call) && $call['function'] === 'callExceptionHandlerDirectly')
+        if ((array_key_exists('class', $call) && $call['class'] === 'BreakpointDebugging_InAllCase') //
+            && (array_key_exists('function', $call) && $call['function'] === 'callExceptionHandlerDirectly') //
         ) {
             throw $pException;
             // @codeCoverageIgnoreStart
@@ -876,7 +879,7 @@ EOD;
         B::assert(is_bool($isUnitTest));
 
         if (!$isUnitTest) {
-            B::windowVirtualOpen(B::ERROR_WINDOW_NAME, B::getStatic('$errorHtmlFileContent'));
+            B::windowVirtualOpen(B::ERROR_WINDOW_NAME, B::getErrorHtmlFileTemplate());
             $errorMessage = <<<EOD
 You must set
     "BREAKPOINTDEBUGGING_MODE=DEBUG" or
@@ -936,7 +939,8 @@ EOD;
                 // If test file path contains '_'.
                 if (strpos($unitTestFilePath, '_') !== false) {
                     echo "You have to change from '_' of '$unitTestFilePath' to '-' because you cannot run unit tests." . PHP_EOL;
-                    if (function_exists('xdebug_break') && !(self::$exeMode & B::IGNORING_BREAK_POINT)
+                    if (function_exists('xdebug_break') //
+                        && !(self::$exeMode & B::IGNORING_BREAK_POINT) //
                     ) {
                         xdebug_break();
                     }

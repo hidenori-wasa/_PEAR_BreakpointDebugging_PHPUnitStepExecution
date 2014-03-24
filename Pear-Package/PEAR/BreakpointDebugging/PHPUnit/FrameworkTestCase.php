@@ -531,7 +531,8 @@ abstract class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Fr
             // "@expectedExceptionMessage" annotation should be success.
             try {
                 $expectedExceptionMessage = $this->expectedExceptionMessage;
-                if (is_string($expectedExceptionMessage) && !empty($expectedExceptionMessage)
+                if (is_string($expectedExceptionMessage) //
+                    && !empty($expectedExceptionMessage) //
                 ) {
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionMessage($expectedExceptionMessage));
                 }
