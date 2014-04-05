@@ -25,16 +25,9 @@ The dependences
 Change log
 ----------
 
-* I supported "PHP5.4".
-* I added the file search detection rule 3 for unit test.
-* I added check of super global variable filter setting.
+* I checked through "$userName" and Apache's user name inside "./PEAR_Setting/BreakpointDebugging_MySetting.php".
+* I repaired "BreakpointDebugging_MySQLi" package for execution on Linux.
 * I improved the file level document of "BreakpointDebugging_InDebug.php" file.
-* I changed package name from "BreakpointDebugging_PHPUnitStepExecution" to "BreakpointDebugging_PHPUnit".
-* I changed class name from "BreakpointDebugging_PHPUnitStepExecution" to "BreakpointDebugging_PHPUnit".
-* I changed class name from "BreakpointDebugging_PHPUnitStepExecution_PHPUnitFrameworkTestCase" to "BreakpointDebugging_PHPUnit_FrameworkTestCase".
-* I changed class name from "BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilFilesystem" to "BreakpointDebugging_PHPUnit_UtilFilesystem".
-* I changed class name from "BreakpointDebugging_PHPUnitStepExecution_PHPUnitUtilGlobalState" to "BreakpointDebugging_PHPUnit_UtilGlobalState".
-* I changed class name from "BreakpointDebugging_PHPUnitStepExecution_DisplayCodeCoverageReport" to "BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport".
 
 Notice
 ------
