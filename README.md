@@ -25,9 +25,9 @@ The dependences
 Change log
 ----------
 
-* I checked through "$userName" and Apache's user name inside "./PEAR_Setting/BreakpointDebugging_MySetting.php".
-* I repaired "BreakpointDebugging_MySQLi" package for execution on Linux.
-* I improved the file level document of "BreakpointDebugging_InDebug.php" file.
+* I checked through "$userName" and Apache's user name inside "./PEAR_Setting/BreakpointDebugging_MySetting.php" in case of Linux.
+* I repaired tag which was disabled in HTML5 for error display.
+* I changed "my.ini" and "my.cnf" setting description.
 
 Notice
 ------
