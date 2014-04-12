@@ -25,9 +25,8 @@ The dependences
 Change log
 ----------
 
-* I checked through "$userName" and Apache's user name inside "./PEAR_Setting/BreakpointDebugging_MySetting.php" in case of Linux.
-* I repaired tag which was disabled in HTML5 for error display.
-* I changed "my.ini" and "my.cnf" setting description.
+* I repaired user name and PHP version check.
+* I improved production server performance by display which comment out "\BreakpointDebugging::iniSet()" and "\BreakpointDebugging::iniCheck()" in case of remote-release-mode.
 
 Notice
 ------
