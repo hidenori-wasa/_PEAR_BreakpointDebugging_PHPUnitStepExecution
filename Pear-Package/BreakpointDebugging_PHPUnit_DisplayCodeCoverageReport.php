@@ -8,7 +8,7 @@
  * by embedding its content
  * if cascading style sheet file path exists in code coverage report file.
  *
- * PHP version 5.3.x, 5.4.x
+ * PHP version 5.3.2-5.4.x
  *
  * LICENSE OVERVIEW:
  * 1. Do not change license text.
@@ -43,7 +43,8 @@
  * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
- * @link     http://pear.php.net/package/BreakpointDebugging
+ * @version  Release: @package_version@
+ * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
  */
 require_once './BreakpointDebugging_Inclusion.php';
 
@@ -62,7 +63,7 @@ B::limitAccess('BreakpointDebugging_PHPUnit.php');
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
  * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
  * @version  Release: @package_version@
- * @link     http://pear.php.net/package/BreakpointDebugging
+ * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
  * @codeCoverageIgnore
  * Because "phpunit" command cannot run during "phpunit" command running.
  */
