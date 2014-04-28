@@ -250,7 +250,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
                 if (strpos($methodReflection->name, 'test') !== 0) {
                     continue;
                 }
-                self::$_phpUnit->displayProgress(300);
+                self::$_phpUnit->displayProgress(5);
                 // Start output buffering.
                 ob_start();
                 // Clean up stat cache.

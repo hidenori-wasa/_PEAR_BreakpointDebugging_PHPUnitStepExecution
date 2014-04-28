@@ -170,7 +170,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
      */
     public function runBare()
     {
-        self::$_phpUnit->displayProgress(300);
+        self::$_phpUnit->displayProgress(5);
 
         $this->numAssertions = 0;
 

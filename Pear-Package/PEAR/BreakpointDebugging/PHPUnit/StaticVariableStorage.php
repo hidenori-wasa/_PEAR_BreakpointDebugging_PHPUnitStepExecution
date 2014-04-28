@@ -216,7 +216,10 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
 
         // Excepts unit test classes.
         if (self::_isUnitTestClass($className)) {
-            B::loadClass($className);
+            $exception = B::loadClass($className);
+            if ($exception) {
+                throw $exception;
+            }
             return;
         }
 
@@ -239,9 +242,12 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 self::restoreProperties(self::$_staticProperties);
             }
             $nestLevel = 1;
-            B::loadClass($className);
+            $exception = B::loadClass($className);
             // If class file has been loaded completely including dependency files.
             $nestLevel = 0;
+            if ($exception) {
+                throw $exception;
+            }
             // Checks deletion and change violation of global variables and global variable references during autoload.
             self::checkGlobals(self::$_globalRefs, self::$_globals);
             // Checks the change violation of static properties and static property child element references.
@@ -258,8 +264,11 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             }
         } else { // In case of auto load inside auto load.
             $nestLevel++;
-            B::loadClass($className);
+            $exception = B::loadClass($className);
             $nestLevel--;
+            if ($exception) {
+                throw $exception;
+            }
         }
     }
 
@@ -294,7 +303,9 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
 
         // Stores new variable by autoload or initialization.
         foreach ($variables as $key => &$value) {
-            if (in_array($key, $blacklist) || array_key_exists($key, $variablesStorage) || $value instanceof Closure
+            if (in_array($key, $blacklist) //
+                || array_key_exists($key, $variablesStorage) //
+                || $value instanceof Closure //
             ) {
                 continue;
             }
@@ -485,8 +496,9 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     {
         set_error_handler('\BreakpointDebugging::handleError', 0);
         // Excepts unit test classes.
-        if (preg_match('`^ BreakpointDebugging_PHPUnit_StaticVariableStorage | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xXi', $declaredClassName) === 1 || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test')) {
-            // if (preg_match('`^ BreakpointDebugging_PHPUnit_StaticVariableStorage | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken))))) | File_Iterator | sfYaml | Text_Template )`xXi', $declaredClassName) === 1 || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test')) {
+        if (preg_match('`^ BreakpointDebugging_PHPUnit_StaticVariableStorage | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xXi', $declaredClassName) === 1 //
+            || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
+        ) {
             restore_error_handler();
             return true;
         }
@@ -552,7 +564,8 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 if ($property->class === $declaredClassName) {
                     $propertyName = $property->name;
                     // If static property does not exist in black list (PHPUnit_Framework_TestCase::$backupStaticAttributesBlacklist).
-                    if (!isset($blacklist[$declaredClassName]) || !in_array($propertyName, $blacklist[$declaredClassName])
+                    if (!isset($blacklist[$declaredClassName]) //
+                        || !in_array($propertyName, $blacklist[$declaredClassName]) //
                     ) {
                         $property->setAccessible(true);
                         $propertyValue = $property->getValue();
@@ -578,9 +591,9 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     /**
      * Stores static properties.
      *
-     * @param array &$staticProperties                 Static properties storage.
-     * @param array $blacklist                         The list to except from static properties storage.
-     * @param bool  $isSnapshot                        Is this snapshot?
+     * @param array &$staticProperties Static properties storage.
+     * @param array $blacklist         The list to except from static properties storage.
+     * @param bool  $isSnapshot        Is this snapshot?
      *
      * @return void
      */
@@ -621,7 +634,8 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 if ($property->class === $declaredClassName) {
                     $propertyName = $property->name;
                     // If static property does not exist in black list (PHPUnit_Framework_TestCase::$backupStaticAttributesBlacklist).
-                    if (!isset($blacklist[$declaredClassName]) || !in_array($propertyName, $blacklist[$declaredClassName])
+                    if (!isset($blacklist[$declaredClassName]) //
+                        || !in_array($propertyName, $blacklist[$declaredClassName]) //
                     ) {
                         $property->setAccessible(TRUE);
                         $propertyValue = $property->getValue();

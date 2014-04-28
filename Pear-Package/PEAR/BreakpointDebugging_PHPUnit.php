@@ -23,36 +23,17 @@
  *
  * ### Running procedure. ###
  * Please, run the following procedure.
- * Procedure 1: Make page like "@Example page which runs unit test files (*Test.php)" and pages like "@Example page of unit test file (*Test.php)".
- * Procedure 2: Run page like "example page which runs unit tests" with IDE.
+ * Procedure 1: Make page like "@example top page" and pages like "@example page of unit test file (*Test.php)".
+ * Procedure 2: Run page like "@example top page" with IDE.
  * Option Procedure: Copy from "PEAR/BreakpointDebugging/" directory and "PEAR/BreakpointDebugging_*.php" files to the project directory of remote server if you want remote unit test.
  *
- * @Example page which runs unit test files (*Test.php).
- *  <?php
+ * @example top page.
+ *      @see "$this->executeUnitTest()".
+ *      @see "$this->executeUnitTestSimple()".
+ *      @see "$this->displayCodeCoverageReport()".
+ *      @see "$this->displayCodeCoverageReportSimple()".
  *
- *  chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
- *  unset($matches);
- *
- *  require_once './BreakpointDebugging_Inclusion.php';
- *
- *  use \BreakpointDebugging as B;
- *  use \BreakpointDebugging_PHPUnit as BU;
- *
- *  B::checkExeMode(true);
- *
- *  // Please, choose unit tests files by customizing.
- *  $unitTestFilePaths = array (
- *      'SomethingTest.php',
- *      'Something/SubTest.php',
- *  );
- *
- *  // Executes unit tests.
- *  $breakpointDebuggingPHPUnit = new \BreakpointDebugging_PHPUnit();
- *  $breakpointDebuggingPHPUnit->executeUnitTest($unitTestFilePaths); // Or, "$breakpointDebuggingPHPUnit->executeUnitTestSimple($unitTestFilePaths);"
- *
- *  ?>
- *
- * @Example page of unit test file (*Test.php).
+ * @example page of unit test file (*Test.php). For "$this->executeUnitTest()" or "$this->displayCodeCoverageReport()".
  *  <?php
  *
  *  use \BreakpointDebugging as B;
@@ -218,10 +199,10 @@
  *
  * The rule 1: We must overwrite "null" to variable if we call "__destruct()" on the way in all code.
  *      Because server calls "__destruct()" even though reference storage exists.
- *      @Example: $this->_pTestObject = null;
+ *      @example: $this->_pTestObject = null;
  * The rule 2: We must construct test instance inside "setUp()".
  *      Because we must initialize value and reference of auto properties (auto class method's local static variable and auto property).
- *      @Example:
+ *      @example:
  *          protected function setUp()
  *          {
  *              // This is required at top.
@@ -233,7 +214,7 @@
  *
  * The file search detection rule 1: We must use property array element reference instead of property reference in all code.
  *      Because server cannot get property reference by reflection in "PHP version 5.3.0".
- *      @Example of rule violation:
+ *      @example of rule violation:
  *          ::$something = &
  *          or recursive array ::$something = array (&
  *      Instead:
@@ -248,7 +229,7 @@
  *          Those is same about "$this".
  * The file search detection rule 2: We must not code except "tab and space" behind "@codeCoverageIgnore".
  *      Because of parsing to except '@codeCoverageIgnore' and "@codeCoverageIgnore" of code coverage report.
- *      @Example of rule violation:
+ *      @example of rule violation:
  *          @codeCoverageIgnore A sentence.
  *      Instead:
  *          @codeCoverageIgnore
@@ -261,13 +242,6 @@
  *          filter_input[\t\x20\r\n]*\(
  *          filter_input_array[\t\x20\r\n]*\(
  *
- * //Autodetecting rule 1: Follow autoload rule of PEAR in all codes
- * //     because this package uses special autoload class method.
- * //     @Example of class:
- * //         namespace YourName;
- * //         class Example_Class {
- * //     @Example of file name of class above:
- * //         ProjectDir/YourName/Example/Class.php
  * Autodetecting rule 2: We must not delete or change static status by the autoload
  *      because autoload is executed only once per file.
  * Autodetecting rule 3: We must use private static property instead of use local static variable in static class method
@@ -279,12 +253,12 @@
  *      So, global variables or static properties is restored with initial value before "setUp()".
  * Autodetecting rule 6: We must not register autoload function at top of stack by "spl_autoload_register()" in all code
  *      because server stores static status by autoload function.
- *      @Example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
+ *      @example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
  * Autodetecting rule 7: We must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
  *      Because we cannot debug unit test code with IDE.
  *
  * Recommendation rule 1: We should destruct a test instance per test in "tearDown()" because it cuts down on production server memory use.
- *      @Example:
+ *      @example:
  *          protected function tearDown()
  *          {
  *              // Destructs the test instance.
@@ -301,6 +275,7 @@
  *          \BreakpointDebugging_PHPUnit::$exeMode
  *          \BreakpointDebugging_PHPUnit::getPropertyForTest()
  *          \BreakpointDebugging_PHPUnit::setPropertyForTest()
+ *          \BreakpointDebugging_PHPUnit::assertExceptionMessage()
  *          parent::markTestSkippedInDebug()
  *          parent::markTestSkippedInRelease()
  *          parent::assertTrue()
@@ -311,7 +286,7 @@
  * How to run multiprocess unit test:
  *      Procedure 1: Use "popen()" inside your unit test class method "test...()".
  *      Procedure 2: Judge by using "parent::assertTrue(<conditional expression>)".
- *      @See "\tests_PEAR_BreakpointDebugging_MultiprocessTest_Main::test()".
+ *      @see "\tests_PEAR_BreakpointDebugging_MultiprocessTest_Main::test()".
  *
  * PHP version 5.3.2-5.4.x
  *
@@ -494,6 +469,7 @@ class BreakpointDebugging_PHPUnit
      * Limits static properties accessing of class.
      *
      * @return void
+     *
      * @codeCoverageIgnore
      * Because this is code for unit test.
      */
@@ -573,6 +549,7 @@ EOD;
      * @param object $pException Exception information.
      *
      * @return void
+     *
      * @codeCoverageIgnore
      * Because unit test is exited.
      */
@@ -591,9 +568,9 @@ EOD;
             B::iniSet('xdebug.var_display_max_depth', '5', false);
             ob_start();
             var_dump($pException);
-
-            B::windowHtmlAddition($this->_unitTestWindowName, 'pre', 0, ob_get_clean());
-            B::exitForError();
+            B::windowVirtualOpen(B::ERROR_WINDOW_NAME, ob_get_clean());
+            B::windowFront(B::ERROR_WINDOW_NAME);
+            exit;
         }
     }
 
@@ -603,6 +580,7 @@ EOD;
      * @param object $pException Exception information.
      *
      * @return void
+     *
      * @codeCoverageIgnore
      * Because this is code for unit test.
      */
@@ -703,9 +681,7 @@ EOD;
             B::assert($result);
         } else {
             // Restores global variables.
-            $globalRefs = BSS::refGlobalRefs();
-            $globals = BSS::refGlobals();
-            BSS::restoreGlobals($globalRefs, $globals);
+            BSS::restoreGlobals(BSS::refGlobalRefs(), BSS::refGlobals());
             // Restores static properties.
             BSS::restoreProperties(BSS::refStaticProperties2());
         }
@@ -723,9 +699,6 @@ EOD;
      * @param string $testFilePath A test file path.
      *
      * @return void
-     *
-     * @codeCoverageIgnore
-     * Because "phpunit" command cannot run during "phpunit" command running.
      */
     private function _runPHPUnitCommandSimple($testFilePath)
     {
@@ -778,6 +751,7 @@ EOD;
      * @param int $dy Y vector distance.
      *
      * @return void
+     *
      * @codeCoverageIgnore
      * Because this is code for unit test.
      */
@@ -815,6 +789,7 @@ EOD;
      * Deletes code coverage report.
      *
      * @return string Code coverage report path.
+     *
      * @codeCoverageIgnore
      * Because this is code for unit test.
      */
@@ -840,6 +815,22 @@ EOD;
     }
 
     //////////////////////////////////////// For package user ////////////////////////////////////////
+    /**
+     * Asserts exception message.
+     *
+     * @param object $exception Exception object.
+     * @param string $message   Message to compare.
+     */
+    static function assertExceptionMessage($exception, $message)
+    {
+        B::assert($exception instanceof \Exception);
+        B::assert(is_string($message));
+
+        if (strpos($exception->getMessage(), $message) === false) {
+            B::exitForError($exception->getMessage()); // Displays error call stack information.
+        }
+    }
+
     /**
      * Gets property for test.
      *
@@ -938,23 +929,6 @@ EOD;
      *
      * @return void
      *
-     * @example
-     *      <?php
-     *
-     *      $projectDirPath = str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2);
-     *      chdir(__DIR__ . '/' . $projectDirPath);
-     *      require_once './BreakpointDebugging_Inclusion.php';
-     *
-     *      use \BreakpointDebugging as B;
-     *
-     *      B::checkExeMode(true);
-     *
-     *      class SomethingTest extends \BreakpointDebugging_PHPUnit_FrameworkTestCase
-     *      {
-     *          .
-     *          .
-     *          .
-     *
      * @codeCoverageIgnore
      * Because this exits.
      */
@@ -1011,6 +985,28 @@ EOD;
      * @param bool   $phpUnitUse          Does it use "PHPUnit" package?
      *
      * @return void
+     *
+     * @example top page.
+     *      <?php
+     *
+     *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
+     *      unset($matches);
+     *
+     *      require_once './BreakpointDebugging_Inclusion.php';
+     *
+     *      B::checkExeMode(true);
+     *
+     *      // Please, choose unit tests files by customizing.
+     *      $unitTestFilePaths = array (
+     *          'SomethingTest.php',
+     *          'Something/SubTest.php',
+     *      );
+     *
+     *      // Executes unit tests.
+     *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
+     *      $breakpointDebugging_PHPUnit->executeUnitTest($unitTestFilePaths); exit;
+     *
+     *      ?>
      *
      * @codeCoverageIgnore
      * Because "phpunit" command cannot run during "phpunit" command running.
@@ -1095,6 +1091,28 @@ EOD;
      * @param array  $testFilePaths       The file paths of unit tests.
      *
      * @return void
+     *
+     * @example top page.
+     *      <?php
+     *
+     *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
+     *      unset($matches);
+     *
+     *      require_once './BreakpointDebugging_Inclusion.php';
+     *
+     *      B::checkExeMode(true);
+     *
+     *      // Please, choose unit tests files by customizing.
+     *      $unitTestFilePaths = array (
+     *          'SomethingTest.php',
+     *          'Something/SubTest.php',
+     *      );
+     *
+     *      // Executes unit tests.
+     *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
+     *      $breakpointDebugging_PHPUnit->executeUnitTestSimple($unitTestFilePaths); exit;
+     *
+     *      ?>
      */
     function executeUnitTestSimple($testFilePaths)
     {
@@ -1107,27 +1125,29 @@ EOD;
      * @param string $testFilePath        Relative path of unit test file.
      * @param mixed  $classFilePaths      It is relative path of class which see the code coverage, and its current directory must be project directory.
      * @param string $commandLineSwitches Command-line-switches except "--static-backup --coverage-html".
-     * @param bool   $phpUnitUse          Does it use "PHPUnit" package?
      *
      * @return void
-     * @example
+     *
+     * @example top page.
      *      <?php
      *
-     *      $projectDirPath = str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2);
-     *      chdir(__DIR__ . '/' . $projectDirPath);
+     *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
+     *      unset($matches);
+     *
      *      require_once './BreakpointDebugging_Inclusion.php';
      *
+     *      B::checkExeMode(true);
      *      // Makes up code coverage report, then displays in browser.
-     *      $breakpointDebuggingPHPUnit = new \BreakpointDebugging_PHPUnit();
-     *      $breakpointDebuggingPHPUnit->displayCodeCoverageReport('BreakpointDebugging-InAllCaseTest.php', 'PEAR/BreakpointDebugging.php');
-     *      $breakpointDebuggingPHPUnit->displayCodeCoverageReport('BreakpointDebugging/LockByFileExistingTest.php', array ('PEAR/BreakpointDebugging/Lock.php', 'PEAR/BreakpointDebugging/LockByFileExisting.php'));
-     *          .
-     *          .
-     *          .
+     *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
+     *      $breakpointDebugging_PHPUnit->displayCodeCoverageReport('BreakpointDebugging-InAllCaseTest.php', 'PEAR/BreakpointDebugging.php'); exit;
+     *      // Or, "$breakpointDebugging_PHPUnit->displayCodeCoverageReport('BreakpointDebugging/LockByFileExistingTest.php', array ('PEAR/BreakpointDebugging/Lock.php', 'PEAR/BreakpointDebugging/LockByFileExisting.php')); exit;"
+     *
+     *      ?>
+     *
      * @codeCoverageIgnore
      * Because "phpunit" command cannot run during "phpunit" command running.
      */
-    function displayCodeCoverageReport($testFilePath, $classFilePaths, $commandLineSwitches = '', $phpUnitUse = true)
+    function displayCodeCoverageReport($testFilePath, $classFilePaths, $commandLineSwitches = '')
     {
         if (!B::checkDevelopmentSecurity()) {
             exit;
@@ -1136,7 +1156,6 @@ EOD;
         B::assert(func_num_args() <= 4);
         B::assert(is_string($testFilePath));
         B::assert(is_string($classFilePaths) || is_array($classFilePaths));
-        B::assert(is_bool($phpUnitUse));
 
         if (!extension_loaded('xdebug')) {
             B::exitForError('"\BreakpointDebugging_PHPUnit::displayCodeCoverageReport()" needs "xdebug" extention.');
@@ -1144,17 +1163,12 @@ EOD;
 
         $this->_prepareUnitTest();
 
-        if ($phpUnitUse) {
-            // Deletes code coverage report.
-            $codeCoverageReportPath = self::deleteCodeCoverageReport();
-            $this->_getUnitTestDir();
-            // Creates code coverage report.
-            $displayErrorsStorage = ini_get('display_errors');
-            ini_set('display_errors', '');
-        } else {
-            B::iniSet('xdebug.coverage_enable', 1);
-            // B::iniCheck('xdebug.coverage_enable', 1, '');
-        }
+        // Deletes code coverage report.
+        $codeCoverageReportPath = self::deleteCodeCoverageReport();
+        $this->_getUnitTestDir();
+        // Creates code coverage report.
+        $displayErrorsStorage = ini_get('display_errors');
+        ini_set('display_errors', '');
 
         B::windowVirtualOpen($this->_unitTestWindowName, $this->getHtmlFileContent());
         ob_start();
@@ -1165,33 +1179,22 @@ EOD;
             echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
         }
 
-        if ($phpUnitUse) {
-            $this->_runPHPUnitCommand($commandLineSwitches . ' --static-backup --coverage-html ' . $codeCoverageReportPath . ' ' . $testFilePath);
-        } else {
-            xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
-            $this->_runPHPUnitCommandSimple($testFilePath);
-            $codeCoverages = xdebug_get_code_coverage();
-            xdebug_stop_code_coverage();
-        }
+        $this->_runPHPUnitCommand($commandLineSwitches . ' --static-backup --coverage-html ' . $codeCoverageReportPath . ' ' . $testFilePath);
 
         B::windowHtmlAddition($this->_unitTestWindowName, 'pre', 0, ob_get_clean());
 
-        if ($phpUnitUse) {
-            ini_set('display_errors', $displayErrorsStorage);
-            // Displays the code coverage report in browser.
-            $documentRoot = $_SERVER['DOCUMENT_ROOT'];
-            $dir = str_replace('\\', '/', __DIR__);
-            if (preg_match("`^$documentRoot`xX", $dir) === 0) {
-                foreach ($classFilePaths as &$classFilePath) {
-                    $classFilePath = 'php/' . $classFilePath;
-                }
+        ini_set('display_errors', $displayErrorsStorage);
+        // Displays the code coverage report in browser.
+        $documentRoot = $_SERVER['DOCUMENT_ROOT'];
+        $dir = str_replace('\\', '/', __DIR__);
+        if (preg_match("`^$documentRoot`xX", $dir) === 0) {
+            foreach ($classFilePaths as &$classFilePath) {
+                $classFilePath = 'php/' . $classFilePath;
             }
-            self::$_classFilePaths = $classFilePaths;
-            self::$_codeCoverageReportPath = $codeCoverageReportPath;
-            include_once './BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport.php';
-        } else {
-            var_dump($classFilePaths, $codeCoverages); // For debug.
         }
+        self::$_classFilePaths = $classFilePaths;
+        self::$_codeCoverageReportPath = $codeCoverageReportPath;
+        include_once './BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport.php';
     }
 
     /**
@@ -1201,6 +1204,22 @@ EOD;
      * @param type $classFilePath  It is relative path of class which see the code coverage, and its current directory must be project directory.
      *
      * @return void
+     *
+     * @example top page.
+     *      <?php
+     *
+     *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
+     *      unset($matches);
+     *
+     *      require_once './BreakpointDebugging_Inclusion.php';
+     *
+     *      B::checkExeMode(true);
+     *      // Makes up code coverage report, then displays in browser.
+     *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
+     *      $breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple('SomethingTest.php', 'Something.php'); exit;
+     *      // Or, "$breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple(array ('Something1Test.php', 'Something2Test.php'), 'Something.php'); exit;"
+     *
+     *      ?>
      */
     function displayCodeCoverageReportSimple($testFilePaths, $classFilePath)
     {

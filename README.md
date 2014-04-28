@@ -25,12 +25,9 @@ The dependences
 Change log
 ----------
 
-* I added execution mode procedure description inside of "BreakpointDebugging_InDebug.php" file.
-* I changed autoload class method name from "autoload" to "loadClass".
-* I customized "\BreakpointDebugging_PHPUnit" static class to auto class for "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple" class.
-* I changed "\BreakpointDebugging_PHPUnit_GlobalState" class name to "\BreakpointDebugging_PHPUnit_StaticVariableStorage" class name, and I changed its license because its class does not use "PHPUnit" package code.
-* I created unit test feature without "PHPUnit" package by "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple" class.
-* I have been developing code coverage report feature without "PHPUnit" package by "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple" class.
+* I repaired "\BreakpointDebugging_InAllCase::loadClass()" and "\BreakpointDebugging_PHPUnit_StaticVariableStorage::loadClass()" class methods.
+* I repaired "Example2Test.php" and "BreakpointDebugging-PHPUnitTest.php" file.
+* I improved "@example" of "BreakpointDebugging_PHPUnit.php" file document.
 
 Notice
 ------
