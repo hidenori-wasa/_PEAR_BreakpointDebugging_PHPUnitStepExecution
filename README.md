@@ -25,9 +25,8 @@ The dependences
 Change log
 ----------
 
-* I repaired "\BreakpointDebugging_InAllCase::loadClass()" and "\BreakpointDebugging_PHPUnit_StaticVariableStorage::loadClass()" class methods.
-* I repaired "Example2Test.php" and "BreakpointDebugging-PHPUnitTest.php" file.
-* I improved "@example" of "BreakpointDebugging_PHPUnit.php" file document.
+* I repaired "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple::runTestMethods()" to split up instance per test class method.
+* I added "Autodetecting rule 1" inside "BreakpointDebugging_PHPUnit.php" file level document.
 
 Notice
 ------

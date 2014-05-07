@@ -9,7 +9,7 @@
  * ### How to develop by this package. ###
  * Procedure 1: Create or change a class method.
  *      Then, write unfinished meaning code into its class method.
- *      @Example: \BreakpointDebugging::registerNotFixedLocation(self::$_isRegister[__METHOD__]);
+ *      Example: \BreakpointDebugging::registerNotFixedLocation(self::$_isRegister[__METHOD__]);
  * Procedure 2: Create or change its unit test.
  * Procedure 3: Do breakpoint debugging by execution of its unit test because as for code with many bugs, this way is earlier.
  * Procedure 4: Please, execute the following procedure.
@@ -23,186 +23,31 @@
  *
  * ### Running procedure. ###
  * Please, run the following procedure.
- * Procedure 1: Make page like "@example top page" and pages like "@example page of unit test file (*Test.php)".
- * Procedure 2: Run page like "@example top page" with IDE.
+ * Procedure 1: Make page like "Example top page:" and pages like "Example page of unit test file (*Test.php, *TestSimple.php):".
+ * Procedure 2: Run page like "Example top page:" with IDE.
  * Option Procedure: Copy from "PEAR/BreakpointDebugging/" directory and "PEAR/BreakpointDebugging_*.php" files to the project directory of remote server if you want remote unit test.
  *
- * @example top page.
- *      @see "$this->executeUnitTest()".
- *      @see "$this->executeUnitTestSimple()".
- *      @see "$this->displayCodeCoverageReport()".
- *      @see "$this->displayCodeCoverageReportSimple()".
+ * Example top page:
+ *      @see BreakpointDebugging_PHPUnit::executeUnitTest()
+ *      @see BreakpointDebugging_PHPUnit::executeUnitTestSimple()
+ *      @see BreakpointDebugging_PHPUnit::displayCodeCoverageReport()
+ *      @see BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()
  *
- * @example page of unit test file (*Test.php). For "$this->executeUnitTest()" or "$this->displayCodeCoverageReport()".
- *  <?php
- *
- *  use \BreakpointDebugging as B;
- *  use \BreakpointDebugging_PHPUnit as BU;
- *
- *  function localStaticVariable()
- *  {
- *      // static $localStatic = 'Local static value.'; // We must not define local static variable of function. (Autodetects)
- *  }
- *
- *  class LocalStaticVariableOfStaticMethod
- *  {
- *      static $staticProperty = 'Initial value.'; // We can define static property here.
- *
- *      static function localStaticVariable()
- *      {
- *          // static $localStatic = 'Local static value.'; // We must not define local static variable of static class method. (Autodetects)
- *      }
- *
- *      function localStaticVariableOfInstance()
- *      {
- *          static $localStatic = 'Local static value.'; // We can define local static variable of auto class method.
- *      }
- *
- *  }
- *
- *  // global $something;
- *  // $something = 'Defines global variable.'; // We must not define global variable here. (Autodetects)
- *  //
- *  // $_FILES = 'Changes the value.'; // We must not change global variable and property here. (Autodetects)
- *  //
- *  // $_FILES = &$bugReference; // We must not overwrite global variable and property with reference here. (Autodetects)
- *  // unset($bugReference);
- *  //
- *  // unset($_FILES); // We must not delete global variable here. (Autodetects)
- *  //
- *  // spl_autoload_register('\ExampleTest::loadClass', true, true); // We must not register "loadClass" function at top of stack by "spl_autoload_register()". (Autodetects)
- *  //
- *  // include_once __DIR__ . '/AFile.php'; // We must not include a file because "loadClass" is only once per file. (Autodetects)
- *  class ExampleTest extends \BreakpointDebugging_PHPUnit_FrameworkTestCase // Or, "class ExampleTest extends \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple"
- *  {
- *      private $_pTestObject;
- *
- *      static function loadClass($className)
- *      {
- *
- *      }
- *
- *      static function setUpBeforeClass()
- *      {
- *          // global $something;
- *          // $something = 'Defines global variable.'; // We must not define global variable here. (Autodetects)
- *          //
- *          // $_FILES = 'Changes the value.'; // We must not change global variable and property here. (Autodetects)
- *          //
- *          // $_FILES = &$bugReference; // We must not overwrite global variable and property with reference here. (Autodetects)
- *          //
- *          // unset($_FILES); // We must not delete global variable here. (Autodetects)
- *          //
- *          // spl_autoload_register('\ExampleTest::loadClass', true, true); // We must not register "loadClass" function at top of stack by "spl_autoload_register()". (Autodetects)
- *          //
- *          // include_once __DIR__ . '/AFile.php'; // We must not include a file because "loadClass" is only once per file. (Autodetects)
- *      }
- *
- *      static function tearDownAfterClass()
- *      {
- *
- *      }
- *
- *      protected function setUp()
- *      {
- *          // This is required at top.
- *          parent::setUp();
- *
- *          // We must construct the test instance here.
- *          $this->_pTestObject = &BreakpointDebugging_LockByFlock::singleton();
- *
- *          global $something;
- *          $something = 'Defines global variable 2.'; // We can define global variable here.
- *
- *          $_FILES = 'Changes the value 2.'; // We can change global variable and property here.
- *
- *          $_FILES = &$aReference2; // We can overwrite global variable except property with reference here.
- *
- *          unset($_FILES); // We can delete global variable here.
- *          //
- *          // spl_autoload_register('\ExampleTest::loadClass', true, true); // We must not register "loadClass" function at top of stack by "spl_autoload_register()". (Autodetects)
- *          //
- *          // include_once __DIR__ . '/AFile.php'; // We must not include a file because "loadClass" is only once per file. (Cannot detect!)
- *      }
- *
- *      protected function tearDown()
- *      {
- *          // spl_autoload_register('\ExampleTest::loadClass', true, true); // We must not register "loadClass" function at top of stack by "spl_autoload_register()". (Autodetects)
- *          //
- *          // Destructs the test instance to reduce memory use.
- *          $this->_pTestObject = null;
- *
- *          // This is required at bottom.
- *          parent::tearDown();
- *      }
- *
- *      function isCalled()
- *      {
- *          throw new \BreakpointDebugging_ErrorException('Something message.', 101); // This is reflected in "@expectedException" and "@expectedExceptionMessage".
- *      }
- *
- *      /**
- *       * @covers \Example<extended>
- *       *
- *       * @expectedException        \BreakpointDebugging_ErrorException
- *       * @expectedExceptionMessage CLASS=ExampleTest FUNCTION=isCalled ID=101.
- *       * /
- *      public function testSomething_A()
- *      {
- *          global $something;
- *          $something = 'Defines global variable 3.'; // We can define global variable here.
- *
- *          $_FILES = 'Changes the value 3.'; // We can change global variable and property here.
- *
- *          $_FILES = &$aReference3; // We can overwrite global variable except property with reference here.
- *
- *          unset($_FILES); // We can delete global variable here.
- *          //
- *          // spl_autoload_register('\ExampleTest::loadClass', true, true); // We must not register "loadClass" function at top of stack by "spl_autoload_register()". (Autodetects)
- *          //
- *          // include_once __DIR__ . '/AFile.php'; // We must not include a file because "loadClass" is only once per file. (Cannot detect!)
- *
- *          parent::markTestSkippedInDebug();
- *
- *          // Destructs the instance.
- *          $this->_pTestObject = null;
- *
- *          BU::$exeMode |= B::IGNORING_BREAK_POINT;
- *          $this->isCalled();
- *      }
- *
- *      /**
- *       * @covers \Example<extended>
- *       * /
- *      public function testSomething_B()
- *      {
- *          parent::markTestSkippedInRelease();
- *
- *          // How to use "try-catch" syntax instead of "@expectedException" and "@expectedExceptionMessage".
- *          // This way can test an error after static status was changed.
- *          try {
- *              B::assert(true, 101);
- *              B::assert(false, 102);
- *          } catch (\BreakpointDebugging_ErrorException $e) {
- *              parent::assertTrue(preg_match('`CLASS=ExampleTest FUNCTION=testSomething_B ID=102\.$`X', $e->getMessage()) === 1);
- *              return;
- *          }
- *          $this->fail();
- *      }
- *
- *  }
- *
- *  ?>
+ * Example page of unit test file (*Test.php, *TestSimple.php):
+ *      For "BreakpointDebugging_PHPUnit::executeUnitTest()" or "BreakpointDebugging_PHPUnit::displayCodeCoverageReport()".
+ *          @see tests/PEAR/ExampleTest.php
+ *      For "BreakpointDebugging_PHPUnit::executeUnitTestSimple()" or "BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()".
+ *          @see tests/PEAR/ExampleTestSimple.php
  *
  * ### Coding rule. ###
  * Please, follow rule, then, we can use unit test's "--static-backup" command line switch for execution with IDE.
  *
  * The rule 1: We must overwrite "null" to variable if we call "__destruct()" on the way in all code.
  *      Because server calls "__destruct()" even though reference storage exists.
- *      @example: $this->_pTestObject = null;
+ *      Example: $this->_pTestObject = null;
  * The rule 2: We must construct test instance inside "setUp()".
  *      Because we must initialize value and reference of auto properties (auto class method's local static variable and auto property).
- *      @example:
+ *      Example:
  *          protected function setUp()
  *          {
  *              // This is required at top.
@@ -214,7 +59,7 @@
  *
  * The file search detection rule 1: We must use property array element reference instead of property reference in all code.
  *      Because server cannot get property reference by reflection in "PHP version 5.3.0".
- *      @example of rule violation:
+ *      Example of rule violation:
  *          ::$something = &
  *          or recursive array ::$something = array (&
  *      Instead:
@@ -229,7 +74,7 @@
  *          Those is same about "$this".
  * The file search detection rule 2: We must not code except "tab and space" behind "@codeCoverageIgnore".
  *      Because of parsing to except '@codeCoverageIgnore' and "@codeCoverageIgnore" of code coverage report.
- *      @example of rule violation:
+ *      Example of rule violation:
  *          @codeCoverageIgnore A sentence.
  *      Instead:
  *          @codeCoverageIgnore
@@ -242,6 +87,9 @@
  *          filter_input[\t\x20\r\n]*\(
  *          filter_input_array[\t\x20\r\n]*\(
  *
+ * Autodetecting rule 1: Unit test file name of "PHPUnit" package should be "*Test.php".
+ *      And, simple unit test file name must be "*TestSimple.php"
+ *      because "PHPUnit" package searches "*Test.php" file.
  * Autodetecting rule 2: We must not delete or change static status by the autoload
  *      because autoload is executed only once per file.
  * Autodetecting rule 3: We must use private static property instead of use local static variable in static class method
@@ -253,12 +101,12 @@
  *      So, global variables or static properties is restored with initial value before "setUp()".
  * Autodetecting rule 6: We must not register autoload function at top of stack by "spl_autoload_register()" in all code
  *      because server stores static status by autoload function.
- *      @example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
+ *      Example: spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
  * Autodetecting rule 7: We must not use unit test's "--process-isolation" command line switch because its tests is run in other process.
  *      Because we cannot debug unit test code with IDE.
  *
  * Recommendation rule 1: We should destruct a test instance per test in "tearDown()" because it cuts down on production server memory use.
- *      @example:
+ *      Example:
  *          protected function tearDown()
  *          {
  *              // Destructs the test instance.
@@ -286,7 +134,7 @@
  * How to run multiprocess unit test:
  *      Procedure 1: Use "popen()" inside your unit test class method "test...()".
  *      Procedure 2: Judge by using "parent::assertTrue(<conditional expression>)".
- *      @see "\tests_PEAR_BreakpointDebugging_MultiprocessTest_Main::test()".
+ *      @see tests_PEAR_BreakpointDebugging_MultiprocessTest_Main::test()
  *
  * PHP version 5.3.2-5.4.x
  *
@@ -674,8 +522,8 @@ EOD;
             // Stores static properties.
             $staticProperties = &BSS::refStaticProperties2();
             BSS::storeProperties($staticProperties, array ());
-            // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php), "setUpBeforeClass()" and "setUp()".
-            // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php), "setUpBeforeClass()" and "setUp()".
+            // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
+            // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to store initial value of global variables and static properties.
             $result = spl_autoload_register('\BreakpointDebugging_PHPUnit_StaticVariableStorage::loadClass', true, true);
             B::assert($result);
@@ -716,8 +564,8 @@ EOD;
             // Stores static properties.
             $staticProperties = &BSS::refStaticProperties2();
             BSS::storeProperties($staticProperties, array ());
-            // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php), "setUpBeforeClass()" and "setUp()".
-            // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php), "setUpBeforeClass()" and "setUp()".
+            // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
+            // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to store initial value of global variables and static properties.
             $result = spl_autoload_register('\BreakpointDebugging_PHPUnit_StaticVariableStorage::loadClass', true, true);
             B::assert($result);
@@ -736,11 +584,9 @@ EOD;
         // Translates from a test file path to a test class name.
         $testClassName = substr(str_replace(array ('/', '-'), '_', $testFilePath), 0, strlen($testFilePath) - strlen('.php'));
         $declaredClasses = get_declared_classes();
-        assert($testClassName === array_pop($declaredClasses));
-        // Creates unit test instance.
-        $pTestInstance = new $testClassName();
+        B::assert($testClassName === array_pop($declaredClasses));
         // Runs unit test continuously.
-        $pTestInstance->runTestMethods();
+        \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple::runTestMethods($testClassName);
         // Uses "BreakpointDebugging" package error handler.
         restore_error_handler();
     }
@@ -839,7 +685,7 @@ EOD;
      *
      * @return mixed Property value.
      *
-     * @example $propertyValue = \BreakpointDebugging::getPropertyForTest('ClassName', 'CONST_NAME');
+     * Example: $propertyValue = \BreakpointDebugging::getPropertyForTest('ClassName', 'CONST_NAME');
      *          $propertyValue = \BreakpointDebugging::getPropertyForTest('ClassName', '$_privateStaticName');
      *          $propertyValue = \BreakpointDebugging::getPropertyForTest($object, '$_privateStaticName');
      *          $propertyValue = \BreakpointDebugging::getPropertyForTest($object, '$_privateAutoName');
@@ -888,7 +734,7 @@ EOD;
      *
      * @return void
      *
-     * @example \BreakpointDebugging::setPropertyForTest('ClassName', '$_privateStaticName', $value);
+     * Example: \BreakpointDebugging::setPropertyForTest('ClassName', '$_privateStaticName', $value);
      *          \BreakpointDebugging::setPropertyForTest($object, '$_privateStaticName', $value);
      *          \BreakpointDebugging::setPropertyForTest($object, '$_privateAutoName', $value);
      */
@@ -986,7 +832,7 @@ EOD;
      *
      * @return void
      *
-     * @example top page.
+     * Example top page:
      *      <?php
      *
      *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
@@ -1025,6 +871,11 @@ EOD;
         $this->_prepareUnitTest($phpUnitUse);
 
         foreach ($testFilePaths as $testFilePath) {
+            if (!$phpUnitUse //
+                && substr($testFilePath, 0 - strlen('TestSimple.php')) !== 'TestSimple.php' //
+            ) {
+                throw new \BreakpointDebugging_ErrorException('Simple unit test file name must be "*TestSimple.php".', 101);
+            }
             if (array_key_exists($testFilePath, self::$_unitTestFilePathsStorage)) {
                 throw new \BreakpointDebugging_ErrorException('Unit test file path must be unique.', 101);
             }
@@ -1092,7 +943,7 @@ EOD;
      *
      * @return void
      *
-     * @example top page.
+     * Example top page:
      *      <?php
      *
      *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
@@ -1128,7 +979,7 @@ EOD;
      *
      * @return void
      *
-     * @example top page.
+     * Example top page:
      *      <?php
      *
      *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
@@ -1205,7 +1056,7 @@ EOD;
      *
      * @return void
      *
-     * @example top page.
+     * Example top page:
      *      <?php
      *
      *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));

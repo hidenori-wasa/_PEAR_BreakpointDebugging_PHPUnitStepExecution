@@ -173,6 +173,9 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         self::$_phpUnit->displayProgress(5);
 
         $this->numAssertions = 0;
+        // Gets test-class-name.
+        $classReflection = new \ReflectionClass($this);
+        $testClassName = $classReflection->name;
 
         $refOnceFlagPerTestFile = &BSS::refOnceFlagPerTestFile();
         if ($refOnceFlagPerTestFile) {
@@ -185,7 +188,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
             $refBackupStaticPropertiesBlacklist = &BSS::refBackupStaticPropertiesBlacklist();
             $refBackupStaticPropertiesBlacklist = $this->backupStaticAttributesBlacklist;
             // Checks the autoload functions.
-            BTCS::checkAutoloadFunctions($this);
+            BTCS::checkAutoloadFunctions($testClassName);
             // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
             BSS::checkGlobals(BSS::refGlobalRefs(), BSS::refGlobals(), true);
             // Checks the change violation of static properties and static property child element references.
@@ -212,27 +215,27 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
             $this->setUp();
 
             // Checks the autoload functions.
-            BTCS::checkAutoloadFunctions($this, 'setUp');
+            BTCS::checkAutoloadFunctions($testClassName, 'setUp');
 
             $this->checkRequirements();
             $this->assertPreConditions();
             $this->testResult = $this->runTest();
 
             // Checks the autoload functions.
-            BTCS::checkAutoloadFunctions($this, $this->getName());
+            BTCS::checkAutoloadFunctions($testClassName, $this->getName());
 
             $this->verifyMockObjects();
             $this->assertPostConditions();
             $this->status = PHPUnit_Runner_BaseTestRunner::STATUS_PASSED;
         } catch (PHPUnit_Framework_IncompleteTest $e) {
             // Checks the autoload functions.
-            BTCS::checkAutoloadFunctions($this, $this->getName());
+            BTCS::checkAutoloadFunctions($testClassName, $this->getName());
 
             $this->status = PHPUnit_Runner_BaseTestRunner::STATUS_INCOMPLETE;
             $this->statusMessage = $e->getMessage();
         } catch (PHPUnit_Framework_SkippedTest $e) {
             // Checks the autoload functions.
-            BTCS::checkAutoloadFunctions($this, $this->getName());
+            BTCS::checkAutoloadFunctions($testClassName, $this->getName());
 
             $this->status = PHPUnit_Runner_BaseTestRunner::STATUS_SKIPPED;
             $this->statusMessage = $e->getMessage();
@@ -247,7 +250,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         try {
             $this->tearDown();
             // Checks the autoload functions.
-            BTCS::checkAutoloadFunctions($this, 'tearDown');
+            BTCS::checkAutoloadFunctions($testClassName, 'tearDown');
         } catch (Exception $_e) {
             B::exitForError($_e); // Displays error call stack information.
         }

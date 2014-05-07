@@ -366,7 +366,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             }
 
             $message2 = "\t" . 'The bootstrap file.' . PHP_EOL;
-            $message2 .= "\t" . 'Code which is executed at autoload of unit test file (*Test.php).' . PHP_EOL;
+            $message2 .= "\t" . 'Code which is executed at autoload of unit test file (*Test.php, *TestSimple.php).' . PHP_EOL;
             $message2 .= "\t" . '"setUpBeforeClass()".' . PHP_EOL;
         } else {
             $message2 = "\t" . 'During autoload.' . PHP_EOL;
@@ -527,7 +527,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             $message2 = "\t" . 'During autoload.' . PHP_EOL;
         } else {
             $message2 = "\t" . 'The bootstrap file.' . PHP_EOL;
-            $message2 .= "\t" . 'Code which is executed at autoload of unit test file (*Test.php).' . PHP_EOL;
+            $message2 .= "\t" . 'Code which is executed at autoload of unit test file (*Test.php, *TestSimple.php).' . PHP_EOL;
             $message2 .= "\t" . '"setUpBeforeClass()".' . PHP_EOL;
             $message2 .= "\t" . '"setUp()".' . PHP_EOL;
         }

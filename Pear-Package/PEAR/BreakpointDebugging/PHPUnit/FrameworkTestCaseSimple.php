@@ -5,7 +5,7 @@
  *
  * We can use for unit tests of this package and "PHPUnit" package because this class is instance and this class does not use "PHPUnit" package.
  * Also, we can use instead of "*.phpt".
- * @See the "BreakpointDebugging_PHPUnit.php" file for usage.
+ * See the "BreakpointDebugging_PHPUnit.php" file-level document for usage.
  *
  * PHP version 5.3.2-5.4.x
  *
@@ -72,7 +72,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
     private static $_phpUnit;
 
     /**
-     * This class method is called first per "*Test.php" file.
+     * This class method is called first per "*TestSimple.php" file.
      *
      * @return void
      */
@@ -82,7 +82,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
     }
 
     /**
-     * This class method is called lastly per "*Test.php" file.
+     * This class method is called lastly per "*TestSimple.php" file.
      *
      * @return void
      */
@@ -106,12 +106,12 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
     /**
      * Checks the autoload functions.
      *
-     * @param object $thisInstance   This instance.
+     * @param string $testClassName  The test class name.
      * @param string $testMethodName The test class method name.
      *
      * @return void
      */
-    static function checkAutoloadFunctions($thisInstance, $testMethodName = null)
+    static function checkAutoloadFunctions($testClassName, $testMethodName = null)
     {
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
@@ -133,12 +133,12 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
             $className = $autoloadFunctions[0][0];
         }
         $autoloadFunction = $className . '::' . $autoloadFunctions[0][1];
-        $className = get_class($thisInstance);
+
         $message = '<b>You must not register autoload function "' . $autoloadFunction . '" at top of stack by "spl_autoload_register()" in all code.' . PHP_EOL;
         if ($testMethodName) {
-            $message .= 'Inside of "' . $className . '::' . $testMethodName . '()".' . PHP_EOL;
+            $message .= 'Inside of "' . $testClassName . '::' . $testMethodName . '()".' . PHP_EOL;
         } else {
-            $message .= 'In "bootstrap file", "file of (class ' . $className . ') which is executed at autoload" or "' . $className . '::setUpBeforeClass()"' . '.' . PHP_EOL;
+            $message .= 'In "bootstrap file", "file of (class ' . $testClassName . ') which is executed at autoload" or "' . $testClassName . '::setUpBeforeClass()"' . '.' . PHP_EOL;
         }
         $message .= '</b>Because it cannot store static status.';
         B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, $message);
@@ -221,23 +221,23 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
     /**
      * Runs class methods of this unit test instance continuously.
      *
+     * @param string $testClassName The test class name.
+     *
      * @return void
      */
-    function runTestMethods()
+    static function runTestMethods($testClassName)
     {
         B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
         try {
-            $classReflection = new \ReflectionClass($this);
+            $classReflection = new \ReflectionClass($testClassName);
             $methodReflections = $classReflection->getMethods(ReflectionMethod::IS_PUBLIC);
-            $className = $classReflection->name;
-
             // Invokes "setUpBeforeClass()" class method.
-            $className::setUpBeforeClass();
+            $testClassName::setUpBeforeClass();
 
             self::$_phpUnit->displayProgress(300);
             // Checks the autoload functions.
-            self::checkAutoloadFunctions($this);
+            self::checkAutoloadFunctions($testClassName);
             // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
             BSS::checkGlobals(BSS::refGlobalRefs(), BSS::refGlobals(), true);
             // Checks the change violation of static properties and static property child element references.
@@ -253,6 +253,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
                 self::$_phpUnit->displayProgress(5);
                 // Start output buffering.
                 ob_start();
+                // Creates unit test instance.
+                $pTestInstance = new $testClassName();
                 // Clean up stat cache.
                 clearstatcache();
                 // Restores global variables.
@@ -261,26 +263,28 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
                 BSS::restoreProperties(BSS::refStaticProperties2());
 
                 // Invokes "setUp()" class method.
-                $this->setUp();
+                $pTestInstance->setUp();
 
                 // Checks the autoload functions.
-                self::checkAutoloadFunctions($this, 'setUp');
+                self::checkAutoloadFunctions($testClassName, 'setUp');
             } catch (Exception $e) {
                 B::exitForError($e); // Displays error call stack information.
             }
 
             // Invokes "test*()" class method.
-            $methodReflection->invoke($this);
+            $methodReflection->invoke($pTestInstance);
 
             try {
                 // Checks the autoload functions.
-                self::checkAutoloadFunctions($this, $methodReflection->name);
+                self::checkAutoloadFunctions($testClassName, $methodReflection->name);
 
                 // Invokes "tearDown()" class method.
-                $this->tearDown();
+                $pTestInstance->tearDown();
 
                 // Checks the autoload functions.
-                self::checkAutoloadFunctions($this, 'tearDown');
+                self::checkAutoloadFunctions($testClassName, 'tearDown');
+                // Deletes unit test instance.
+                $pTestInstance = null;
                 // Stop output buffering.
                 ob_end_clean();
                 // Displays a completed test.
@@ -291,7 +295,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
         }
         try {
             // Invokes "tearDownAfterClass()" class method.
-            $className::tearDownAfterClass();
+            $testClassName::tearDownAfterClass();
         } catch (Exception $e) {
             B::exitForError($e); // Displays error call stack information.
         }
