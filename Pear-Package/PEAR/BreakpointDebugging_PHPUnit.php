@@ -180,8 +180,6 @@
 // therefore "use" keyword alias does not be affected by other files.
 use \BreakpointDebugging as B;
 use \BreakpointDebugging_PHPUnit_StaticVariableStorage as BSS;
-use \BreakpointDebugging_PHPUnit_FrameworkTestCase as BTC;
-use \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple as BTCS;
 
 B::limitAccess('BreakpointDebugging.php', true);
 /**
@@ -258,6 +256,11 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
  */
 class BreakpointDebugging_PHPUnit
 {
+    /**
+     * @var object "\StaticVariableStorage" instance.
+     */
+    private $_staticVariableStorage;
+
     /**
      * @var string Unit test window name.
      */
@@ -416,9 +419,7 @@ EOD;
             B::iniSet('xdebug.var_display_max_depth', '5', false);
             ob_start();
             var_dump($pException);
-            B::windowVirtualOpen(B::ERROR_WINDOW_NAME, ob_get_clean());
-            B::windowFront(B::ERROR_WINDOW_NAME);
-            exit;
+            B::windowExitForError(ob_get_clean());
         }
     }
 
@@ -508,8 +509,6 @@ EOD;
         $command = ltrim($command);
         echo self::$_separator;
         echo "Runs <b>\"phpunit $command\"</b> command." . PHP_EOL;
-        include_once 'PHPUnit/Autoload.php';
-        $pPHPUnit_TextUI_Command = new \PHPUnit_TextUI_Command();
         // Initializes once's flag per test file.
         $onceFlagPerTestFile = &BSS::refOnceFlagPerTestFile(); // This is not rule violation because this property is not stored.
         $onceFlagPerTestFile = true;
@@ -521,11 +520,11 @@ EOD;
             BSS::storeGlobals($globalRefs, $globals, array ());
             // Stores static properties.
             $staticProperties = &BSS::refStaticProperties2();
-            BSS::storeProperties($staticProperties, array ());
+            $this->getStaticVariableStorageInstance()->storeProperties($staticProperties, array ());
             // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to store initial value of global variables and static properties.
-            $result = spl_autoload_register('\BreakpointDebugging_PHPUnit_StaticVariableStorage::loadClass', true, true);
+            $result = spl_autoload_register(array ($this->getStaticVariableStorageInstance(), 'loadClass'), true, true);
             B::assert($result);
         } else {
             // Restores global variables.
@@ -536,6 +535,8 @@ EOD;
         // Uses "PHPUnit" package error handler.
         set_error_handler('\PHPUnit_Util_ErrorHandler::handleError', E_ALL | E_STRICT);
         // Runs unit test continuously.
+        include_once 'PHPUnit/Autoload.php';
+        $pPHPUnit_TextUI_Command = new \PHPUnit_TextUI_Command();
         $pPHPUnit_TextUI_Command->run($commandElements, false);
         // Uses "BreakpointDebugging" package error handler.
         restore_error_handler();
@@ -563,11 +564,11 @@ EOD;
             BSS::storeGlobals($globalRefs, $globals, array ());
             // Stores static properties.
             $staticProperties = &BSS::refStaticProperties2();
-            BSS::storeProperties($staticProperties, array ());
+            $this->getStaticVariableStorageInstance()->storeProperties($staticProperties, array ());
             // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to store initial value of global variables and static properties.
-            $result = spl_autoload_register('\BreakpointDebugging_PHPUnit_StaticVariableStorage::loadClass', true, true);
+            $result = spl_autoload_register(array ($this->getStaticVariableStorageInstance(), 'loadClass'), true, true);
             B::assert($result);
         } else {
             // Restores global variables.
@@ -783,23 +784,23 @@ EOD;
         B::assert(is_bool($isUnitTest));
 
         if (!$isUnitTest) {
-            B::windowVirtualOpen(B::ERROR_WINDOW_NAME, B::getErrorHtmlFileTemplate());
             $errorMessage = <<<EOD
 You must set
     "BREAKPOINTDEBUGGING_MODE=DEBUG" or
     "BREAKPOINTDEBUGGING_MODE=RELEASE"
 to this project execution parameter.
 EOD;
-            B::windowHtmlAddition(B::ERROR_WINDOW_NAME, 'pre', 0, '<b>' . $errorMessage . '</b>');
-            exit;
+            B::windowExitForError('<b>' . $errorMessage . '</b>');
         }
     }
 
     /**
      * Prepares unit test.
      */
-    private function _prepareUnitTest($phpUnitUse = true)
+    private function _prepareUnitTest($howToTest = 'PHPUNIT')
     {
+        // Preloads error classes.
+        class_exists('BreakpointDebugging_Error');
         // Sets component pear package inclusion paths.
         $pearDir = `pear config-get php_dir`;
         if (isset($pearDir)) {
@@ -812,15 +813,81 @@ EOD;
         $includePaths[1] = __DIR__ . '/BreakpointDebugging/Component' . $componentDir;
         ini_set('include_path', implode(PATH_SEPARATOR, $includePaths));
         // Does it use "PHPUnit" package?
-        $this->_phpUnitUse = $phpUnitUse;
-        // Sets this instance to unit test class.
-        if ($phpUnitUse) {
-            BTC::setPHPUnit($this);
-            $this->_unitTestWindowName = 'BreakpointDebugging_PHPUnit';
-        } else {
-            BTCS::setPHPUnit($this);
-            $this->_unitTestWindowName = 'BreakpointDebugging_PHPUnitSimple';
+        //$this->_phpUnitUse = null;
+        switch ($howToTest) {
+            case 'SIMPLE':
+                $isUnitTestClass = function ($declaredClassName) {
+                    set_error_handler('\BreakpointDebugging::handleError', 0);
+                    // Excepts unit test classes.
+                    if ('BreakpointDebugging_PHPUnit_StaticVariableStorage' === $declaredClassName //
+                        || @is_subclass_of($declaredClassName, 'BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple') //
+                    ) {
+                        restore_error_handler();
+                        return true;
+                    }
+                    restore_error_handler();
+                    return false;
+                };
+                $this->_phpUnitUse = false;
+                $this->_unitTestWindowName = 'BreakpointDebugging_PHPUnitSimple';
+                break;
+            case 'PHPUNIT':
+                $isUnitTestClass = function ($declaredClassName) {
+                    set_error_handler('\BreakpointDebugging::handleError', 0);
+                    // Excepts unit test classes.
+                    if (preg_match('`^ BreakpointDebugging_PHPUnit_StaticVariableStorage | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
+                        || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
+                    ) {
+                        restore_error_handler();
+                        return true;
+                    }
+                    restore_error_handler();
+                    return false;
+                };
+                $this->_phpUnitUse = true;
+                $this->_unitTestWindowName = 'BreakpointDebugging_PHPUnit';
+                \BreakpointDebugging_PHPUnit_FrameworkTestCase::setPHPUnit($this);
+                break;
+            case 'PHPUNIT_OWN':
+                $this->_phpUnitUse = true;
+                $this->_unitTestWindowName = 'BreakpointDebugging_PHPUnit';
+                \BreakpointDebugging_PHPUnit_FrameworkTestCase::setPHPUnit($this);
+            case 'SIMPLE_OWN':
+                $isUnitTestClass = function ($declaredClassName) {
+                    set_error_handler('\BreakpointDebugging::handleError', 0);
+                    // Excepts unit test classes.
+                    if (preg_match('`^ BreakpointDebugging_PHPUnit_StaticVariableStorage | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
+                        || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
+                        || @is_subclass_of($declaredClassName, 'BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple') //
+                    ) {
+                        restore_error_handler();
+                        return true;
+                    }
+                    restore_error_handler();
+                    return false;
+                };
+                if (!isset($this->_phpUnitUse)) {
+                    $this->_phpUnitUse = false;
+                    $this->_unitTestWindowName = 'BreakpointDebugging_PHPUnitSimple';
+                }
+                break;
+            default:
+                throw new \BreakpointDebugging_ErrorException('Class method parameter is incorrect.');
         }
+        $this->_staticVariableStorage = new \BreakpointDebugging_PHPUnit_StaticVariableStorage($isUnitTestClass);
+        // Sets this instance to unit test class.
+        \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple::setPHPUnit($this);
+        B::setPHPUnit($this);
+    }
+
+    /**
+     * Gets "\StaticVariableStorage" instance.
+     *
+     * @return void
+     */
+    function getStaticVariableStorageInstance()
+    {
+        return $this->_staticVariableStorage;
     }
 
     /**
@@ -828,7 +895,9 @@ EOD;
      *
      * @param array  $testFilePaths       The file paths of unit tests.
      * @param string $commandLineSwitches Command-line-switches except "--stop-on-failure --static-backup".
-     * @param bool   $phpUnitUse          Does it use "PHPUnit" package?
+     * @param string $howToTest           How to test?
+     *      'PHPUNIT': Uses "PHPUnit" package.
+     *      'PHPUNIT_OWN': This package's 'PHPUNIT' mode test.
      *
      * @return void
      *
@@ -857,7 +926,7 @@ EOD;
      * @codeCoverageIgnore
      * Because "phpunit" command cannot run during "phpunit" command running.
      */
-    function executeUnitTest($testFilePaths, $commandLineSwitches = '', $phpUnitUse = true)
+    function executeUnitTest($testFilePaths, $commandLineSwitches = '', $howToTest = 'PHPUNIT')
     {
         B::assert(func_num_args() <= 3);
         B::assert(is_array($testFilePaths));
@@ -868,10 +937,10 @@ EOD;
             exit;
         }
 
-        $this->_prepareUnitTest($phpUnitUse);
+        $this->_prepareUnitTest($howToTest);
 
         foreach ($testFilePaths as $testFilePath) {
-            if (!$phpUnitUse //
+            if (($howToTest === 'SIMPLE' || $howToTest === 'SIMPLE_OWN') //
                 && substr($testFilePath, 0 - strlen('TestSimple.php')) !== 'TestSimple.php' //
             ) {
                 throw new \BreakpointDebugging_ErrorException('Simple unit test file name must be "*TestSimple.php".', 101);
@@ -907,17 +976,19 @@ EOD;
                 }
                 continue;
             }
-            if ($phpUnitUse) {
-                $this->_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $testFilePath);
-            } else {
+            if ($howToTest === 'SIMPLE' //
+                || $howToTest === 'SIMPLE_OWN' //
+            ) {
                 $this->_runPHPUnitCommandSimple($testFilePath);
+            } else {
+                $this->_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $testFilePath);
             }
             gc_collect_cycles();
         }
         $this->displayProgress();
         echo self::$_separator;
-        BSS::checkFunctionLocalStaticVariable();
-        BSS::checkMethodLocalStaticVariable();
+        $this->getStaticVariableStorageInstance()->checkFunctionLocalStaticVariable();
+        $this->getStaticVariableStorageInstance()->checkMethodLocalStaticVariable();
 
         switch ($this->_unitTestResult) {
             case 'DONE':
@@ -940,6 +1011,9 @@ EOD;
      * Executes unit test files continuously without "PHPUnit" package, and debugs with IDE.
      *
      * @param array  $testFilePaths       The file paths of unit tests.
+     * @param string $howToTest           How to test?
+     *      'SIMPLE': Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
+     *      'SIMPLE_OWN': This package test.
      *
      * @return void
      *
@@ -965,9 +1039,9 @@ EOD;
      *
      *      ?>
      */
-    function executeUnitTestSimple($testFilePaths)
+    function executeUnitTestSimple($testFilePaths, $howToTest = 'SIMPLE')
     {
-        $this->executeUnitTest($testFilePaths, '', false);
+        $this->executeUnitTest($testFilePaths, '', $howToTest);
     }
 
     /**

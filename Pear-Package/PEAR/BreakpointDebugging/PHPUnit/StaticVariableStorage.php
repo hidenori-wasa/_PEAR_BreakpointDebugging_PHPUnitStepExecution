@@ -106,6 +106,16 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     private static $_backupStaticPropertiesBlacklist = array ();
 
     /**
+     * @var Closure Is it unit test class?
+     */
+    private $_isUnitTestClass;
+
+    public function __construct($isUnitTestClass)
+    {
+        $this->_isUnitTestClass = $isUnitTestClass;
+    }
+
+    /**
      * Returns reference of flag of once per test file.
      *
      * @return bool& Reference value.
@@ -210,12 +220,13 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    static function loadClass($className)
+    function loadClass($className)
     {
         static $nestLevel = 0;
 
         // Excepts unit test classes.
-        if (self::_isUnitTestClass($className)) {
+        $isUnitTestClass = $this->_isUnitTestClass;
+        if ($isUnitTestClass($className)) {
             $exception = B::loadClass($className);
             if ($exception) {
                 throw $exception;
@@ -229,12 +240,12 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
                 self::checkGlobals(self::$_globalRefs, self::$_globals, true);
                 // Checks the change violation of static properties and static property child element references.
-                self::checkProperties(self::$_staticProperties);
+                $this->checkProperties(self::$_staticProperties);
             } else {
                 // Snapshots global variables.
                 self::storeGlobals(self::$_globalRefsSnapshot, self::$_globalsSnapshot, self::$_backupGlobalsBlacklist, true);
                 // Snapshots static properties.
-                self::storeProperties(self::$_staticPropertiesSnapshot, self::$_backupStaticPropertiesBlacklist, true);
+                $this->storeProperties(self::$_staticPropertiesSnapshot, self::$_backupStaticPropertiesBlacklist, true);
 
                 // Restores global variables.
                 self::restoreGlobals(self::$_globalRefs, self::$_globals);
@@ -251,11 +262,11 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             // Checks deletion and change violation of global variables and global variable references during autoload.
             self::checkGlobals(self::$_globalRefs, self::$_globals);
             // Checks the change violation of static properties and static property child element references.
-            self::checkProperties(self::$_staticProperties);
+            $this->checkProperties(self::$_staticProperties);
             // Stores global variables before variable value is changed in bootstrap file and "setUpBeforeClass()".
             self::storeGlobals(self::$_globalRefs, self::$_globals, self::$_backupGlobalsBlacklist);
             // Stores static properties before variable value is changed.
-            self::storeProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
+            $this->storeProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
             if (!self::$_onceFlagPerTestFile) {
                 // Restores global variables snapshot.
                 self::restoreGlobals(self::$_globalRefsSnapshot, self::$_globalsSnapshot);
@@ -389,7 +400,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             $message .= $message2;
             $message .= 'We must not ' . $defineOrDelete . ' global variable in the above place.' . PHP_EOL;
             $message .= 'Because "php" version 5.3.0 cannot detect ' . $defineOrDelete . 'd global variable realtime.';
-            B::exitForError('<pre>' . $message . '</pre>');
+            B::windowExitForError($message);
         }
 
         // Checks global variables values and global variables child element references.
@@ -424,7 +435,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             $message .= $message2;
             $message .= 'We must not overwrite global variable ' . $message3 . ' in the above place.' . PHP_EOL;
             $message .= 'Because "php" version 5.3.0 cannot detect overwritten global variable ' . $message3 . ' realtime.';
-            B::exitForError('<pre>' . $message . '</pre>');
+            B::windowExitForError($message);
         }
     }
 
@@ -486,27 +497,6 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     }
 
     /**
-     * Is it unit test class?
-     *
-     * @param string $declaredClassName
-     *
-     * @return bool Is it unit test class?
-     */
-    private static function _isUnitTestClass($declaredClassName)
-    {
-        set_error_handler('\BreakpointDebugging::handleError', 0);
-        // Excepts unit test classes.
-        if (preg_match('`^ BreakpointDebugging_PHPUnit_StaticVariableStorage | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xXi', $declaredClassName) === 1 //
-            || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
-        ) {
-            restore_error_handler();
-            return true;
-        }
-        restore_error_handler();
-        return false;
-    }
-
-    /**
      * Checks the change violation of static properties and static property child element references.
      *
      * @param array $staticProperties Static properties storage.
@@ -514,7 +504,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    static function checkProperties($staticProperties, $forAutoload = true)
+    function checkProperties($staticProperties, $forAutoload = true)
     {
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
@@ -539,7 +529,8 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
         for ($key = $currentDeclaredClassesNumber - 1; $key >= 0; $key--) {
             $declaredClassName = $declaredClasses[$key];
             // Excepts unit test classes.
-            if (self::_isUnitTestClass($declaredClassName) //
+            $isUnitTestClass = $this->_isUnitTestClass;
+            if ($isUnitTestClass($declaredClassName) //
                 || $declaredClassName === 'BreakpointDebugging' //
                 || $declaredClassName === 'BreakpointDebugging_InAllCase' //
                 || $declaredClassName === 'BreakpointDebugging_PHPUnit' //
@@ -597,7 +588,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    static function storeProperties(array &$staticProperties, array $blacklist, $isSnapshot = false)
+    function storeProperties(array &$staticProperties, array $blacklist, $isSnapshot = false)
     {
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/StaticVariableStorage.php',
@@ -617,7 +608,8 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
         for ($key = $currentDeclaredClassesNumber - 1; $key >= $prevDeclaredClassesNumber; $key--) {
             $declaredClassName = $declaredClasses[$key];
             // Excepts unit test classes.
-            if (self::_isUnitTestClass($declaredClassName)) {
+            $isUnitTestClass = $this->_isUnitTestClass;
+            if ($isUnitTestClass($declaredClassName)) {
                 continue;
             }
             // Class reflection.
@@ -690,7 +682,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    static function checkFunctionLocalStaticVariable()
+    function checkFunctionLocalStaticVariable()
     {
         B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
@@ -705,7 +697,8 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 if (strpos($fileName, $componentFullPath) === 0) {
                     $className = str_replace(array ('\\', '/'), '_', substr($fileName, strlen($componentFullPath)));
                     // Excepts unit test classes.
-                    if (self::_isUnitTestClass($className)) {
+                    $isUnitTestClass = $this->_isUnitTestClass;
+                    if ($isUnitTestClass($className)) {
                         continue;
                     }
                 }
@@ -724,7 +717,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    static function checkMethodLocalStaticVariable()
+    function checkMethodLocalStaticVariable()
     {
         B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
@@ -734,7 +727,8 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
         for ($key = $currentDeclaredClassesNumber - 1; $key >= 0; $key--) {
             $declaredClassName = $declaredClasses[$key];
             // Excepts unit test classes.
-            if (self::_isUnitTestClass($declaredClassName)) {
+            $isUnitTestClass = $this->_isUnitTestClass;
+            if ($isUnitTestClass($declaredClassName)) {
                 continue;
             }
             // Class reflection.

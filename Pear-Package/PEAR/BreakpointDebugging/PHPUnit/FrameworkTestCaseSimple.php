@@ -100,7 +100,9 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
     {
         B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
-        self::$_phpUnit = $phpUnit;
+        if (!isset(self::$_phpUnit)) {
+            self::$_phpUnit = $phpUnit;
+        }
     }
 
     /**
@@ -122,7 +124,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
         // Checks the autoload functions.
         $autoloadFunctions = spl_autoload_functions();
         if (is_array($autoloadFunctions[0]) //
-            && $autoloadFunctions[0][0] === 'BreakpointDebugging_PHPUnit_StaticVariableStorage' //
+            && $autoloadFunctions[0][0] === self::$_phpUnit->getStaticVariableStorageInstance() //
             && $autoloadFunctions[0][1] === 'loadClass' //
         ) {
             return;
@@ -141,8 +143,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
             $message .= 'In "bootstrap file", "file of (class ' . $testClassName . ') which is executed at autoload" or "' . $testClassName . '::setUpBeforeClass()"' . '.' . PHP_EOL;
         }
         $message .= '</b>Because it cannot store static status.';
-        B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, $message);
-        exit;
+        B::windowExitForError($message);
     }
 
     /**
@@ -241,12 +242,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
             // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
             BSS::checkGlobals(BSS::refGlobalRefs(), BSS::refGlobals(), true);
             // Checks the change violation of static properties and static property child element references.
-            BSS::checkProperties(BSS::refStaticProperties2(), false);
-        } catch (Exception $e) {
-            B::exitForError($e); // Displays error call stack information.
-        }
-        foreach ($methodReflections as $methodReflection) {
-            try {
+            self::$_phpUnit->getStaticVariableStorageInstance()->checkProperties(BSS::refStaticProperties2(), false);
+            foreach ($methodReflections as $methodReflection) {
                 if (strpos($methodReflection->name, 'test') !== 0) {
                     continue;
                 }
@@ -267,14 +264,10 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
 
                 // Checks the autoload functions.
                 self::checkAutoloadFunctions($testClassName, 'setUp');
-            } catch (Exception $e) {
-                B::exitForError($e); // Displays error call stack information.
-            }
 
-            // Invokes "test*()" class method.
-            $methodReflection->invoke($pTestInstance);
+                // Invokes "test*()" class method.
+                $methodReflection->invoke($pTestInstance);
 
-            try {
                 // Checks the autoload functions.
                 self::checkAutoloadFunctions($testClassName, $methodReflection->name);
 
@@ -289,11 +282,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
                 ob_end_clean();
                 // Displays a completed test.
                 echo '.';
-            } catch (Exception $e) {
-                B::exitForError($e); // Displays error call stack information.
             }
-        }
-        try {
             // Invokes "tearDownAfterClass()" class method.
             $testClassName::tearDownAfterClass();
         } catch (Exception $e) {

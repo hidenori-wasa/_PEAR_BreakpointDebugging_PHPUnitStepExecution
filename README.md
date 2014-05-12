@@ -25,12 +25,17 @@ The dependences
 Change log
 ----------
 
-* I repaired "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple::runTestMethods()" to split up instance per test class method.
-* I added "Autodetecting rule 1" inside "BreakpointDebugging_PHPUnit.php" file level document.
+* I improved "\BreakpointDebugging_PHPUnit::displaysException()" display.
+* I repaired "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple::runTestMethods()" to catch unhandle exception of unit test.
+* I changed "\BreakpointDebugging_PHPUnit_StaticVariableStorage::_isUnitTestClass()" to lambda function for unit test judgment of multiple kind.
+* I preloaded error classes to optimize "isUnitTestClass()".
+* I tested auto detect by "ExampleTestSimple.php" file, and repaired it. Then, I repaired "\BreakpointDebugging_PHPUnit::executeUnitTest()".
+* I tested "BreakpointDebugging-PHPUnitTestSimple.php" file. Then, I repaired "\BreakpointDebugging_PHPUnit::executeUnitTest()".
+* I tested "*Test.php" file. Then, I repaired "\BreakpointDebugging_PHPUnit::executeUnitTest()".
 
 Notice
 ------
 
 * I have been developing package yet.
 * Also, I have been testing with "BreakpointDebugging_PHPUnit" package.
-* And, I have been testing "BreakpointDebugging_PHPUnit" package by "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple" class.
+* And, I have been testing "BreakpointDebugging_PHPUnit" package by "\BreakpointDebugging_PHPUnit::executeUnitTestSimple()".
