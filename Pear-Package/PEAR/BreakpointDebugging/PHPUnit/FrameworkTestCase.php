@@ -170,6 +170,11 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
      */
     public function runBare()
     {
+        if (BU::getCodeCoverageKind() === 'SIMPLE_OWN') {
+            // Resumes the code coverage report.
+            xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+        }
+
         self::$_phpUnit->displayProgress(5);
 
         $this->numAssertions = 0;
@@ -219,7 +224,18 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
 
             $this->checkRequirements();
             $this->assertPreConditions();
+
+            if (BU::getCodeCoverageKind() === 'SIMPLE_OWN') {
+                // Stops the code coverage report.
+                xdebug_stop_code_coverage(false);
+            }
+
             $this->testResult = $this->runTest();
+
+            if (BU::getCodeCoverageKind() === 'SIMPLE_OWN') {
+                // Resumes the code coverage report.
+                xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+            }
 
             // Checks the autoload functions.
             BTCS::checkAutoloadFunctions($testClassName, $this->getName());
@@ -301,6 +317,11 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         if (isset($e)) {
             $this->onNotSuccessfulTest($e);
         }
+
+        if (BU::getCodeCoverageKind() === 'SIMPLE_OWN') {
+            // Stops the code coverage report.
+            xdebug_stop_code_coverage(false);
+        }
     }
 
     /**
@@ -312,6 +333,11 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
      */
     protected function runTest()
     {
+        if (BU::getCodeCoverageKind() === 'SIMPLE_OWN') {
+            // Resumes the code coverage report.
+            xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+        }
+
         $name = $this->getName(false);
         if ($name === NULL) {
             throw new PHPUnit_Framework_Exception('PHPUnit_Framework_TestCase::$name must not be NULL.');
@@ -366,6 +392,12 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
                 B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionCode" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
+
+            if (BU::getCodeCoverageKind() === 'SIMPLE_OWN') {
+                // Stops the code coverage report.
+                xdebug_stop_code_coverage(false);
+            }
+
             return;
         }
         if ($this->getExpectedException() !== NULL) {
@@ -373,6 +405,11 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
             B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error in "' . $class->name . '::' . $name . '".</b>');
 
             $this->assertThat(NULL, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
+        }
+
+        if (BU::getCodeCoverageKind() === 'SIMPLE_OWN') {
+            // Stops the code coverage report.
+            xdebug_stop_code_coverage(false);
         }
 
         return $testResult;

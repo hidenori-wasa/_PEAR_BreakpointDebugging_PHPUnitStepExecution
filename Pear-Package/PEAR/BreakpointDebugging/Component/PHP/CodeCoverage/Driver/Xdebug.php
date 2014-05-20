@@ -80,7 +80,21 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
      */
     public function start()
     {
-        xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+        // xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+
+        // Hidenori Wasa added. ===>
+        switch (\BreakpointDebugging_PHPUnit::getCodeCoverageKind())
+        {
+            case 'SIMPLE':
+            case 'SIMPLE_OWN':
+                break;
+            case 'PHPUNIT':
+                xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+                break;
+            default:
+                \BreakpointDebugging::exitForError();
+        }
+        // <=== Hidenori Wasa added.
     }
 
     /**
@@ -91,7 +105,21 @@ class PHP_CodeCoverage_Driver_Xdebug implements PHP_CodeCoverage_Driver
     public function stop()
     {
         $codeCoverage = xdebug_get_code_coverage();
-        xdebug_stop_code_coverage();
+        // xdebug_stop_code_coverage();
+
+        // Hidenori Wasa added. ===>
+        switch (\BreakpointDebugging_PHPUnit::getCodeCoverageKind())
+        {
+            case 'SIMPLE':
+            case 'SIMPLE_OWN':
+                break;
+            case 'PHPUNIT':
+                xdebug_stop_code_coverage();
+                break;
+            default:
+                \BreakpointDebugging::exitForError();
+        }
+        // <=== Hidenori Wasa added.
 
         return $codeCoverage;
     }

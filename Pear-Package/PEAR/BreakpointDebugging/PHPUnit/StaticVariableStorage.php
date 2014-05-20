@@ -526,10 +526,10 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
         // Scans the declared classes.
         $declaredClasses = get_declared_classes();
         $currentDeclaredClassesNumber = count($declaredClasses);
+        $isUnitTestClass = $this->_isUnitTestClass;
         for ($key = $currentDeclaredClassesNumber - 1; $key >= 0; $key--) {
             $declaredClassName = $declaredClasses[$key];
             // Excepts unit test classes.
-            $isUnitTestClass = $this->_isUnitTestClass;
             if ($isUnitTestClass($declaredClassName) //
                 || $declaredClassName === 'BreakpointDebugging' //
                 || $declaredClassName === 'BreakpointDebugging_InAllCase' //
@@ -605,10 +605,10 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
         // Scans the declared classes.
         $declaredClasses = get_declared_classes();
         $currentDeclaredClassesNumber = count($declaredClasses);
+        $isUnitTestClass = $this->_isUnitTestClass;
         for ($key = $currentDeclaredClassesNumber - 1; $key >= $prevDeclaredClassesNumber; $key--) {
             $declaredClassName = $declaredClasses[$key];
             // Excepts unit test classes.
-            $isUnitTestClass = $this->_isUnitTestClass;
             if ($isUnitTestClass($declaredClassName)) {
                 continue;
             }
@@ -688,6 +688,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
 
         $componentFullPath = stream_resolve_include_path('BreakpointDebugging/Component/') . DIRECTORY_SEPARATOR;
         $definedFunctionsName = get_defined_functions();
+        $isUnitTestClass = $this->_isUnitTestClass;
         foreach ($definedFunctionsName['user'] as $definedFunctionName) {
             $functionReflection = new ReflectionFunction($definedFunctionName);
             $staticVariables = $functionReflection->getStaticVariables();
@@ -697,7 +698,6 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 if (strpos($fileName, $componentFullPath) === 0) {
                     $className = str_replace(array ('\\', '/'), '_', substr($fileName, strlen($componentFullPath)));
                     // Excepts unit test classes.
-                    $isUnitTestClass = $this->_isUnitTestClass;
                     if ($isUnitTestClass($className)) {
                         continue;
                     }
@@ -724,10 +724,10 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
         // Scans the declared classes.
         $declaredClasses = get_declared_classes();
         $currentDeclaredClassesNumber = count($declaredClasses);
+        $isUnitTestClass = $this->_isUnitTestClass;
         for ($key = $currentDeclaredClassesNumber - 1; $key >= 0; $key--) {
             $declaredClassName = $declaredClasses[$key];
             // Excepts unit test classes.
-            $isUnitTestClass = $this->_isUnitTestClass;
             if ($isUnitTestClass($declaredClassName)) {
                 continue;
             }

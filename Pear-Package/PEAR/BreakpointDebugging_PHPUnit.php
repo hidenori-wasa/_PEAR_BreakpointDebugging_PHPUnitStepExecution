@@ -119,6 +119,9 @@
  *
  * The special rule of "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple":
  *      We must use try-catch statement instead of annotation.
+ *      However, we can use following annotation.
+ *          @codeCoverageSimpleIgnoreStart (Instead of "@codeCoverageIgnoreStart".)
+ *          @codeCoverageSimpleIgnoreEnd (Instead of "@codeCoverageIgnoreEnd".)
  *      The class methods and property which can be used are limited below.
  *          \BreakpointDebugging_PHPUnit::$exeMode
  *          \BreakpointDebugging_PHPUnit::getPropertyForTest()
@@ -317,6 +320,11 @@ class BreakpointDebugging_PHPUnit
     private $_obLevel;
 
     /**
+     * @var string How to test?
+     */
+    private static $_codeCoverageKind = 'PHPUNIT';
+
+    /**
      * Limits static properties accessing of class.
      *
      * @return void
@@ -463,13 +471,23 @@ EOD;
      */
     private function _getUnitTestDir()
     {
-        $unitTestCurrentDir = debug_backtrace();
-        if ($this->_phpUnitUse) {
-            $unitTestCurrentDir = dirname($unitTestCurrentDir[1]['file']) . DIRECTORY_SEPARATOR;
-        } else {
-            $unitTestCurrentDir = dirname($unitTestCurrentDir[2]['file']) . DIRECTORY_SEPARATOR;
+        $callStack = debug_backtrace();
+        $callStack = array_reverse($callStack);
+        foreach ($callStack as $call) {
+            if ($call['class'] !== 'BreakpointDebugging_PHPUnit') {
+                continue;
+            }
+            $functionName = $call['function'];
+            if ($functionName === 'executeUnitTestSimple' //
+                || $functionName === 'executeUnitTest' //
+                || $functionName === 'displayCodeCoverageReportSimple' //
+                || $functionName === 'displayCodeCoverageReport' //
+            ) {
+                self::$unitTestDir = dirname($call['file']) . DIRECTORY_SEPARATOR;
+                return;
+            }
         }
-        self::$unitTestDir = $unitTestCurrentDir;
+        B::assert(false);
     }
 
     /**
@@ -520,11 +538,11 @@ EOD;
             BSS::storeGlobals($globalRefs, $globals, array ());
             // Stores static properties.
             $staticProperties = &BSS::refStaticProperties2();
-            $this->getStaticVariableStorageInstance()->storeProperties($staticProperties, array ());
+            $this->_staticVariableStorage->storeProperties($staticProperties, array ());
             // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to store initial value of global variables and static properties.
-            $result = spl_autoload_register(array ($this->getStaticVariableStorageInstance(), 'loadClass'), true, true);
+            $result = spl_autoload_register(array ($this->_staticVariableStorage, 'loadClass'), true, true);
             B::assert($result);
         } else {
             // Restores global variables.
@@ -537,7 +555,15 @@ EOD;
         // Runs unit test continuously.
         include_once 'PHPUnit/Autoload.php';
         $pPHPUnit_TextUI_Command = new \PHPUnit_TextUI_Command();
-        $pPHPUnit_TextUI_Command->run($commandElements, false);
+        if (self::$_codeCoverageKind === 'SIMPLE_OWN') {
+            // Stops the code coverage report.
+            xdebug_stop_code_coverage(false);
+            $pPHPUnit_TextUI_Command->run($commandElements, false);
+            // Resumes the code coverage report.
+            xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+        } else {
+            $pPHPUnit_TextUI_Command->run($commandElements, false);
+        }
         // Uses "BreakpointDebugging" package error handler.
         restore_error_handler();
     }
@@ -564,11 +590,11 @@ EOD;
             BSS::storeGlobals($globalRefs, $globals, array ());
             // Stores static properties.
             $staticProperties = &BSS::refStaticProperties2();
-            $this->getStaticVariableStorageInstance()->storeProperties($staticProperties, array ());
+            $this->_staticVariableStorage->storeProperties($staticProperties, array ());
             // Registers autoload class method to check definition, deletion and change violation of global variables in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to check the change violation of static properties in bootstrap file, unit test file (*Test.php, *TestSimple.php), "setUpBeforeClass()" and "setUp()".
             // And, to store initial value of global variables and static properties.
-            $result = spl_autoload_register(array ($this->getStaticVariableStorageInstance(), 'loadClass'), true, true);
+            $result = spl_autoload_register(array ($this->_staticVariableStorage, 'loadClass'), true, true);
             B::assert($result);
         } else {
             // Restores global variables.
@@ -812,8 +838,7 @@ EOD;
         array_unshift($includePaths, $includePaths[0]);
         $includePaths[1] = __DIR__ . '/BreakpointDebugging/Component' . $componentDir;
         ini_set('include_path', implode(PATH_SEPARATOR, $includePaths));
-        // Does it use "PHPUnit" package?
-        //$this->_phpUnitUse = null;
+
         switch ($howToTest) {
             case 'SIMPLE':
                 $isUnitTestClass = function ($declaredClassName) {
@@ -987,8 +1012,8 @@ EOD;
         }
         $this->displayProgress();
         echo self::$_separator;
-        $this->getStaticVariableStorageInstance()->checkFunctionLocalStaticVariable();
-        $this->getStaticVariableStorageInstance()->checkMethodLocalStaticVariable();
+        $this->_staticVariableStorage->checkFunctionLocalStaticVariable();
+        $this->_staticVariableStorage->checkMethodLocalStaticVariable();
 
         switch ($this->_unitTestResult) {
             case 'DONE':
@@ -1125,8 +1150,11 @@ EOD;
     /**
      * Creates code coverage report without "PHPUnit" package, then displays in browser.
      *
-     * @param mixed $testFilePaths Relative paths of unit test files.
-     * @param type $classFilePath  It is relative path of class which see the code coverage, and its current directory must be project directory.
+     * @param mixed $testFilePaths         Relative paths of unit test files.
+     * @param type $classFileRelativePath  Relative path of class which see the code coverage.
+     * @param string $howToTest    How to test?
+     *      'SIMPLE': Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
+     *      'SIMPLE_OWN': This package test.
      *
      * @return void
      *
@@ -1146,30 +1174,192 @@ EOD;
      *
      *      ?>
      */
-    function displayCodeCoverageReportSimple($testFilePaths, $classFilePath)
+    function displayCodeCoverageReportSimple($testFilePaths, $classFileRelativePath, $howToTest = 'SIMPLE')
     {
-        B::assert(func_num_args() === 2);
+        xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+
+        B::assert(func_num_args() <= 3);
         B::assert(is_string($testFilePaths) || is_array($testFilePaths));
-        B::assert(is_string($classFilePath));
+        B::assert(is_string($classFileRelativePath));
+        B::assert(is_string($howToTest));
 
         if (!extension_loaded('xdebug')) {
             B::exitForError('"\BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()" needs "xdebug" extention.');
         }
-        B::iniSet('xdebug.coverage_enable', 1);
-        // B::iniCheck('xdebug.coverage_enable', 1, '');
+        B::iniCheck('xdebug.coverage_enable', '1', '');
 
         if (is_string($testFilePaths)) {
             $testFilePaths = array ($testFilePaths);
         }
 
-        xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
-        $this->executeUnitTest($testFilePaths, '', false);
+        self::$_codeCoverageKind = $howToTest;
+        $this->executeUnitTestSimple($testFilePaths, $howToTest);
         $codeCoverages = xdebug_get_code_coverage();
         xdebug_stop_code_coverage();
 
-        ob_start();
-        var_dump($classFilePath, $codeCoverages); // For debug.
-        B::windowVirtualOpen('DisplayCodeCoverageReportSimple', ob_get_clean());
+        $classFilePath = stream_resolve_include_path($classFileRelativePath);
+        $buffer = '';
+        $isDuringIgnore = false;
+        $errorMessage = PHP_EOL
+            . 'FILE: ' . $classFileRelativePath . PHP_EOL
+            . 'LINE: ';
+        foreach ($codeCoverages as $filePath => $codeCoverage) {
+            if ($filePath === $classFilePath) {
+                $pFile = B::fopen(array ($filePath, 'rb'));
+                $lineNumber = 0;
+                $coveringLineNumber = 0;
+                $notCoveringNumber = 0;
+                while (( $line = fgets($pFile)) !== false) {
+                    $lineNumber++;
+                    $lineNumberString = '<span class="lineNum">' . sprintf('%05d: ', $lineNumber) . '</span>';
+                    $line = $lineNumberString . htmlspecialchars($line, ENT_QUOTES, 'UTF-8');
+                    if (!array_key_exists($lineNumber, $codeCoverage)) {
+                        if ($isDuringIgnore) { // Is during ignoring.
+                            if (preg_match("`@codeCoverageSimpleIgnoreEnd [^_[:alnum:]]`xX", $line)) {
+                                $isDuringIgnore = false;
+                            } else if (preg_match("`@codeCoverageSimpleIgnoreStart [^_[:alnum:]]`xX", $line)) {
+                                B::exitForError('We must not start to ignore during ignoring.' . $errorMessage . $lineNumber);
+                            }
+                        } else { // Is not during ignoring.
+                            if (preg_match("`@codeCoverageSimpleIgnoreEnd [^_[:alnum:]]`xX", $line)) {
+                                B::exitForError('We must not end to ignore during not ignoring.' . $errorMessage . $lineNumber);
+                            } else if (preg_match("`@codeCoverageSimpleIgnoreStart [^_[:alnum:]]`xX", $line)) {
+                                $isDuringIgnore = true;
+                            }
+                        }
+                        $buffer .= '<span>' . $line . '</span>';
+                        continue;
+                    }
+                    switch ($codeCoverage[$lineNumber]) {
+                        case 1:
+                            if ($isDuringIgnore) { // Is during ignoring.
+                                B::exitForError('We must not ignore covering line.' . $errorMessage . $lineNumber);
+                            } else { // Is not during ignoring.
+                                $coveringLineNumber++;
+                                $buffer .= '<span class="lineCov">' . $line . '</span>';
+                            }
+                            break;
+                        case -1:
+                            if ($isDuringIgnore) { // Is during ignoring.
+                                $buffer .= '<span class="lineIgnoring">' . $line . '</span>';
+                            } else { // Is not during ignoring.
+                                $notCoveringNumber++;
+                                $buffer .= '<span class="lineNoCov">' . $line . '</span>';
+                            }
+                            break;
+                        case -2:
+                            $buffer .= '<span class="lineDeadCode">' . $line . '</span>';
+                            break;
+                        default :
+                            assert(false);
+                    }
+                }
+                $codeLineNumber = $coveringLineNumber + $notCoveringNumber;
+                $codeCoveragePercent = $coveringLineNumber * 100 / $codeLineNumber;
+                $html = <<<EOD
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>DisplayCodeCoverageReportSimple</title>
+        <style type="text/css">
+            <!--
+            body
+            {
+                background-color: black;
+                color: white;
+                font-family: arial, helvetica, sans-serif;
+                font-size: 12px;
+                margin: 0 auto;
+                width: 100%;
+            }
+
+            p.title
+            {
+                text-align: center;
+                padding: 10px;
+                font-family: sans-serif;
+                font-style: italic;
+                font-weight: bold;
+                font-size: 36px;
+            }
+
+            p.coverage
+            {
+                text-align: center;
+                padding: 10px;
+                font-family: sans-serif;
+                font-weight: bold;
+                font-size: 36px;
+            }
+
+            pre.source
+            {
+                font-family: monospace;
+                white-space: pre;
+            }
+
+            span.lineNum
+            {
+                background-color: #404040;
+            }
+
+            span.lineIgnoring
+            {
+                background-color: navy;
+                display: block;
+            }
+
+            span.lineCov
+            {
+                background-color: #008000;
+                display: block;
+            }
+
+            span.lineNoCov
+            {
+                background-color: #bd0000;
+                display: block;
+            }
+
+            span.lineDeadCode
+            {
+                background-color: gray;
+                display: block;
+            }
+            -->
+        </style>
+	</head>
+	<body>
+        <p class="title">$classFileRelativePath</p>
+        <hr />
+        <p class="coverage">
+            Code line number: $codeLineNumber<br />
+            Covering line number: $coveringLineNumber<br />
+            Code coverage percent: <span style="color:aqua">$codeCoveragePercent%</span>
+        </p>
+        <hr />
+		<pre class="source">
+$buffer
+        </pre>
+	</body>
+</html>
+EOD;
+                B::windowVirtualOpen('BreakpointDebugging_displayCodeCoverageReportSimple', $html);
+                exit;
+            }
+        }
+        B::assert(false);
+    }
+
+    /**
+     * Gets "self::$_codeCoverageKind".
+     *
+     * @return bool Was code coverage started?
+     */
+    static function getCodeCoverageKind()
+    {
+        return self::$_codeCoverageKind;
     }
 
 }

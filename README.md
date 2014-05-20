@@ -25,13 +25,10 @@ The dependences
 Change log
 ----------
 
-* I improved "\BreakpointDebugging_PHPUnit::displaysException()" display.
-* I repaired "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple::runTestMethods()" to catch unhandle exception of unit test.
-* I changed "\BreakpointDebugging_PHPUnit_StaticVariableStorage::_isUnitTestClass()" to lambda function for unit test judgment of multiple kind.
-* I preloaded error classes to optimize "isUnitTestClass()".
-* I tested auto detect by "ExampleTestSimple.php" file, and repaired it. Then, I repaired "\BreakpointDebugging_PHPUnit::executeUnitTest()".
-* I tested "BreakpointDebugging-PHPUnitTestSimple.php" file. Then, I repaired "\BreakpointDebugging_PHPUnit::executeUnitTest()".
-* I tested "*Test.php" file. Then, I repaired "\BreakpointDebugging_PHPUnit::executeUnitTest()".
+* I created simple unit test cord coverage report display feature by "\BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()".
+* I created "@codeCoverageSimpleIgnoreStart and @codeCoverageSimpleIgnoreEnd" feature to ignore simple unit test cord coverage report.
+* I improved lambda function call of "\BreakpointDebugging_PHPUnit_StaticVariableStorage::$_isUnitTestClass".
+* I repaired file level document of "BreakpointDebugging_InDebug.php" file because I differed from estimate in "PHP" version of "Ubuntu".
 
 Notice
 ------
