@@ -72,6 +72,7 @@
 // and moreover "use" keyword alias has priority over class definition,
 // therefore "use" keyword alias does not be affected by other files.
 use \BreakpointDebugging as B;
+use \BreakpointDebugging_Window as BW;
 use \BreakpointDebugging_PHPUnit as BU;
 use \BreakpointDebugging_PHPUnit_StaticVariableStorage as BSS;
 use \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple as BTCS;
@@ -361,14 +362,14 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
             }
             // If "@expectedException" annotation is not string.
             if (!is_string($this->getExpectedException())) {
-                B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>It is error if this test has been not using "@expectedException" annotation, or it requires "@expectedException" annotation.</b>');
+                BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>It is error if this test has been not using "@expectedException" annotation, or it requires "@expectedException" annotation.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedException" annotation should be success.
             try {
                 $this->assertThat($e, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
             } catch (Exception $dummy) {
-                B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedException" annotation value.</b>');
+                BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedException" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedExceptionMessage" annotation should be success.
@@ -380,7 +381,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionMessage($expectedExceptionMessage));
                 }
             } catch (Exception $dummy) {
-                B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionMessage" annotation value.</b>');
+                BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionMessage" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedExceptionCode" annotation should be success.
@@ -389,7 +390,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionCode($this->expectedExceptionCode));
                 }
             } catch (Exception $dummy) {
-                B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionCode" annotation value.</b>');
+                BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionCode" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
 
@@ -402,7 +403,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         }
         if ($this->getExpectedException() !== NULL) {
             // "@expectedException" should not exist.
-            B::windowHtmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error in "' . $class->name . '::' . $name . '".</b>');
+            BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error in "' . $class->name . '::' . $name . '".</b>');
 
             $this->assertThat(NULL, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
         }

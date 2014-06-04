@@ -49,6 +49,7 @@
 require_once './BreakpointDebugging_Inclusion.php';
 
 use \BreakpointDebugging as B;
+use \BreakpointDebugging_Window as BW;
 
 if (!B::checkDevelopmentSecurity()) {
     exit;
@@ -79,7 +80,7 @@ class BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport
         if (isset($_GET['codeCoverageReportDeletion'])) {
             \BreakpointDebugging_PHPUnit::deleteCodeCoverageReport();
             // Closes this window.
-            B::windowClose(__CLASS__);
+            BW::close(__CLASS__);
         } else if (isset($_GET['codeCoverageReportPath'])) { // If we pushed "Code coverage report" button.
             $codeCoverageReportPath = $_GET['codeCoverageReportPath'];
             // Opens code coverage report.
@@ -179,7 +180,7 @@ $buffer
 </html>
 
 EOD;
-            B::windowVirtualOpen(__CLASS__, $htmlFileContent);
+            BW::virtualOpen(__CLASS__, $htmlFileContent);
         }
     }
 

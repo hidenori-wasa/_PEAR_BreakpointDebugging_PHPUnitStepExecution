@@ -42,6 +42,7 @@
  * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
  */
 use \BreakpointDebugging as B;
+use \BreakpointDebugging_Window as BW;
 
 /**
  * Static variable storage.
@@ -400,7 +401,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             $message .= $message2;
             $message .= 'We must not ' . $defineOrDelete . ' global variable in the above place.' . PHP_EOL;
             $message .= 'Because "php" version 5.3.0 cannot detect ' . $defineOrDelete . 'd global variable realtime.';
-            B::windowExitForError($message);
+            BW::exitForError($message);
         }
 
         // Checks global variables values and global variables child element references.
@@ -435,7 +436,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             $message .= $message2;
             $message .= 'We must not overwrite global variable ' . $message3 . ' in the above place.' . PHP_EOL;
             $message .= 'Because "php" version 5.3.0 cannot detect overwritten global variable ' . $message3 . ' realtime.';
-            B::windowExitForError($message);
+            BW::exitForError($message);
         }
     }
 

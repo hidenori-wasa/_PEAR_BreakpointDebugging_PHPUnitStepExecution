@@ -50,9 +50,9 @@
 // and moreover "use" keyword alias has priority over class definition,
 // therefore "use" keyword alias does not be affected by other files.
 use \BreakpointDebugging as B;
+use \BreakpointDebugging_Window as BW;
 use \BreakpointDebugging_PHPUnit as BU;
 use \BreakpointDebugging_PHPUnit_StaticVariableStorage as BSS;
-use BreakpointDebugging_PHPUnit_FrameworkTestCase as BTC;
 
 /**
  * Debugs unit test files continuously by IDE.
@@ -119,7 +119,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
             array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
             )
-            , true);
+            , true
+        );
 
         // Checks the autoload functions.
         $autoloadFunctions = spl_autoload_functions();
@@ -143,7 +144,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
             $message .= 'In "bootstrap file", "file of (class ' . $testClassName . ') which is executed at autoload" or "' . $testClassName . '::setUpBeforeClass()"' . '.' . PHP_EOL;
         }
         $message .= '</b>Because it cannot store static status.';
-        B::windowExitForError($message);
+        BW::exitForError($message);
     }
 
     /**

@@ -182,6 +182,7 @@
 // and moreover "use" keyword alias has priority over class definition,
 // therefore "use" keyword alias does not be affected by other files.
 use \BreakpointDebugging as B;
+use \BreakpointDebugging_Window as BW;
 use \BreakpointDebugging_PHPUnit_StaticVariableStorage as BSS;
 
 B::limitAccess('BreakpointDebugging.php', true);
@@ -427,7 +428,7 @@ EOD;
             B::iniSet('xdebug.var_display_max_depth', '5', false);
             ob_start();
             var_dump($pException);
-            B::windowExitForError(ob_get_clean());
+            BW::exitForError(ob_get_clean());
         }
     }
 
@@ -649,9 +650,8 @@ EOD;
                 $buffer .= $result;
             }
         }
-        B::windowHtmlAddition($this->_unitTestWindowName, 'pre', 0, $buffer);
-        B::windowScrollBy($this->_unitTestWindowName, $dy);
-        B::windowScriptClearance();
+        BW::htmlAddition($this->_unitTestWindowName, 'pre', 0, $buffer);
+        BW::scrollBy($this->_unitTestWindowName, $dy);
         flush();
         for (; $count > 0; $count--) {
             ob_start();
@@ -816,7 +816,7 @@ You must set
     "BREAKPOINTDEBUGGING_MODE=RELEASE"
 to this project execution parameter.
 EOD;
-            B::windowExitForError('<b>' . $errorMessage . '</b>');
+            BW::exitForError('<b>' . $errorMessage . '</b>');
         }
     }
 
@@ -845,6 +845,7 @@ EOD;
                     set_error_handler('\BreakpointDebugging::handleError', 0);
                     // Excepts unit test classes.
                     if ('BreakpointDebugging_PHPUnit_StaticVariableStorage' === $declaredClassName //
+                        || 'BreakpointDebugging_Window' === $declaredClassName //
                         || @is_subclass_of($declaredClassName, 'BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple') //
                     ) {
                         restore_error_handler();
@@ -860,7 +861,7 @@ EOD;
                 $isUnitTestClass = function ($declaredClassName) {
                     set_error_handler('\BreakpointDebugging::handleError', 0);
                     // Excepts unit test classes.
-                    if (preg_match('`^ BreakpointDebugging_PHPUnit_StaticVariableStorage | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
+                    if (preg_match('`^ (BreakpointDebugging_ (Window | PHPUnit_StaticVariableStorage)) | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
                         || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
                     ) {
                         restore_error_handler();
@@ -881,7 +882,7 @@ EOD;
                 $isUnitTestClass = function ($declaredClassName) {
                     set_error_handler('\BreakpointDebugging::handleError', 0);
                     // Excepts unit test classes.
-                    if (preg_match('`^ BreakpointDebugging_PHPUnit_StaticVariableStorage | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
+                    if (preg_match('`^ (BreakpointDebugging_ (Window | PHPUnit_StaticVariableStorage)) | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
                         || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
                         || @is_subclass_of($declaredClassName, 'BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple') //
                     ) {
@@ -953,6 +954,10 @@ EOD;
      */
     function executeUnitTest($testFilePaths, $commandLineSwitches = '', $howToTest = 'PHPUNIT')
     {
+        if (\BreakpointDebugging_Window::initializeSharedResource()) {
+            return;
+        }
+
         B::assert(func_num_args() <= 3);
         B::assert(is_array($testFilePaths));
         B::assert(!empty($testFilePaths));
@@ -976,7 +981,7 @@ EOD;
             self::$_unitTestFilePathsStorage[$testFilePath] = true;
         }
 
-        B::windowVirtualOpen($this->_unitTestWindowName, $this->getHtmlFileContent());
+        BW::virtualOpen($this->_unitTestWindowName, $this->getHtmlFileContent());
         ob_start();
 
         if (self::$exeMode & B::RELEASE) {
@@ -1026,10 +1031,9 @@ EOD;
                 B::assert(false);
         }
 
-        B::windowHtmlAddition($this->_unitTestWindowName, 'pre', 0, ob_get_clean());
-        B::windowFront($this->_unitTestWindowName);
-        B::windowScrollBy($this->_unitTestWindowName, PHP_INT_MAX, PHP_INT_MAX);
-        B::windowScriptClearance();
+        BW::htmlAddition($this->_unitTestWindowName, 'pre', 0, ob_get_clean());
+        BW::front($this->_unitTestWindowName);
+        BW::scrollBy($this->_unitTestWindowName, PHP_INT_MAX, PHP_INT_MAX);
     }
 
     /**
@@ -1120,7 +1124,7 @@ EOD;
         $displayErrorsStorage = ini_get('display_errors');
         ini_set('display_errors', '');
 
-        B::windowVirtualOpen($this->_unitTestWindowName, $this->getHtmlFileContent());
+        BW::virtualOpen($this->_unitTestWindowName, $this->getHtmlFileContent());
         ob_start();
 
         if (self::$exeMode & B::RELEASE) {
@@ -1131,7 +1135,7 @@ EOD;
 
         $this->_runPHPUnitCommand($commandLineSwitches . ' --static-backup --coverage-html ' . $codeCoverageReportPath . ' ' . $testFilePath);
 
-        B::windowHtmlAddition($this->_unitTestWindowName, 'pre', 0, ob_get_clean());
+        BW::htmlAddition($this->_unitTestWindowName, 'pre', 0, ob_get_clean());
 
         ini_set('display_errors', $displayErrorsStorage);
         // Displays the code coverage report in browser.
@@ -1150,9 +1154,9 @@ EOD;
     /**
      * Creates code coverage report without "PHPUnit" package, then displays in browser.
      *
-     * @param mixed $testFilePaths         Relative paths of unit test files.
-     * @param type $classFileRelativePath  Relative path of class which see the code coverage.
-     * @param string $howToTest    How to test?
+     * @param mixed  $testFilePaths         Relative paths of unit test files.
+     * @param string $classFileRelativePath Relative path of class which see the code coverage.
+     * @param string $howToTest             How to test?
      *      'SIMPLE': Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
      *      'SIMPLE_OWN': This package test.
      *
@@ -1177,6 +1181,10 @@ EOD;
     function displayCodeCoverageReportSimple($testFilePaths, $classFileRelativePath, $howToTest = 'SIMPLE')
     {
         xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+
+        if (\BreakpointDebugging_Window::initializeSharedResource()) {
+            return;
+        }
 
         B::assert(func_num_args() <= 3);
         B::assert(is_string($testFilePaths) || is_array($testFilePaths));
@@ -1345,7 +1353,7 @@ $buffer
 	</body>
 </html>
 EOD;
-                B::windowVirtualOpen('BreakpointDebugging_displayCodeCoverageReportSimple', $html);
+                BW::virtualOpen('BreakpointDebugging_displayCodeCoverageReportSimple', $html);
                 exit;
             }
         }

@@ -21,14 +21,13 @@ The dependences
 * OS requires Linux or Windows.
 * PHP version = 5.3.2-5.4.x
 * Requires "Xdebug extension".
+* Requires "Mozilla Firefox" web browser.
 
 Change log
 ----------
 
-* I created simple unit test cord coverage report display feature by "\BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()".
-* I created "@codeCoverageSimpleIgnoreStart and @codeCoverageSimpleIgnoreEnd" feature to ignore simple unit test cord coverage report.
-* I improved lambda function call of "\BreakpointDebugging_PHPUnit_StaticVariableStorage::$_isUnitTestClass".
-* I repaired file level document of "BreakpointDebugging_InDebug.php" file because I differed from estimate in "PHP" version of "Ubuntu".
+* I moved "\BreakpointDebugging::window...()" class method to "\BreakpointDebugging_Window" class.
+* I changed browser display to other process browser display because session unit test must not send header.
 
 Notice
 ------
