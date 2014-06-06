@@ -954,9 +954,9 @@ EOD;
      */
     function executeUnitTest($testFilePaths, $commandLineSwitches = '', $howToTest = 'PHPUNIT')
     {
-        if (\BreakpointDebugging_Window::initializeSharedResource()) {
-            return;
-        }
+        //if (\BreakpointDebugging_Window::_initializeSharedResource()) {
+        //    return;
+        //}
 
         B::assert(func_num_args() <= 3);
         B::assert(is_array($testFilePaths));
@@ -1182,9 +1182,9 @@ EOD;
     {
         xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
 
-        if (\BreakpointDebugging_Window::initializeSharedResource()) {
-            return;
-        }
+        //if (\BreakpointDebugging_Window::_initializeSharedResource()) {
+        //    return;
+        //}
 
         B::assert(func_num_args() <= 3);
         B::assert(is_string($testFilePaths) || is_array($testFilePaths));

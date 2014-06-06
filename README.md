@@ -26,12 +26,15 @@ The dependences
 Change log
 ----------
 
-* I repaired "\BreakpointDebugging_DisplayToOtherProcess::displayToOtherProcess()" class method timeout.
+* I repaired interprocess communication of shared memory on local server about "\BreakpointDebugging_Window" class.
+* I checked caution display in case of shared file on local server about "\BreakpointDebugging_Window" class.
+* I repaired interprocess communication of shared memory on remote server about "\BreakpointDebugging_Window" class.
 
 Notice
 ------
 
 * Do not use draft of 31th because "\BreakpointDebugging_DisplayToOtherProcess::displayToOtherProcess()" class method is endless.
+* Also, should not use draft.
 * I have been developing package yet.
 * Also, I have been testing with "BreakpointDebugging_PHPUnit" package.
 * And, I have been testing "BreakpointDebugging_PHPUnit" package by "\BreakpointDebugging_PHPUnit::executeUnitTestSimple()".
