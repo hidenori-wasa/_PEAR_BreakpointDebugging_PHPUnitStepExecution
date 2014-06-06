@@ -26,12 +26,12 @@ The dependences
 Change log
 ----------
 
-* I moved "\BreakpointDebugging::window...()" class method to "\BreakpointDebugging_Window" class.
-* I changed browser display to other process browser display because session unit test must not send header.
+* I repaired "\BreakpointDebugging_DisplayToOtherProcess::displayToOtherProcess()" class method timeout.
 
 Notice
 ------
 
+* Do not use draft of 31th because "\BreakpointDebugging_DisplayToOtherProcess::displayToOtherProcess()" class method is endless.
 * I have been developing package yet.
 * Also, I have been testing with "BreakpointDebugging_PHPUnit" package.
 * And, I have been testing "BreakpointDebugging_PHPUnit" package by "\BreakpointDebugging_PHPUnit::executeUnitTestSimple()".
