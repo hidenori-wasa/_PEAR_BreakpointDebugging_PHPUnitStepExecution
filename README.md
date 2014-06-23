@@ -26,9 +26,7 @@ The dependences
 Change log
 ----------
 
-* I repaired interprocess communication of shared memory on local server about "\BreakpointDebugging_Window" class.
-* I checked caution display in case of shared file on local server about "\BreakpointDebugging_Window" class.
-* I repaired interprocess communication of shared memory on remote server about "\BreakpointDebugging_Window" class.
+* I repaired interprocess communication of shared file on remote server about "\BreakpointDebugging_Window" class.
 
 Notice
 ------
