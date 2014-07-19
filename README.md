@@ -26,7 +26,9 @@ The dependences
 Change log
 ----------
 
-* I repaired interprocess communication of shared file on remote server about "\BreakpointDebugging_Window" class.
+* I decreased disk access.
+* I repaired production server release mode.
+* I repaired for exception throw if "BreakpointDebugging_Window" class was used in case of production server release.
 
 Notice
 ------
