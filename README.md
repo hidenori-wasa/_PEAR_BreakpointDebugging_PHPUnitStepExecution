@@ -26,9 +26,9 @@ The dependences
 Change log
 ----------
 
-* I decreased disk access.
-* I repaired production server release mode.
-* I repaired for exception throw if "BreakpointDebugging_Window" class was used in case of production server release.
+* I added shared memory rotation feature of "BreakpointDebugging_Window" class.
+* I moved code of remote emulation setting forward.
+* I have been creating "\BreakpointDebugging_LockByShmopRequest" and "\BreakpointDebugging_LockByShmopResponse".
 
 Notice
 ------
