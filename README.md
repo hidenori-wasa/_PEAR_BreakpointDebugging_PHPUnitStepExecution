@@ -26,15 +26,13 @@ The dependences
 Change log
 ----------
 
-* I added shared memory rotation feature of "BreakpointDebugging_Window" class.
-* I moved code of remote emulation setting forward.
-* I have been creating "\BreakpointDebugging_LockByShmopRequest" and "\BreakpointDebugging_LockByShmopResponse".
+* I added command line error display feature.
+* I have been testing "\BreakpointDebugging_LockByShmopRequest" and "\BreakpointDebugging_LockByShmopResponse" to add lock feature by shared memory.
 
 Notice
 ------
 
-* Do not use draft of 31th because "\BreakpointDebugging_DisplayToOtherProcess::displayToOtherProcess()" class method is endless.
-* Also, should not use draft.
+* Should not use draft.
 * I have been developing package yet.
 * Also, I have been testing with "BreakpointDebugging_PHPUnit" package.
 * And, I have been testing "BreakpointDebugging_PHPUnit" package by "\BreakpointDebugging_PHPUnit::executeUnitTestSimple()".
