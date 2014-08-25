@@ -26,13 +26,12 @@ The dependences
 Change log
 ----------
 
-* I added command line error display feature.
-* I have been testing "\BreakpointDebugging_LockByShmopRequest" and "\BreakpointDebugging_LockByShmopResponse" to add lock feature by shared memory.
+* I tested "\BreakpointDebugging_LockByShmopRequest" and "\BreakpointDebugging_LockByShmopResponse" to add lock feature by shared memory.
 
 Notice
 ------
 
 * Should not use draft.
-* I have been developing package yet.
+* I am implementing "\BreakpointDebugging\NativeFunctions" class.
 * Also, I have been testing with "BreakpointDebugging_PHPUnit" package.
 * And, I have been testing "BreakpointDebugging_PHPUnit" package by "\BreakpointDebugging_PHPUnit::executeUnitTestSimple()".
