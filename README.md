@@ -26,7 +26,9 @@ The dependences
 Change log
 ----------
 
-* I tested "\BreakpointDebugging_LockByShmopRequest" and "\BreakpointDebugging_LockByShmopResponse" to add lock feature by shared memory.
+* I added features which copies "BreakpointDebugging_ErrorLogFilesManager.php" and "BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport.php" to current work directory.
+* I decreased disk access at logging.
+* I improved "BreakpointDebugging" package sample.
 
 Notice
 ------
