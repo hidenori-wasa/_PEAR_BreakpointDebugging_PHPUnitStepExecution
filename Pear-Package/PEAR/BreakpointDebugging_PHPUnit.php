@@ -705,6 +705,49 @@ EOD;
     }
 
     /**
+     * Calls class method for test.
+     *
+     * @param array $params Parameters.
+     * <pre>
+     * ### Template code. ###
+     *
+     * <code>
+     * array(
+     *      'objectOrClassName' => ''
+     *      'methodName' => ''
+     * )
+     * </code>
+     *
+     * ### Static class method call's example code. ###
+     *
+     * <code>
+     * array(
+     *      'objectOrClassName' => 'ClassName'
+     *      'methodName' => 'staticMethodName'
+     * )
+     * </code>
+     *
+     * ### Auto class method call's example code. ###
+     *
+     * <code>
+     * array(
+     *      'objectOrClassName' => $object
+     *      'methodName' => 'autoMethodName'
+     * )
+     * </code>
+     *
+     * </pre>
+     *
+     * @return mixed Return value of called class method.
+     */
+    static function callForTest($params)
+    {
+        extract($params);
+        $objectOrClassName;
+        $methodName;
+    }
+
+    /**
      * Gets property for test.
      *
      * @param mixed  $objectOrClassName A object or class name.
@@ -712,10 +755,10 @@ EOD;
      *
      * @return mixed Property value.
      *
-     * Example: $propertyValue = \BreakpointDebugging::getPropertyForTest('ClassName', 'CONST_NAME');
-     *          $propertyValue = \BreakpointDebugging::getPropertyForTest('ClassName', '$_privateStaticName');
-     *          $propertyValue = \BreakpointDebugging::getPropertyForTest($object, '$_privateStaticName');
-     *          $propertyValue = \BreakpointDebugging::getPropertyForTest($object, '$_privateAutoName');
+     * @example <code>$propertyValue = \BreakpointDebugging_PHPUnit::getPropertyForTest('ClassName', 'CONST_NAME');</code>
+     * @example <code>$propertyValue = \BreakpointDebugging_PHPUnit::getPropertyForTest('ClassName', '$_privateStaticName');</code>
+     * @example <code>$propertyValue = \BreakpointDebugging_PHPUnit::getPropertyForTest($object, '$_privateStaticName');</code>
+     * @example <code>$propertyValue = \BreakpointDebugging_PHPUnit::getPropertyForTest($object, '$_privateAutoName');</code>
      */
     static function getPropertyForTest($objectOrClassName, $propertyName)
     {
@@ -761,9 +804,9 @@ EOD;
      *
      * @return void
      *
-     * Example: \BreakpointDebugging::setPropertyForTest('ClassName', '$_privateStaticName', $value);
-     *          \BreakpointDebugging::setPropertyForTest($object, '$_privateStaticName', $value);
-     *          \BreakpointDebugging::setPropertyForTest($object, '$_privateAutoName', $value);
+     * @example <code>\BreakpointDebugging_PHPUnit::setPropertyForTest('ClassName', '$_privateStaticName', $value);</code>
+     * @example <code>\BreakpointDebugging_PHPUnit::setPropertyForTest($object, '$_privateStaticName', $value);</code>
+     * @example <code>\BreakpointDebugging_PHPUnit::setPropertyForTest($object, '$_privateAutoName', $value);</code>
      */
     static function setPropertyForTest($objectOrClassName, $propertyName, $value)
     {

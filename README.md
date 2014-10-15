@@ -26,9 +26,9 @@ The dependences
 Change log
 ----------
 
-* I added features which copies "BreakpointDebugging_ErrorLogFilesManager.php" and "BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport.php" to current work directory.
-* I decreased disk access at logging.
-* I improved "BreakpointDebugging" package sample.
+* I repaired "\BreakpointDebugging_LockByShmopRequest" and "\BreakpointDebugging_LockByShmopResponse" class.
+  * However, those classes have not done health check yet.
+* I fixed the caused bug when I decreased disk access at logging.
 
 Notice
 ------
