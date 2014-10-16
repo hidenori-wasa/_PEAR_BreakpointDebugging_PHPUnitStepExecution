@@ -26,9 +26,7 @@ The dependences
 Change log
 ----------
 
-* I repaired "\BreakpointDebugging_LockByShmopRequest" and "\BreakpointDebugging_LockByShmopResponse" class.
-  * However, those classes have not done health check yet.
-* I fixed the caused bug when I decreased disk access at logging.
+* I added error display feature in case of release unit test.
 
 Notice
 ------
