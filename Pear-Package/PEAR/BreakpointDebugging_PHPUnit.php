@@ -238,10 +238,10 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
                     $function = ' FUNCTION=' . $call['function'];
                 }
                 if (array_key_exists('class', $call)) {
-                    $class = ' CLASS=' . $call['class'];
+                    $class = 'CLASS=' . $call['class'];
                 }
             }
-            $message .= $class . $function . $idString;
+            $message .= "'  '" . $class . $function . $idString;
         }
         parent::__construct($message, $id, $previous);
     }
@@ -1061,7 +1061,7 @@ EOD;
 
         switch ($this->_unitTestResult) {
             case 'DONE':
-                echo '<b>Unit tests have done.</b>';
+                echo '<b>Unit tests have been done.</b>';
                 break;
             case 'INCOMPLETE':
                 echo '<strong>Unit tests have ended incompletely.</strong>';

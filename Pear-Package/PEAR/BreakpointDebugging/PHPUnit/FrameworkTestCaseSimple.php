@@ -150,29 +150,18 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
     /**
      * Base of "setUp()" class method.
      *
-     * @param object $phpUnit "\BreakpointDebugging_PHPUnit" instance.
+     * @param mixed $phpUnit "\BreakpointDebugging_PHPUnit" instance or false.
      */
-    static function setUpBase($phpUnit)
+    static function setUpBase($phpUnit = false)
     {
         B::limitAccess(
-            array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
+            array (
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
             )
             , true);
 
-        // Unlinks synchronization files.
-        $lockFilePaths = array (
-            'LockByFileExistingOfInternal.txt',
-            'LockByFileExisting.txt',
-        );
-        $workDir = B::getStatic('$_workDir');
-        foreach ($lockFilePaths as $lockFilePath) {
-            $lockFilePath = realpath($workDir . '/' . $lockFilePath);
-            if (is_file($lockFilePath)) {
-                B::unlink(array ($lockFilePath));
-            }
-            B::assert(!is_file($lockFilePath));
-        }
+        B::initializeSync();
         // Stores the output buffering level.
         $obLevel = &$phpUnit->refObLevel();
         $obLevel = ob_get_level();
