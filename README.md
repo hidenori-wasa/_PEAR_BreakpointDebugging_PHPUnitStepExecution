@@ -26,11 +26,7 @@ The dependences
 Change log
 ----------
 
-* I added sync's files initialization feature when execution mode is development.
-* I changed that error message of unit test is chosen easily.
 * I changed procedure of "BreakpointDebugging_ErrorLogFilesManager.php" page.
-* I combined "BreakpointDebugging_" prefix to this package work directory and PEAR setting directory.
-* I added "BreakpointDebugging_ProductionSwitcher.php" page which switches production mode and development mode.
 
 Notice
 ------
