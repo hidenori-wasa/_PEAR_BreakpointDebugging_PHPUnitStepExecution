@@ -150,9 +150,9 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
     /**
      * Base of "setUp()" class method.
      *
-     * @param mixed $phpUnit "\BreakpointDebugging_PHPUnit" instance or false.
+     * @param object $phpUnit "\BreakpointDebugging_PHPUnit" instance.
      */
-    static function setUpBase($phpUnit = false)
+    static function setUpBase($phpUnit)
     {
         B::limitAccess(
             array (

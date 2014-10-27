@@ -26,12 +26,10 @@ The dependences
 Change log
 ----------
 
-* I changed procedure of "BreakpointDebugging_ErrorLogFilesManager.php" page.
+* I repaired "\BreakpointDebugging_ProductionSwitcher" class and "\BreakpointDebugging_Window" class for "BreakpointDebugging_ErrorLogFilesManager.php" page.
 
 Notice
 ------
 
 * Should not use draft.
-* I am implementing "\BreakpointDebugging\NativeFunctions" class.
-* Also, I have been testing with "BreakpointDebugging_PHPUnit" package.
-* And, I have been testing "BreakpointDebugging_PHPUnit" package by "\BreakpointDebugging_PHPUnit::executeUnitTestSimple()".
+* I have been implementing new feature and unit test yet.
