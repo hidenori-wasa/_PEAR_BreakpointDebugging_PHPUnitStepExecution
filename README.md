@@ -26,7 +26,8 @@ The dependences
 Change log
 ----------
 
-* I repaired "\BreakpointDebugging_ProductionSwitcher" class and "\BreakpointDebugging_Window" class for "BreakpointDebugging_ErrorLogFilesManager.php" page.
+* I repaired "\BreakpointDebugging_ProductionSwitcher" class description and display.
+* I improved the file level document of "BreakpointDebugging_InDebug.php".
 
 Notice
 ------
