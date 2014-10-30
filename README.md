@@ -18,16 +18,14 @@ The dependences
 ---------------
 
 * Requires "BreakpointDebugging" package.
-* OS requires Linux or Windows.
-* PHP version = 5.3.2-5.4.x
-* Requires "Xdebug extension".
-* Requires "Mozilla Firefox" web browser.
 
 Change log
 ----------
 
-* I repaired "\BreakpointDebugging_ProductionSwitcher" class description and display.
-* I improved the file level document of "BreakpointDebugging_InDebug.php".
+* I changed default permission of "\BreakpointDebugging_InAllCase::mkdir()" from "0777" to "0700" for security.
+* I changed default permission of "\BreakpointDebugging_InAllCase::fopen()" from "0777" to "0600" for "BreakpointDebugging_ProductionSwitcher.php" page.
+* I repaired "\BreakpointDebugging_Window" class on Linux for "BreakpointDebugging_ProductionSwitcher.php" page.
+* I did regression test on Linux.
 
 Notice
 ------
