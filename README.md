@@ -22,10 +22,7 @@ The dependences
 Change log
 ----------
 
-* I changed default permission of "\BreakpointDebugging_InAllCase::mkdir()" from "0777" to "0700" for security.
-* I changed default permission of "\BreakpointDebugging_InAllCase::fopen()" from "0777" to "0600" for "BreakpointDebugging_ProductionSwitcher.php" page.
-* I repaired "\BreakpointDebugging_Window" class on Linux for "BreakpointDebugging_ProductionSwitcher.php" page.
-* I did regression test on Linux.
+* I repaired "\BreakpointDebugging_ProductionSwitcher::_scandir()" class method for recursive symbolic link.
 
 Notice
 ------
