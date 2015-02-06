@@ -26,6 +26,32 @@
  * Procedure 1: Make page like "Example top page:" and pages like "Example page of unit test file (*Test.php, *TestSimple.php):".
  * Procedure 2: Run page like "Example top page:" with IDE.
  * Option Procedure: Copy from "PEAR/BreakpointDebugging/" directory and "PEAR/BreakpointDebugging_*.php" files to the project directory of remote server if you want remote unit test.
+ * Option Procedure: "CakePHP" framework requires the following files. I do not mention about detail because those files may be changed at future.
+ *      Customize "app/Config/core.php". Because global exception and error handler is registered in this package.
+ *          Configure::write(array ('Error' => null));
+ *          Configure::write(array ('Exception'=> null));
+ *      Copy and customize "app/webroot/WasaCakeTestStart.php" instead of "app/webroot/test.php".
+ *      Copy and customize "WasaCakeTestSuiteDispatcher.php" which extends "lib/Cake/TestSuite/CakeTestSuiteDispatcher.php".
+ *      Copy and customize "WasaCakeTestSuiteCommand.php" which extends "lib/Cake/TestSuite/CakeTestSuiteCommand.php".
+ *      Customize "lib/Cake/TestSuite/CakeTestCase.php" as below.
+ *          // abstract class CakeTestCase extends PHPUnit_Framework_TestCase {
+ *          //
+ *          // Hidenori Wasa added. ===>
+ *          $wasaStartPage = array_pop(debug_backtrace());
+ *          if (array_key_exists('file', $wasaStartPage)) {
+ *              $wasaStartPage = $wasaStartPage['class'];
+ *          } else {
+ *              $wasaStartPage = '';
+ *          }
+ *          if ($wasaStartPage === 'CakeTestSuiteDispatcher') { // If normal unit test. (Start page is "app/webroot/test.php".)
+ *              abstract class WasaCakeTestCase extends \PHPUnit_Framework_TestCase {}
+ *          } else { // If wasa's unit test. (Uses "app/webroot/WasaCakeTestStart.php" instead of "app/webroot/test.php".)
+ *              abstract class WasaCakeTestCase extends \BreakpointDebugging_PHPUnit_FrameworkTestCase {}
+ *          }
+ *          unset($wasaStartPage);
+ *
+ *          abstract class CakeTestCase extends \WasaCakeTestCase {
+ *          // <=== Hidenori Wasa added.
  *
  * Example top page:
  *      @see BreakpointDebugging_PHPUnit::executeUnitTest()
@@ -198,6 +224,7 @@ B::limitAccess('BreakpointDebugging.php', true);
  */
 class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAllCase
 {
+
     /**
      * Constructs instance.
      *
@@ -260,6 +287,11 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
  */
 class BreakpointDebugging_PHPUnit
 {
+    /**
+     * @var string Full file path of "WasaCakeTestStart.php".
+     */
+    private $_WasaCakeTestStartPagePath;
+
     /**
      * @var object "\StaticVariableStorage" instance.
      */
@@ -347,6 +379,11 @@ class BreakpointDebugging_PHPUnit
         $staticPropertyLimitings['$_valuesToTrace'] = '';
         self::$exeMode = &B::refStatic('$exeMode'); // This is not rule violation because this property is not stored.
         self::$_separator = PHP_EOL . '//////////////////////////////////////////////////////////////////////////' . PHP_EOL;
+    }
+
+    function __construct()
+    {
+        $this->_WasaCakeTestStartPagePath = getcwd() . '/WasaCakeTestStart.php';
     }
 
     /**
@@ -555,18 +592,26 @@ EOD;
         set_error_handler('\PHPUnit_Util_ErrorHandler::handleError', E_ALL | E_STRICT);
         // Runs unit test continuously.
         include_once 'PHPUnit/Autoload.php';
-        $pPHPUnit_TextUI_Command = new \PHPUnit_TextUI_Command();
-        if (self::$_codeCoverageKind === 'SIMPLE_OWN') {
-            // Stops the code coverage report.
-            xdebug_stop_code_coverage(false);
-            $pPHPUnit_TextUI_Command->run($commandElements, false);
-            // Resumes the code coverage report.
-            xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+
+        //if ($this->_isCakePHP()) {
+        if (BREAKPOINTDEBUGGING_IS_CAKE) {
+            \WasaCakeTestSuiteDispatcher::runPHPUnitCommand($commandElements);
         } else {
-            $pPHPUnit_TextUI_Command->run($commandElements, false);
+            $pPHPUnit_TextUI_Command = new \PHPUnit_TextUI_Command();
+
+            if (self::$_codeCoverageKind === 'SIMPLE_OWN') {
+                // Stops the code coverage report.
+                xdebug_stop_code_coverage(false);
+                $pPHPUnit_TextUI_Command->run($commandElements, false);
+                // Resumes the code coverage report.
+                xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
+            } else {
+                $pPHPUnit_TextUI_Command->run($commandElements, false);
+            }
         }
         // Uses "BreakpointDebugging" package error handler.
         restore_error_handler();
+        //self::$_onceFlag = false;
     }
 
     /**
@@ -902,10 +947,105 @@ EOD;
                 break;
             case 'PHPUNIT':
                 $isUnitTestClass = function ($declaredClassName) {
+                    static $exclusionClassNames = array (
+                        // Required class names.
+                        'App' => true, // "CakePHP" class.
+                        'BaseCoverageReport' => true, // "CakePHP" class.
+                        'BreakpointDebugging_Window' => true,
+                        'BreakpointDebugging_PHPUnit_StaticVariableStorage' => true,
+                        'CakeBaseReporter' => true, // "CakePHP" class.
+                        'CakeFixtureManager' => true, // "CakePHP" class.
+                        'CakeHtmlReporter' => true, // "CakePHP" class.
+                        'CakeTestCase' => true, // "CakePHP" class.
+                        'CakeTestFixture' => true, // "CakePHP" class.
+                        'CakeTestLoader' => true, // "CakePHP" class.
+                        'CakeTestModel' => true, // "CakePHP" class.
+                        'CakeTestRunner' => true, // "CakePHP" class.
+                        'CakeTestSuite' => true, // "CakePHP" class.
+                        'CakeTestSuiteCommand' => true, // "CakePHP" class.
+                        'CakeTestSuiteDispatcher' => true, // "CakePHP" class.
+                        'CakeTextReporter' => true, // "CakePHP" class.
+                        'ClassRegistry' => true, // "CakePHP" class.
+                        'ControllerTestCase' => true, // "CakePHP" class.
+                        'HtmlCoverageReport' => true, // "CakePHP" class.
+                        'TextCoverageReport' => true, // "CakePHP" class.
+                        'WasaCakeTestSuiteCommand' => true, // Wasa's "CakePHP" class.
+                        'WasaCakeTestSuiteDispatcher' => true, // Wasa's "CakePHP" class.
+                        // Optional class names.
+                        'AclException' => true, // "CakePHP" class.
+                        'BadRequestException' => true, // "CakePHP" class.
+                        'BaseLog' => true, // "CakePHP" class.
+                        'BreakpointDebugging_Error' => true,
+                        'BreakpointDebugging_ErrorInAllCase' => true,
+                        'BreakpointDebugging_PHPUnit' => true,
+                        'BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple' => true,
+                        'BreakpointDebugging_Shmop' => true,
+                        'BreakpointDebugging\NativeFunctions' => true,
+                        'Cache' => true, // "CakePHP" class.
+                        'CacheEngine' => true, // "CakePHP" class.
+                        'CacheException' => true, // "CakePHP" class.
+                        'CakeBaseException' => true, // "CakePHP" class.
+                        'CakeException' => true, // "CakePHP" class.
+                        'CakeLog' => true, // "CakePHP" class.
+                        'CakeLogException' => true, // "CakePHP" class.
+                        'CakePlugin' => true, // "CakePHP" class.
+                        'CakeSessionException' => true, // "CakePHP" class.
+                        'Configure' => true, // "CakePHP" class.
+                        'ConfigureException' => true, // "CakePHP" class.
+                        'ConsoleException' => true, // "CakePHP" class.
+                        'Debugger' => true, // "CakePHP" class.
+                        'ErrorHandler' => true, // "CakePHP" class.
+                        'FatalErrorException' => true, // "CakePHP" class.
+                        'FileEngine' => true, // "CakePHP" class.
+                        'FileLog' => true, // "CakePHP" class.
+                        'ForbiddenException' => true, // "CakePHP" class.
+                        'Hash' => true, // "CakePHP" class.
+                        'HttpException' => true, // "CakePHP" class.
+                        'Inflector' => true, // "CakePHP" class.
+                        'InternalErrorException' => true, // "CakePHP" class.
+                        'LogEngineCollection' => true, // "CakePHP" class.
+                        'MethodNotAllowedException' => true, // "CakePHP" class.
+                        'MissingActionException' => true, // "CakePHP" class.
+                        'MissingBehaviorException' => true, // "CakePHP" class.
+                        'MissingComponentException' => true, // "CakePHP" class.
+                        'MissingConnectionException' => true, // "CakePHP" class.
+                        'MissingControllerException' => true, // "CakePHP" class.
+                        'MissingDatabaseException' => true, // "CakePHP" class.
+                        'MissingDatasourceConfigException' => true, // "CakePHP" class.
+                        'MissingDatasourceException' => true, // "CakePHP" class.
+                        'MissingDispatcherFilterException' => true, // "CakePHP" class.
+                        'MissingHelperException' => true, // "CakePHP" class.
+                        'MissingLayoutException' => true, // "CakePHP" class.
+                        'MissingModelException' => true, // "CakePHP" class.
+                        'MissingPluginException' => true, // "CakePHP" class.
+                        'MissingShellException' => true, // "CakePHP" class.
+                        'MissingShellMethodException' => true, // "CakePHP" class.
+                        'MissingTableException' => true, // "CakePHP" class.
+                        'MissingTaskException' => true, // "CakePHP" class.
+                        'MissingTestLoaderException' => true, // "CakePHP" class.
+                        'MissingViewException' => true, // "CakePHP" class.
+                        'NotFoundException' => true, // "CakePHP" class.
+                        'NotImplementedException' => true, // "CakePHP" class.
+                        'ObjectCollection' => true, // "CakePHP" class.
+                        'PEAR_Exception' => true,
+                        'PrivateActionException' => true, // "CakePHP" class.
+                        'RouterException' => true, // "CakePHP" class.
+                        'SocketException' => true, // "CakePHP" class.
+                        'String' => true, // "CakePHP" class.
+                        'UnauthorizedException' => true, // "CakePHP" class.
+                        'XmlException' => true, // "CakePHP" class.
+                    );
+
                     set_error_handler('\BreakpointDebugging::handleError', 0);
                     // Excepts unit test classes.
-                    if (preg_match('`^ (BreakpointDebugging_ (Window | PHPUnit_StaticVariableStorage)) | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
+                    //if (preg_match('`^ (BreakpointDebugging_ (Window | PHPUnit_StaticVariableStorage)) | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
+                    if (preg_match('`^ (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
                         || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
+                        //|| $declaredClassName === 'App' // "CakePHP" class.
+                        //|| $declaredClassName === 'CakeTestSuiteDispatcher' // "CakePHP" class.
+                        //|| $declaredClassName === 'ClassRegistry' // "CakePHP" class.
+                        //|| $declaredClassName === 'WasaCakeTestSuiteDispatcher' // "CakePHP" class.
+                        || array_key_exists($declaredClassName, $exclusionClassNames)
                     ) {
                         restore_error_handler();
                         return true;
@@ -959,14 +1099,61 @@ EOD;
         return $this->_staticVariableStorage;
     }
 
+//    /**
+//     * Is this "CakePHP"?
+//     */
+//    private function _isCakePHP()
+//    {
+//        if (is_file($this->_WasaCakeTestStartPagePath)) {
+//            return true;
+//        }
+//        return false;
+//    }
+
+    /**
+     * Gets verification test file paths.
+     *
+     * @param string $howToTest How to test?
+     *      'PHPUNIT':     Uses "PHPUnit" package.
+     *      'PHPUNIT_OWN': This package's 'PHPUNIT' mode test.
+     *      'SIMPLE':      Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
+     *      'SIMPLE_OWN':  This package test.
+     *
+     * @return array Verification test file paths.
+     */
+    private function _getVerificationTestFilePaths($howToTest)
+    {
+        if ($howToTest === 'SIMPLE' || $howToTest === 'SIMPLE_OWN') {
+            $regEx = '`.* TestSimple\.php $`xX';
+        } else {
+            $regEx = '`.* Test\.php $`xX';
+        }
+        $verificationTestFilePaths = array ();
+        if (!is_dir(self::$unitTestDir)) {
+            throw new \BreakpointDebugging_ErrorException('Mistaken test directory specification.', 101);
+        }
+        $fileObjects = new RegexIterator(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(self::$unitTestDir)), $regEx);
+        foreach ($fileObjects as $fileObject) {
+            $fullFilePath = $fileObject->getPathname();
+            if (strpos($fullFilePath, self::$unitTestDir) !== 0) {
+                throw new \BreakpointDebugging_ErrorException('Mistaken full file path.', 102);
+            }
+            $verificationTestFilePaths[] = str_replace('\\', '/', substr($fullFilePath, strlen(self::$unitTestDir)));
+        }
+
+        return $verificationTestFilePaths;
+    }
+
     /**
      * Executes unit test files continuously, and debugs with IDE.
      *
      * @param array  $testFilePaths       The file paths of unit tests.
      * @param string $commandLineSwitches Command-line-switches except "--stop-on-failure --static-backup".
      * @param string $howToTest           How to test?
-     *      'PHPUNIT': Uses "PHPUnit" package.
+     *      'PHPUNIT':     Uses "PHPUnit" package.
      *      'PHPUNIT_OWN': This package's 'PHPUNIT' mode test.
+     *      'SIMPLE':      Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
+     *      'SIMPLE_OWN':  This package test.
      *
      * @return void
      *
@@ -1030,11 +1217,21 @@ EOD;
         }
 
         $this->_getUnitTestDir();
+
+        //if ($this->_isCakePHP()) {
+        if (BREAKPOINTDEBUGGING_IS_CAKE) {
+            require $this->_WasaCakeTestStartPagePath;
+        }
+
+        //$verificationTestFilePaths = $this->_getVerificationTestFilePaths($howToTest);
+
         foreach ($testFilePaths as $testFilePath) {
             // If unit test file does not exist.
             if (!is_file(self::$unitTestDir . $testFilePath)) {
                 throw new \BreakpointDebugging_ErrorException('Unit test file "' . $testFilePath . '" does not exist.', 102);
             }
+            // Registers the executed full test file path.
+            $executedTestFilePaths[] = $testFilePath;
             // If test file path contains '_'.
             if (strpos($testFilePath, '_') !== false) {
                 echo "You have to change from '_' of '$testFilePath' to '-' because you cannot run unit tests." . PHP_EOL;
@@ -1061,13 +1258,23 @@ EOD;
 
         switch ($this->_unitTestResult) {
             case 'DONE':
-                echo '<b>Unit tests have been done.</b>';
+                echo '<b>Unit tests was completed.</b>' . PHP_EOL;
                 break;
             case 'INCOMPLETE':
-                echo '<strong>Unit tests have ended incompletely.</strong>';
+                echo '<strong>Unit tests was incompletely.</strong>' . PHP_EOL;
                 break;
             default:
                 B::assert(false);
+        }
+
+        //$diffTestFilePaths = array_diff($verificationTestFilePaths, $executedTestFilePaths);
+        $diffTestFilePaths = array_diff($this->_getVerificationTestFilePaths($howToTest), $executedTestFilePaths);
+        if (!empty($diffTestFilePaths)) {
+            echo self::$_separator;
+            echo '<b>The following test file paths had not been executed.</b>' . PHP_EOL;
+        }
+        foreach ($diffTestFilePaths as $diffTestFilePath) {
+            echo '<strong>\'' . $diffTestFilePath . '\',</strong>' . PHP_EOL;
         }
 
         BW::htmlAddition($this->_unitTestWindowName, 'pre', 0, ob_get_clean());
@@ -1170,6 +1377,11 @@ EOD;
             echo '<b>\'RELEASE_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
         } else {
             echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
+        }
+
+        //if ($this->_isCakePHP()) {
+        if (BREAKPOINTDEBUGGING_IS_CAKE) {
+            require $this->_WasaCakeTestStartPagePath;
         }
 
         $this->_runPHPUnitCommand($commandLineSwitches . ' --static-backup --coverage-html ' . $codeCoverageReportPath . ' ' . $testFilePath);

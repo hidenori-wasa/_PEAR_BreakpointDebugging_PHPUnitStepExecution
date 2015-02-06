@@ -27,7 +27,7 @@
  *
  * PHP version 5.3.2-5.4.x
  *
- * Copyright (c) 2001-2014, Sebastian Bergmann <sebastian@phpunit.de>.
+ * Copyright (c) 2001-2015, Sebastian Bergmann <sebastian@phpunit.de>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@
  * @package    PHPUnit
  * @subpackage Framework
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
- * @copyright  2001-2014 Sebastian Bergmann <sebastian@phpunit.de>
+ * @copyright  2001-2015 Sebastian Bergmann <sebastian@phpunit.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @link       http://www.phpunit.de/
  * @since      File available since Release 2.0.0
@@ -83,7 +83,7 @@ use \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple as BTCS;
  * @package    PHPUnit
  * @subpackage Framework
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
- * @copyright  2001-2014 Sebastian Bergmann <sebastian@phpunit.de>
+ * @copyright  2001-2015 Sebastian Bergmann <sebastian@phpunit.de>
  * @license    http://www.opensource.org/licenses/bsd-license.php  BSD License
  * @version    Release: 3.6.12
  * @link       http://www.phpunit.de/
@@ -118,6 +118,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
      */
     protected function setUp()
     {
+        parent::setUp();
+
         BTCS::setUpBase(self::$_phpUnit);
     }
 
@@ -131,6 +133,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
     protected function tearDown()
     {
         BTCS::tearDownBase(self::$_phpUnit);
+
+        parent::tearDown();
     }
 
     /**

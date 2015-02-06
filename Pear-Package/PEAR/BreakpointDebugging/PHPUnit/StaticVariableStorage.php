@@ -536,6 +536,10 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 || $declaredClassName === 'BreakpointDebugging_InAllCase' //
                 || $declaredClassName === 'BreakpointDebugging_PHPUnit' //
                 || $declaredClassName === 'PEAR_Exception' //
+                || $declaredClassName === 'Inflector' // "CakePHP" class.
+                || $declaredClassName === 'Router' // "CakePHP" class.
+                || $declaredClassName === 'CakeEventManager' // "CakePHP" class.
+                || $declaredClassName === 'Configure' // "CakePHP" class.
             ) {
                 continue;
             }

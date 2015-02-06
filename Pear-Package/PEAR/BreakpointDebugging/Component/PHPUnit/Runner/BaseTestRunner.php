@@ -138,7 +138,7 @@ abstract class PHPUnit_Runner_BaseTestRunner
                 // );
                 //
                 // return NULL;
-                B::exitForError('suite() method must be static.'); // Hidenori Wasa added.
+                B::exitForError(sprintf("Failed to invoke suite() method.\n%s", $e->getMessage())); // Hidenori Wasa added.
             }
         }
 

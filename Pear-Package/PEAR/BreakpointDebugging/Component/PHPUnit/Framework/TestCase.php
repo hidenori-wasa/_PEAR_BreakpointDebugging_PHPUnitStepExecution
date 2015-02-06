@@ -1853,7 +1853,13 @@ abstract class PHPUnit_Framework_TestCase extends PHPUnit_Framework_Assert imple
      */
     function __set($propertyName, $value) // Hidenori Wasa added.
     {
-        \BreakpointDebugging::limitAccess('BreakpointDebugging/PHPUnit/FrameworkTestCase.php', true);
+        \BreakpointDebugging::limitAccess(
+            array(
+                'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
+                '../../lib/Cake/TestSuite/Fixture/CakeFixtureManager.php',
+            ),
+            true
+        );
         $this->$propertyName = $value;
     }
 
