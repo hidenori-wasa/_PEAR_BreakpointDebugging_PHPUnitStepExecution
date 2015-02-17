@@ -461,30 +461,4 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         }
     }
 
-    /**
-     * Marks the test as skipped in debug.
-     *
-     * @return void
-     * @author Hidenori Wasa <public@hidenori-wasa.com>
-     */
-    static function markTestSkippedInDebug()
-    {
-        if (!(BU::$exeMode & B::RELEASE)) {
-            \PHPUnit_Framework_Assert::markTestSkipped();
-        }
-    }
-
-    /**
-     * Marks the test as skipped in release.
-     *
-     * @return void
-     * @author Hidenori Wasa <public@hidenori-wasa.com>
-     */
-    static function markTestSkippedInRelease()
-    {
-        if (BU::$exeMode & B::RELEASE) {
-            \PHPUnit_Framework_Assert::markTestSkipped();
-        }
-    }
-
 }

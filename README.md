@@ -28,7 +28,4 @@ The dependences
 Change log
 ----------
 
-* I added feature which executes "\BreakpointDebugging_PHPUnit::executeUnitTest()" class method on "CakePHP" framework.
 * I repaired "BreakpointDebugging_PHPUnit.php" file level document.
-* I added display feature of test file paths that "\BreakpointDebugging_PHPUnit::executeUnitTest()" class method had not executed.
-* I repaired "BreakpointDebugging_InDebug.php" file level document.

@@ -27,31 +27,80 @@
  * Procedure 2: Run page like "Example top page:" with IDE.
  * Option Procedure: Copy from "PEAR/BreakpointDebugging/" directory and "PEAR/BreakpointDebugging_*.php" files to the project directory of remote server if you want remote unit test.
  * Option Procedure: "CakePHP" framework requires the following files. I do not mention about detail because those files may be changed at future.
- *      Customize "app/Config/core.php". Because global exception and error handler is registered in this package.
- *          Configure::write(array ('Error' => null));
- *          Configure::write(array ('Exception'=> null));
- *      Copy and customize "app/webroot/WasaCakeTestStart.php" instead of "app/webroot/test.php".
- *      Copy and customize "WasaCakeTestSuiteDispatcher.php" which extends "lib/Cake/TestSuite/CakeTestSuiteDispatcher.php".
- *      Copy and customize "WasaCakeTestSuiteCommand.php" which extends "lib/Cake/TestSuite/CakeTestSuiteCommand.php".
+ *      Customize "app/webroot/WasaCakeTestStart.php" which copied "app/webroot/test.php" as below.
+ *          <pre><code>
+ *          // Hidenori Wasa added. ===>
+ *          // require_once CAKE . 'TestSuite' . DS . 'CakeTestSuiteDispatcher.php';
+ *          require_once \CakePlugin::path('SomethingPluginName') . 'TestSuite/WasaTestArrayDispatcher.php';
+ *          // CakeTestSuiteDispatcher::run();
+ *          \WasaTestArrayDispatcher::run();
+ *          // <=== Hidenori Wasa added.
+ *          </code></pre>
+ *      Create and customize "WasaTestArrayDispatcher.php" which extends "lib/Cake/TestSuite/CakeTestSuiteDispatcher.php".
+ *          Procedure: "dispatch()" override class method must keep instance to static property instead of dispatching.
+ *              And, "_checkPHPUnit()" inside of "dispatch()" must not be called because "BreakpointDebugging_PHPUnit" loads "PHPUnit".
+ *          Procedure: "run()" override class method must change class for "new".
+ *          Procedure: "static function runPHPUnitCommand($commandElements)" must exist because it is called from "\BreakpointDebugging_PHPUnit::_runPHPUnitCommand()".
+ *              And, "--output" command line switch must be deleted because "BreakpointDebugging_PHPUnit" displays.
+ *              And, "PHPUnit_Runner_StandardTestSuiteLoader" must be used instead of "CakeTestLoader" because test file path array must be loaded instead of suite.
+ *      Create and customize "WasaTestArrayCommand.php" which extends "lib/Cake/TestSuite/CakeTestSuiteCommand.php".
+ *          Procedure: "run()" override class method must be able to execute when second parameter is false because this is called inside test path array loop.
+ *      Customize "app/Config/core.php" as below.
+ *          <pre><code>
+ *          // Hidenori Wasa added. ===>
+ *          use \BreakpointDebugging as B; // Comment out this line if you not use "BreakpointDebugging" pear package.
+ *          require_once './BreakpointDebugging_Inclusion.php'; // Comment out this line if you not use "BreakpointDebugging" pear package.
+ *          // <=== Hidenori Wasa added.
+ *
+ *          // Hidenori Wasa added. ===>
+ *          if (!defined('WASA_DEBUG_LEVEL')) {
+ *              if (defined('BREAKPOINTDEBUGGING_IS_CAKE')) { // If "BreakpointDebugging" pear package exists.
+ *                  // Defines debug level automatically.
+ *                  if (BREAKPOINTDEBUGGING_IS_PRODUCTION) { // In case of production server mode.
+ *                      define('WASA_DEBUG_LEVEL', 0);
+ *                      \Configure::write('debug', WASA_DEBUG_LEVEL);
+ *                  } else { // In case of development server mode.
+ *                      if (B::getStatic('$exeMode') & B::RELEASE) { // In case of release mode.
+ *                          define('WASA_DEBUG_LEVEL', 0);
+ *                      } else { // In case of debug mode.
+ *                          define('WASA_DEBUG_LEVEL', 2);
+ *                      }
+ *                      \Configure::write('debug', 2);
+ *                  }
+ *              } else { // If default.
+ *                  // Please, set debug-level. (0-2)
+ *                  define('WASA_DEBUG_LEVEL', 2);
+ *                  \Configure::write('debug', WASA_DEBUG_LEVEL);
+ *              }
+ *          }
+ *          // <=== Hidenori Wasa added.
+ *          </code></pre>
  *      Customize "lib/Cake/TestSuite/CakeTestCase.php" as below.
+ *          <pre><code>
  *          // abstract class CakeTestCase extends PHPUnit_Framework_TestCase {
  *          //
  *          // Hidenori Wasa added. ===>
- *          $wasaStartPage = array_pop(debug_backtrace());
- *          if (array_key_exists('file', $wasaStartPage)) {
+ *          $wasaStartPage = debug_backtrace();
+ *          $wasaStartPage = array_pop($wasaStartPage);
+ *          if (array_key_exists('class', $wasaStartPage)) {
  *              $wasaStartPage = $wasaStartPage['class'];
  *          } else {
  *              $wasaStartPage = '';
  *          }
- *          if ($wasaStartPage === 'CakeTestSuiteDispatcher') { // If normal unit test. (Start page is "app/webroot/test.php".)
+ *          if ($wasaStartPage === 'CakeTestSuiteDispatcher') {
+ *              // If unit tests start with "app/webroot/test.php".
  *              abstract class WasaCakeTestCase extends \PHPUnit_Framework_TestCase {}
- *          } else { // If wasa's unit test. (Uses "app/webroot/WasaCakeTestStart.php" instead of "app/webroot/test.php".)
+ *          } else if ($wasaStartPage === 'BreakpointDebugging_PHPUnit') {
+ *              // If unit tests start with "\BreakpointDebugging_PHPUnit::executeUnitTest()". (These tests use "app/webroot/WasaCakeTestStart.php" instead of "app/webroot/test.php".)
  *              abstract class WasaCakeTestCase extends \BreakpointDebugging_PHPUnit_FrameworkTestCase {}
+ *          } else {
+ *              throw new \WasaErrorException('Mistaken start page.');
  *          }
  *          unset($wasaStartPage);
  *
  *          abstract class CakeTestCase extends \WasaCakeTestCase {
  *          // <=== Hidenori Wasa added.
+ *          </code></pre>
  *
  * Example top page:
  *      @see BreakpointDebugging_PHPUnit::executeUnitTest()
@@ -153,8 +202,8 @@
  *          \BreakpointDebugging_PHPUnit::getPropertyForTest()
  *          \BreakpointDebugging_PHPUnit::setPropertyForTest()
  *          \BreakpointDebugging_PHPUnit::assertExceptionMessage()
- *          parent::markTestSkippedInDebug()
- *          parent::markTestSkippedInRelease()
+ *          \BreakpointDebugging_PHPUnit::markTestSkippedInDebug()
+ *          \BreakpointDebugging_PHPUnit::markTestSkippedInRelease()
  *          parent::assertTrue()
  *          parent::fail()
  *
@@ -593,9 +642,8 @@ EOD;
         // Runs unit test continuously.
         include_once 'PHPUnit/Autoload.php';
 
-        //if ($this->_isCakePHP()) {
         if (BREAKPOINTDEBUGGING_IS_CAKE) {
-            \WasaCakeTestSuiteDispatcher::runPHPUnitCommand($commandElements);
+            \WasaTestArrayDispatcher::runPHPUnitCommand($commandElements);
         } else {
             $pPHPUnit_TextUI_Command = new \PHPUnit_TextUI_Command();
 
@@ -611,7 +659,6 @@ EOD;
         }
         // Uses "BreakpointDebugging" package error handler.
         restore_error_handler();
-        //self::$_onceFlag = false;
     }
 
     /**
@@ -746,6 +793,30 @@ EOD;
 
         if (strpos($exception->getMessage(), $message) === false) {
             B::exitForError($exception->getMessage()); // Displays error call stack information.
+        }
+    }
+
+    /**
+     * Marks the test as skipped in debug.
+     *
+     * @return void
+     */
+    static function markTestSkippedInDebug()
+    {
+        if (!(self::$exeMode & B::RELEASE)) {
+            \PHPUnit_Framework_Assert::markTestSkipped();
+        }
+    }
+
+    /**
+     * Marks the test as skipped in release.
+     *
+     * @return void
+     */
+    static function markTestSkippedInRelease()
+    {
+        if (self::$exeMode & B::RELEASE) {
+            \PHPUnit_Framework_Assert::markTestSkipped();
         }
     }
 
@@ -900,9 +971,9 @@ EOD;
         if (!$isUnitTest) {
             $errorMessage = <<<EOD
 You must set
-    "BREAKPOINTDEBUGGING_MODE=DEBUG" or
-    "BREAKPOINTDEBUGGING_MODE=RELEASE"
-to this project execution parameter.
+    "define('BREAKPOINTDEBUGGING_MODE', 'DEBUG');" or
+    "define('BREAKPOINTDEBUGGING_MODE', 'RELEASE');"
+into "BreakpointDebugging_MySetting.php".
 EOD;
             BW::exitForError('<b>' . $errorMessage . '</b>');
         }
@@ -969,8 +1040,8 @@ EOD;
                         'ControllerTestCase' => true, // "CakePHP" class.
                         'HtmlCoverageReport' => true, // "CakePHP" class.
                         'TextCoverageReport' => true, // "CakePHP" class.
-                        'WasaCakeTestSuiteCommand' => true, // Wasa's "CakePHP" class.
-                        'WasaCakeTestSuiteDispatcher' => true, // Wasa's "CakePHP" class.
+                        'WasaTestArrayCommand' => true, // Wasa's "CakePHP" class.
+                        'WasaTestArrayDispatcher' => true, // Wasa's "CakePHP" class.
                         // Optional class names.
                         'AclException' => true, // "CakePHP" class.
                         'BadRequestException' => true, // "CakePHP" class.
@@ -1038,13 +1109,8 @@ EOD;
 
                     set_error_handler('\BreakpointDebugging::handleError', 0);
                     // Excepts unit test classes.
-                    //if (preg_match('`^ (BreakpointDebugging_ (Window | PHPUnit_StaticVariableStorage)) | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
                     if (preg_match('`^ (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
                         || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
-                        //|| $declaredClassName === 'App' // "CakePHP" class.
-                        //|| $declaredClassName === 'CakeTestSuiteDispatcher' // "CakePHP" class.
-                        //|| $declaredClassName === 'ClassRegistry' // "CakePHP" class.
-                        //|| $declaredClassName === 'WasaCakeTestSuiteDispatcher' // "CakePHP" class.
                         || array_key_exists($declaredClassName, $exclusionClassNames)
                     ) {
                         restore_error_handler();
@@ -1098,17 +1164,6 @@ EOD;
     {
         return $this->_staticVariableStorage;
     }
-
-//    /**
-//     * Is this "CakePHP"?
-//     */
-//    private function _isCakePHP()
-//    {
-//        if (is_file($this->_WasaCakeTestStartPagePath)) {
-//            return true;
-//        }
-//        return false;
-//    }
 
     /**
      * Gets verification test file paths.
@@ -1218,12 +1273,19 @@ EOD;
 
         $this->_getUnitTestDir();
 
-        //if ($this->_isCakePHP()) {
         if (BREAKPOINTDEBUGGING_IS_CAKE) {
+            // Changes autoload class method order.
+            spl_autoload_unregister('\BreakpointDebugging::loadClass');
             require $this->_WasaCakeTestStartPagePath;
+            spl_autoload_register('\BreakpointDebugging::loadClass');
+            if (!BREAKPOINTDEBUGGING_IS_PRODUCTION) { // In case of development server mode.
+                // Checks the fact that "CakeLog" configuration is not defined because "BreakpointDebugging" pear package does logging.
+                $wasaResult = \CakeLog::configured();
+                if (!empty($wasaResult)) {
+                    throw new \WasaErrorException('You must not configure the "CakeLog" by "\CakeLog::config(..." inside "app/Config/bootstrap.php".');
+                }
+            }
         }
-
-        //$verificationTestFilePaths = $this->_getVerificationTestFilePaths($howToTest);
 
         foreach ($testFilePaths as $testFilePath) {
             // If unit test file does not exist.
@@ -1267,7 +1329,6 @@ EOD;
                 B::assert(false);
         }
 
-        //$diffTestFilePaths = array_diff($verificationTestFilePaths, $executedTestFilePaths);
         $diffTestFilePaths = array_diff($this->_getVerificationTestFilePaths($howToTest), $executedTestFilePaths);
         if (!empty($diffTestFilePaths)) {
             echo self::$_separator;
@@ -1379,9 +1440,11 @@ EOD;
             echo '<b>\'DEBUG_UNIT_TEST\' execution mode.</b>' . PHP_EOL;
         }
 
-        //if ($this->_isCakePHP()) {
         if (BREAKPOINTDEBUGGING_IS_CAKE) {
+            // Changes autoload class method order.
+            spl_autoload_unregister('\BreakpointDebugging::loadClass');
             require $this->_WasaCakeTestStartPagePath;
+            spl_autoload_register('\BreakpointDebugging::loadClass');
         }
 
         $this->_runPHPUnitCommand($commandLineSwitches . ' --static-backup --coverage-html ' . $codeCoverageReportPath . ' ' . $testFilePath);
