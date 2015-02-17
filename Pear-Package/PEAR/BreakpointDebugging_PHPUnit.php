@@ -202,8 +202,8 @@
  *          \BreakpointDebugging_PHPUnit::getPropertyForTest()
  *          \BreakpointDebugging_PHPUnit::setPropertyForTest()
  *          \BreakpointDebugging_PHPUnit::assertExceptionMessage()
- *          \BreakpointDebugging_PHPUnit::markTestSkippedInDebug()
- *          \BreakpointDebugging_PHPUnit::markTestSkippedInRelease()
+ *          parent::markTestSkippedInDebug()
+ *          parent::markTestSkippedInRelease()
  *          parent::assertTrue()
  *          parent::fail()
  *
