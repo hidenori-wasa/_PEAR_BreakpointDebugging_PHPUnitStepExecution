@@ -26,25 +26,30 @@
  * Procedure 1: Make page like "Example top page:" and pages like "Example page of unit test file (*Test.php, *TestSimple.php):".
  * Procedure 2: Run page like "Example top page:" with IDE.
  * Option Procedure: Copy from "PEAR/BreakpointDebugging/" directory and "PEAR/BreakpointDebugging_*.php" files to the project directory of remote server if you want remote unit test.
- * Option Procedure: "CakePHP" framework requires the following files. I do not mention about detail because those files may be changed at future.
+ * Option Procedure: "CakePHP" framework requires the following files.
  *      Customize "app/webroot/WasaCakeTestStart.php" which copied "app/webroot/test.php" as below.
  *          <pre><code>
  *          // Hidenori Wasa added. ===>
  *          // require_once CAKE . 'TestSuite' . DS . 'CakeTestSuiteDispatcher.php';
- *          require_once \CakePlugin::path('SomethingPluginName') . 'TestSuite/WasaTestArrayDispatcher.php';
+ *          require_once \CakePlugin::path('WasaPhpUnit') . 'TestSuite/WasaTestArrayDispatcher.php';
  *          // CakeTestSuiteDispatcher::run();
  *          \WasaTestArrayDispatcher::run();
  *          // <=== Hidenori Wasa added.
  *          </code></pre>
- *      Create and customize "WasaTestArrayDispatcher.php" which extends "lib/Cake/TestSuite/CakeTestSuiteDispatcher.php".
- *          Procedure: "dispatch()" override class method must keep instance to static property instead of dispatching.
- *              And, "_checkPHPUnit()" inside of "dispatch()" must not be called because "BreakpointDebugging_PHPUnit" loads "PHPUnit".
- *          Procedure: "run()" override class method must change class for "new".
- *          Procedure: "static function runPHPUnitCommand($commandElements)" must exist because it is called from "\BreakpointDebugging_PHPUnit::_runPHPUnitCommand()".
- *              And, "--output" command line switch must be deleted because "BreakpointDebugging_PHPUnit" displays.
- *              And, "PHPUnit_Runner_StandardTestSuiteLoader" must be used instead of "CakeTestLoader" because test file path array must be loaded instead of suite.
- *      Create and customize "WasaTestArrayCommand.php" which extends "lib/Cake/TestSuite/CakeTestSuiteCommand.php".
- *          Procedure: "run()" override class method must be able to execute when second parameter is false because this is called inside test path array loop.
+ *      Load "WasaPhpUnit" plugin inside "app/Config/bootstrap.php" as below.
+ *          <pre><code>
+ *          \CakePlugin::load('WasaPhpUnit', array ('bootstrap' => true));
+ *          </code></pre>
+ *          If this plugin cannot execute by difference of version, consult the following.
+ *              Create and customize "WasaTestArrayDispatcher.php" which extends "lib/Cake/TestSuite/CakeTestSuiteDispatcher.php".
+ *                  Procedure: "dispatch()" override class method must keep instance to static property instead of dispatching.
+ *                      And, "_checkPHPUnit()" inside of "dispatch()" must not be called because "BreakpointDebugging_PHPUnit" loads "PHPUnit".
+ *                  Procedure: "run()" override class method must change class for "new".
+ *                  Procedure: "static function runPHPUnitCommand($commandElements)" must exist because it is called from "\BreakpointDebugging_PHPUnit::_runPHPUnitCommand()".
+ *                      And, "--output" command line switch must be deleted because "BreakpointDebugging_PHPUnit" displays.
+ *                      And, "PHPUnit_Runner_StandardTestSuiteLoader" must be used instead of "CakeTestLoader" because test file path array must be loaded instead of suite.
+ *              Create and customize "WasaTestArrayCommand.php" which extends "lib/Cake/TestSuite/CakeTestSuiteCommand.php".
+ *                  Procedure: "run()" override class method must be able to execute when second parameter is false because this is called inside test path array loop.
  *      Customize "app/Config/core.php" as below.
  *          <pre><code>
  *          // Hidenori Wasa added. ===>
