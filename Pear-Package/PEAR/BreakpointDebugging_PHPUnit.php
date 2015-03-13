@@ -41,42 +41,25 @@
  *          \CakePlugin::load('WasaPhpUnit', array ('bootstrap' => true));
  *          </code></pre>
  *          If this plugin cannot execute by difference of version, consult the following.
- *              Create and customize "WasaTestArrayDispatcher.php" which extends "lib/Cake/TestSuite/CakeTestSuiteDispatcher.php".
+ *              Customize "app/Plugin/WasaPhpUnit/TestSuite/WasaTestArrayDispatcher.php" which extends "lib/Cake/TestSuite/CakeTestSuiteDispatcher.php".
  *                  Procedure: "dispatch()" override class method must keep instance to static property instead of dispatching.
  *                      And, "_checkPHPUnit()" inside of "dispatch()" must not be called because "BreakpointDebugging_PHPUnit" loads "PHPUnit".
  *                  Procedure: "run()" override class method must change class for "new".
  *                  Procedure: "static function runPHPUnitCommand($commandElements)" must exist because it is called from "\BreakpointDebugging_PHPUnit::_runPHPUnitCommand()".
  *                      And, "--output" command line switch must be deleted because "BreakpointDebugging_PHPUnit" displays.
  *                      And, "PHPUnit_Runner_StandardTestSuiteLoader" must be used instead of "CakeTestLoader" because test file path array must be loaded instead of suite.
- *              Create and customize "WasaTestArrayCommand.php" which extends "lib/Cake/TestSuite/CakeTestSuiteCommand.php".
+ *              Customize "app/Plugin/WasaPhpUnit/TestSuite/WasaTestArrayCommand.php" which extends "lib/Cake/TestSuite/CakeTestSuiteCommand.php".
  *                  Procedure: "run()" override class method must be able to execute when second parameter is false because this is called inside test path array loop.
  *      Customize "app/Config/core.php" as below.
  *          <pre><code>
  *          // Hidenori Wasa added. ===>
- *          use \BreakpointDebugging as B; // Comment out this line if you not use "BreakpointDebugging" pear package.
- *          require_once './BreakpointDebugging_Inclusion.php'; // Comment out this line if you not use "BreakpointDebugging" pear package.
- *          // <=== Hidenori Wasa added.
+ *          require_once './BreakpointDebugging_Inclusion.php';
  *
- *          // Hidenori Wasa added. ===>
- *          if (!defined('WASA_DEBUG_LEVEL')) {
- *              if (defined('BREAKPOINTDEBUGGING_IS_CAKE')) { // If "BreakpointDebugging" pear package exists.
- *                  // Defines debug level automatically.
- *                  if (BREAKPOINTDEBUGGING_IS_PRODUCTION) { // In case of production server mode.
- *                      define('WASA_DEBUG_LEVEL', 0);
- *                      \Configure::write('debug', WASA_DEBUG_LEVEL);
- *                  } else { // In case of development server mode.
- *                      if (B::getStatic('$exeMode') & B::RELEASE) { // In case of release mode.
- *                          define('WASA_DEBUG_LEVEL', 0);
- *                      } else { // In case of debug mode.
- *                          define('WASA_DEBUG_LEVEL', 2);
- *                      }
- *                      \Configure::write('debug', 2);
- *                  }
- *              } else { // If default.
- *                  // Please, set debug-level. (0-2)
- *                  define('WASA_DEBUG_LEVEL', 2);
- *                  \Configure::write('debug', WASA_DEBUG_LEVEL);
- *              }
+ *          // Defines debug level automatically.
+ *          if (BREAKPOINTDEBUGGING_IS_PRODUCTION) { // In case of production server mode.
+ *              \Configure::write('debug', 0);
+ *          } else { // In case of development server mode.
+ *              \Configure::write('debug', 2);
  *          }
  *          // <=== Hidenori Wasa added.
  *          </code></pre>
@@ -341,6 +324,11 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
  */
 class BreakpointDebugging_PHPUnit
 {
+    /**
+     * @var string The test directory.
+     */
+    private $_testDir;
+
     /**
      * @var string Full file path of "WasaCakeTestStart.php".
      */
@@ -618,7 +606,7 @@ EOD;
         }
         $command = ltrim($command);
         echo self::$_separator;
-        echo "Runs <b>\"phpunit $command\"</b> command." . PHP_EOL;
+        echo 'Runs <b>"' . str_replace('\\', '/', substr(realpath(self::$unitTestDir . $testFileName), strlen(realpath(self::$unitTestDir . $this->_testDir)) + 1)) . '"</b>.' . PHP_EOL;
         // Initializes once's flag per test file.
         $onceFlagPerTestFile = &BSS::refOnceFlagPerTestFile(); // This is not rule violation because this property is not stored.
         $onceFlagPerTestFile = true;
@@ -1183,30 +1171,89 @@ EOD;
      */
     private function _getVerificationTestFilePaths($howToTest)
     {
+        // Sets regular expression to get test file paths.
         if ($howToTest === 'SIMPLE' || $howToTest === 'SIMPLE_OWN') {
             $regEx = '`.* TestSimple\.php $`xX';
         } else {
             $regEx = '`.* Test\.php $`xX';
         }
         $verificationTestFilePaths = array ();
-        if (!is_dir(self::$unitTestDir)) {
+        // Sets the full test directory path.
+        $fullTestDirPath = self::$unitTestDir . $this->_testDir;
+        // If test directory specification is mistaken.
+        if (!is_dir($fullTestDirPath)) {
             throw new \BreakpointDebugging_ErrorException('Mistaken test directory specification.', 101);
         }
-        $fileObjects = new RegexIterator(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(self::$unitTestDir)), $regEx);
+        // Gets test file paths recursively.
+        $fileObjects = new RegexIterator(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($fullTestDirPath)), $regEx);
         foreach ($fileObjects as $fileObject) {
+            // Gets a full test file path.
             $fullFilePath = $fileObject->getPathname();
-            if (strpos($fullFilePath, self::$unitTestDir) !== 0) {
-                throw new \BreakpointDebugging_ErrorException('Mistaken full file path.', 102);
+            // Gets a relative test file path.
+            $testFilePath = substr($fullFilePath, strlen($fullTestDirPath));
+            // If "PHPUnit" PEAR package has been used.
+            if ($howToTest === 'PHPUNIT' || $howToTest === 'PHPUNIT_OWN') {
+                // Excepts the test suite class file path.
+                $className = basename($fullFilePath, '.php');
+                if (preg_match('`^ [_[:alpha:]] [_[:alnum:]]* $`xX', $className) === 1) {
+                    include_once $fullFilePath;
+                    if (in_array($className, get_declared_classes()) //
+                        && is_subclass_of($className, 'PHPUnit_Framework_TestSuite') //
+                    ) {
+                        continue;
+                    }
+                }
             }
-            $verificationTestFilePaths[] = str_replace('\\', '/', substr($fullFilePath, strlen(self::$unitTestDir)));
+            // Registers a verification test file path.
+            $verificationTestFilePaths[] = str_replace('\\', '/', $testFilePath);
         }
 
         return $verificationTestFilePaths;
     }
 
     /**
+     * Sets the test directory.
+     *
+     * @param string $testDir The test directory.
+     */
+    function setTestDir($testDir)
+    {
+        $this->_testDir = $testDir;
+    }
+
+    /**
      * Executes unit test files continuously, and debugs with IDE.
      *
+     * <pre>
+     * Example top page:
+     *
+     * <code>
+     *      <?php
+     *
+     *      // Changes current directory to web root.
+     *      chdir('../../');
+     *      require_once './BreakpointDebugging_Inclusion.php';
+     *
+     *      use \BreakpointDebugging as B;
+     *
+     *      B::checkExeMode(true);
+     *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
+     *      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     *      // Please, choose unit tests files by customizing.
+     *      $breakpointDebugging_UnitTestFiles = array (
+     *          'SomethingTest.php',
+     *          'Something/SubTest.php',
+     *      );
+     *
+     *      // Specifies the test directory.
+     *      $breakpointDebugging_PHPUnit->setTestDir('../../../Plugin/WasaPhpUnit/Test/Case/'); // This directory if unspecify.
+     *      // Executes unit tests.
+     *      $breakpointDebugging_PHPUnit->executeUnitTest($breakpointDebugging_UnitTestFiles); exit;
+     *
+     *      ?>
+     * </code>
+     *
+     * </pre>
      * @param array  $testFilePaths       The file paths of unit tests.
      * @param string $commandLineSwitches Command-line-switches except "--stop-on-failure --static-backup".
      * @param string $howToTest           How to test?
@@ -1216,28 +1263,6 @@ EOD;
      *      'SIMPLE_OWN':  This package test.
      *
      * @return void
-     *
-     * Example top page:
-     *      <?php
-     *
-     *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
-     *      unset($matches);
-     *
-     *      require_once './BreakpointDebugging_Inclusion.php';
-     *
-     *      B::checkExeMode(true);
-     *
-     *      // Please, choose unit tests files by customizing.
-     *      $unitTestFilePaths = array (
-     *          'SomethingTest.php',
-     *          'Something/SubTest.php',
-     *      );
-     *
-     *      // Executes unit tests.
-     *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
-     *      $breakpointDebugging_PHPUnit->executeUnitTest($unitTestFilePaths); exit;
-     *
-     *      ?>
      *
      * @codeCoverageIgnore
      * Because "phpunit" command cannot run during "phpunit" command running.
@@ -1277,6 +1302,7 @@ EOD;
         }
 
         $this->_getUnitTestDir();
+        echo 'The test current directory = <b>"' . str_replace('\\', '/', realpath(self::$unitTestDir . $this->_testDir)) . '/"</b>' . PHP_EOL;
 
         if (BREAKPOINTDEBUGGING_IS_CAKE) {
             // Changes autoload class method order.
@@ -1293,15 +1319,16 @@ EOD;
         }
 
         foreach ($testFilePaths as $testFilePath) {
+            $testFullFilePath = $this->_testDir . $testFilePath;
             // If unit test file does not exist.
-            if (!is_file(self::$unitTestDir . $testFilePath)) {
-                throw new \BreakpointDebugging_ErrorException('Unit test file "' . $testFilePath . '" does not exist.', 102);
+            if (!is_file(self::$unitTestDir . $testFullFilePath)) {
+                throw new \BreakpointDebugging_ErrorException('Unit test file "' . $testFullFilePath . '" does not exist.', 102);
             }
             // Registers the executed full test file path.
             $executedTestFilePaths[] = $testFilePath;
             // If test file path contains '_'.
-            if (strpos($testFilePath, '_') !== false) {
-                echo "You have to change from '_' of '$testFilePath' to '-' because you cannot run unit tests." . PHP_EOL;
+            if (strpos($testFullFilePath, '_') !== false) {
+                echo "You have to change from '_' of '$testFullFilePath' to '-' because you cannot run unit tests." . PHP_EOL;
                 if (function_exists('xdebug_break') //
                     && !(self::$exeMode & B::IGNORING_BREAK_POINT) //
                 ) {
@@ -1312,9 +1339,9 @@ EOD;
             if ($howToTest === 'SIMPLE' //
                 || $howToTest === 'SIMPLE_OWN' //
             ) {
-                $this->_runPHPUnitCommandSimple($testFilePath);
+                $this->_runPHPUnitCommandSimple($testFullFilePath);
             } else {
-                $this->_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $testFilePath);
+                $this->_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $testFullFilePath);
             }
             gc_collect_cycles();
         }

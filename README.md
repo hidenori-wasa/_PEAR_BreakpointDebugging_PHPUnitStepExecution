@@ -32,8 +32,3 @@ The dependences
 ---------------
 
 * Requires "BreakpointDebugging" package.
-
-Change log
-----------
-
-* I repaired "BreakpointDebugging_PHPUnit.php" file level document.
