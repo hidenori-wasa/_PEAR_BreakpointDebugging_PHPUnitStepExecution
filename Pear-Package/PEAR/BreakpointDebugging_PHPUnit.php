@@ -50,19 +50,6 @@
  *                      And, "PHPUnit_Runner_StandardTestSuiteLoader" must be used instead of "CakeTestLoader" because test file path array must be loaded instead of suite.
  *              Customize "app/Plugin/WasaPhpUnit/TestSuite/WasaTestArrayCommand.php" which extends "lib/Cake/TestSuite/CakeTestSuiteCommand.php".
  *                  Procedure: "run()" override class method must be able to execute when second parameter is false because this is called inside test path array loop.
- *      Customize "app/Config/core.php" as below.
- *          <pre><code>
- *          // Hidenori Wasa added. ===>
- *          require_once './BreakpointDebugging_Inclusion.php';
- *
- *          // Defines debug level automatically.
- *          if (BREAKPOINTDEBUGGING_IS_PRODUCTION) { // In case of production server mode.
- *              \Configure::write('debug', 0);
- *          } else { // In case of development server mode.
- *              \Configure::write('debug', 2);
- *          }
- *          // <=== Hidenori Wasa added.
- *          </code></pre>
  *      Customize "lib/Cake/TestSuite/CakeTestCase.php" as below.
  *          <pre><code>
  *          // abstract class CakeTestCase extends PHPUnit_Framework_TestCase {
@@ -82,7 +69,7 @@
  *              // If unit tests start with "\BreakpointDebugging_PHPUnit::executeUnitTest()". (These tests use "app/webroot/WasaCakeTestStart.php" instead of "app/webroot/test.php".)
  *              abstract class WasaCakeTestCase extends \BreakpointDebugging_PHPUnit_FrameworkTestCase {}
  *          } else {
- *              throw new \WasaErrorException('Mistaken start page.');
+ *              throw new \BreakpointDebugging_ErrorException('Mistaken start page.');
  *          }
  *          unset($wasaStartPage);
  *
@@ -1313,7 +1300,7 @@ EOD;
                 // Checks the fact that "CakeLog" configuration is not defined because "BreakpointDebugging" pear package does logging.
                 $wasaResult = \CakeLog::configured();
                 if (!empty($wasaResult)) {
-                    throw new \WasaErrorException('You must not configure the "CakeLog" by "\CakeLog::config(..." inside "app/Config/bootstrap.php".');
+                    throw new \BreakpointDebugging_ErrorException('You must not configure the "CakeLog" by "\CakeLog::config(..." inside "app/Config/bootstrap.php".');
                 }
             }
         }
