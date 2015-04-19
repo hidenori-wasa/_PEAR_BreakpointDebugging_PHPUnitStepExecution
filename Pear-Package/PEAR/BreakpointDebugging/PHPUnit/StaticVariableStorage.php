@@ -3,41 +3,16 @@
 /**
  * Static variable storage.
  *
- * PHP version 5.3.2-5.4.x
- *
- * LICENSE OVERVIEW:
- * 1. Do not change license text.
- * 2. Copyrighters do not take responsibility for this file code.
- *
  * LICENSE:
- * Copyright (c) 2014, Hidenori Wasa
+ * Copyright (c) 2014-, Hidenori Wasa
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer
- * in the documentation and/or other materials provided with the distribution.
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * License content is written in "PEAR/BreakpointDebugging/BREAKPOINTDEBUGGING_LICENSE.txt".
  *
  * @category PHP
  * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
- * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
+ * @license  http://opensource.org/licenses/mit-license.php  MIT License
  * @version  Release: @package_version@
  * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
  */
@@ -47,70 +22,99 @@ use \BreakpointDebugging_Window as BW;
 /**
  * Static variable storage.
  *
+ * PHP version 5.3.2-5.4.x
+ *
  * @category PHP
  * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
- * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
+ * @license  http://opensource.org/licenses/mit-license.php  MIT License
  * @version  Release: @package_version@
  * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
  */
 class BreakpointDebugging_PHPUnit_StaticVariableStorage
 {
     /**
-     * @var int Previous declared classes-number storage.
+     * Previous declared classes-number storage.
+     *
+     * @var int
      */
     private static $_prevDeclaredClassesNumberStorage = 0;
 
     /**
-     * @var bool Once flag per test file.
+     * Once flag per test file.
+     *
+     * @var bool
      */
     private static $_onceFlagPerTestFile;
 
     /**
-     * @var array Global variable references.
+     * Global variable references.
+     *
+     * @var array
      */
     private static $_globalRefs = array ();
 
     /**
-     * @var array Global variables.
+     * Global variables.
+     *
+     * @var array
      */
     private static $_globals = array ();
 
     /**
-     * @var array Static properties.
+     * Static properties.
+     *
+     * @var array
      */
     private static $_staticProperties = array ();
 
     /**
-     * @var array Snapshot of global variables references.
+     * Snapshot of global variables references.
+     *
+     * @var array
      */
     private static $_globalRefsSnapshot = array ();
 
     /**
-     * @var array Snapshot of global variables.
+     * Snapshot of global variables.
+     *
+     * @var array
      */
     private static $_globalsSnapshot = array ();
 
     /**
-     * @var array List to except to store global variable.
+     * List to except to store global variable.
+     *
+     * @var array
      */
     private static $_backupGlobalsBlacklist = array ();
 
     /**
-     * @var array Static properties's snapshot.
+     * Static properties's snapshot.
+     *
+     * @var array
      */
     private static $_staticPropertiesSnapshot = array ();
 
     /**
-     * @var array List to except to store static properties values.
+     * List to except to store static properties values.
+     *
+     * @var array
      */
     private static $_backupStaticPropertiesBlacklist = array ();
 
     /**
-     * @var Closure Is it unit test class?
+     * Is it unit test class?
+     *
+     * @var Closure
      */
     private $_isUnitTestClass;
 
+    /**
+     * Sets whether or not unit test class is.
+     *
+     * @param Closure $isUnitTestClass Is it unit test class?
+     */
     public function __construct($isUnitTestClass)
     {
         $this->_isUnitTestClass = $isUnitTestClass;
@@ -127,8 +131,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             array ('BreakpointDebugging_PHPUnit.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            )
-            , true
+            ), true
         );
 
         return self::$_onceFlagPerTestFile;
@@ -145,8 +148,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             array ('BreakpointDebugging_PHPUnit.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            )
-            , true
+            ), true
         );
 
         return self::$_globalRefs;
@@ -163,8 +165,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             array ('BreakpointDebugging_PHPUnit.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            )
-            , true
+            ), true
         );
 
         return self::$_globals;
@@ -181,8 +182,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             array ('BreakpointDebugging_PHPUnit.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            )
-            , true
+            ), true
         );
 
         return self::$_staticProperties;
@@ -289,11 +289,12 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * NOTICE: Reference setting inside "__construct()" is not broken by "unset()" because it is reset.
      *         However, reference setting inside file scope of "autoload or including" is broken by "unset()".
-     * @param array $blacklist            The list to except from variables storing.
-     * @param array $variables            Array variable to store.
-     * @param array &$variableRefsStorage Variable references storage.
-     * @param array &$variablesStorage    Variables storage.
-     * @param bool  $isGlobal             Is this the global variables?
+     *
+     * @param array $blacklist           The list to except from variables storing.
+     * @param array $variables           Array variable to store.
+     * @param array $variableRefsStorage Variable references storage.
+     * @param array $variablesStorage    Variables storage.
+     * @param bool  $isGlobal            Is this the global variables?
      *
      * @return void
      */
@@ -329,7 +330,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     /**
      * Restores variables.
      *
-     * @param array &$variables          Variables to restore.
+     * @param array $variables           Variables to restore.
      * @param array $variableRefsStorage Variable references storage.
      * @param array $variablesStorage    Variables storage.
      *
@@ -443,10 +444,10 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     /**
      * Stores global variables.
      *
-     * @param array &$globalRefs Global variable's references storage.
-     * @param array &$globals    Global variables storage.
-     * @param array $blacklist   The list to except from storage global variables.
-     * @param bool  $isSnapshot  Is this snapshot?
+     * @param array $globalRefs Global variable's references storage.
+     * @param array $globals    Global variables storage.
+     * @param array $blacklist  The list to except from storage global variables.
+     * @param bool  $isSnapshot Is this snapshot?
      *
      * @return void
      */
@@ -587,9 +588,9 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     /**
      * Stores static properties.
      *
-     * @param array &$staticProperties Static properties storage.
-     * @param array $blacklist         The list to except from static properties storage.
-     * @param bool  $isSnapshot        Is this snapshot?
+     * @param array $staticProperties Static properties storage.
+     * @param array $blacklist        The list to except from static properties storage.
+     * @param bool  $isSnapshot       Is this snapshot?
      *
      * @return void
      */
@@ -634,7 +635,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                     if (!isset($blacklist[$declaredClassName]) //
                         || !in_array($propertyName, $blacklist[$declaredClassName]) //
                     ) {
-                        $property->setAccessible(TRUE);
+                        $property->setAccessible(true);
                         $propertyValue = $property->getValue();
                         if (!$propertyValue instanceof Closure) {
                             $storage[$propertyName] = $propertyValue;
@@ -676,7 +677,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             self::_restoreVariables($properties, array (), $staticProperties);
             foreach ($staticProperties as $name => $value) {
                 $reflector = new ReflectionProperty($className, $name);
-                $reflector->setAccessible(TRUE);
+                $reflector->setAccessible(true);
                 $reflector->setValue($properties[$name]);
             }
         }

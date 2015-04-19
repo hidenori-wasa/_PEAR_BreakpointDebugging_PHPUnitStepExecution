@@ -3,6 +3,33 @@
 /**
  * Classes for unit test.
  *
+ * LICENSE:
+ * Copyright (c) 2013-, Hidenori Wasa
+ * All rights reserved.
+ *
+ * License content is written in "PEAR/BreakpointDebugging/BREAKPOINTDEBUGGING_LICENSE.txt".
+ *
+ * @category PHP
+ * @package  BreakpointDebugging_PHPUnit
+ * @author   Hidenori Wasa <public@hidenori-wasa.com>
+ * @license  http://opensource.org/licenses/mit-license.php  MIT License
+ * @version  Release: @package_version@
+ * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
+ */
+// File to have "use" keyword does not inherit scope into a file including itself,
+// also it does not inherit scope into a file including,
+// and moreover "use" keyword alias has priority over class definition,
+// therefore "use" keyword alias does not be affected by other files.
+use \BreakpointDebugging as B;
+use \BreakpointDebugging_Window as BW;
+use \BreakpointDebugging_PHPUnit_StaticVariableStorage as BSS;
+
+B::limitAccess('BreakpointDebugging.php', true);
+/**
+ * Own package exception. For unit test.
+ *
+ * PHP version 5.3.2-5.4.x
+ *
  * This file does not use except unit test. Therefore, response time is zero in release.
  * This file names put "_" to cause error when we do autoload.
  *
@@ -72,22 +99,22 @@
  *              throw new \BreakpointDebugging_ErrorException('Mistaken start page.');
  *          }
  *          unset($wasaStartPage);
- *
+ * ;
  *          abstract class CakeTestCase extends \WasaCakeTestCase {
  *          // <=== Hidenori Wasa added.
  *          </code></pre>
  *
  * Example top page:
- *      @see BreakpointDebugging_PHPUnit::executeUnitTest()
- *      @see BreakpointDebugging_PHPUnit::executeUnitTestSimple()
- *      @see BreakpointDebugging_PHPUnit::displayCodeCoverageReport()
- *      @see BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()
+ *      "@see" BreakpointDebugging_PHPUnit::executeUnitTest()
+ *      "@see" BreakpointDebugging_PHPUnit::executeUnitTestSimple()
+ *      "@see" BreakpointDebugging_PHPUnit::displayCodeCoverageReport()
+ *      "@see" BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()
  *
  * Example page of unit test file (*Test.php, *TestSimple.php):
  *      For "BreakpointDebugging_PHPUnit::executeUnitTest()" or "BreakpointDebugging_PHPUnit::displayCodeCoverageReport()".
- *          @see tests/PEAR/ExampleTest.php
+ *          "@see" tests/PEAR/ExampleTest.php
  *      For "BreakpointDebugging_PHPUnit::executeUnitTestSimple()" or "BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()".
- *          @see tests/PEAR/ExampleTestSimple.php
+ *          "@see" tests/PEAR/ExampleTestSimple.php
  *
  * ### Coding rule. ###
  * Please, follow rule, then, we can use unit test's "--static-backup" command line switch for execution with IDE.
@@ -125,12 +152,12 @@
  * The file search detection rule 2: We must not code except "tab and space" behind "@codeCoverageIgnore".
  *      Because of parsing to except '@codeCoverageIgnore' and "@codeCoverageIgnore" of code coverage report.
  *      Example of rule violation:
- *          @codeCoverageIgnore A sentence.
+ *          "@codeCoverageIgnore" A sentence.
  *      Instead:
- *          @codeCoverageIgnore
+ *          "@codeCoverageIgnore"
  *          A sentence.
  *      Please, search the rule violation of file by the following regular expression.
- *          @codeCoverageIgnore[^SE\r\n][\t\x20]*[^\t\x20].*$
+ *          "@codeCoverageIgnore[^SE\r\n][\t\x20]*[^\t\x20].*$"
  * The file search detection rule 3: We must not use "filter_input()" and "filter_input_array()".
  *      Because we cannot execute "unit test" by super global variable change.
  *      Please, search the rule violation of file by the following regular expression.
@@ -170,8 +197,8 @@
  * The special rule of "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple":
  *      We must use try-catch statement instead of annotation.
  *      However, we can use following annotation.
- *          @codeCoverageSimpleIgnoreStart (Instead of "@codeCoverageIgnoreStart".)
- *          @codeCoverageSimpleIgnoreEnd (Instead of "@codeCoverageIgnoreEnd".)
+ *          "@codeCoverageSimpleIgnoreStart" (Instead of "@codeCoverageIgnoreStart".)
+ *          "@codeCoverageSimpleIgnoreEnd" (Instead of "@codeCoverageIgnoreEnd".)
  *      The class methods and property which can be used are limited below.
  *          \BreakpointDebugging_PHPUnit::$exeMode
  *          \BreakpointDebugging_PHPUnit::getPropertyForTest()
@@ -187,62 +214,12 @@
  * How to run multiprocess unit test:
  *      Procedure 1: Use "popen()" inside your unit test class method "test...()".
  *      Procedure 2: Judge by using "parent::assertTrue(<conditional expression>)".
- *      @see tests_PEAR_BreakpointDebugging_MultiprocessTest_Main::test()
- *
- * PHP version 5.3.2-5.4.x
- *
- * LICENSE OVERVIEW:
- * 1. Do not change license text.
- * 2. Copyrighters do not take responsibility for this file code.
- *
- * LICENSE:
- * Copyright (c) 2013-2014, Hidenori Wasa
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer
- * in the documentation and/or other materials provided with the distribution.
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *      "@see" tests_PEAR_BreakpointDebugging_MultiprocessTest_Main::test()
  *
  * @category PHP
  * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
- * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
- * @version  Release: @package_version@
- * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
- */
-// File to have "use" keyword does not inherit scope into a file including itself,
-// also it does not inherit scope into a file including,
-// and moreover "use" keyword alias has priority over class definition,
-// therefore "use" keyword alias does not be affected by other files.
-use \BreakpointDebugging as B;
-use \BreakpointDebugging_Window as BW;
-use \BreakpointDebugging_PHPUnit_StaticVariableStorage as BSS;
-
-B::limitAccess('BreakpointDebugging.php', true);
-/**
- * Own package exception. For unit test.
- *
- * @category PHP
- * @package  BreakpointDebugging_PHPUnit
- * @author   Hidenori Wasa <public@hidenori-wasa.com>
- * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
+ * @license  http://opensource.org/licenses/mit-license.php  MIT License
  * @version  Release: @package_version@
  * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
  */
@@ -312,77 +289,107 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
 class BreakpointDebugging_PHPUnit
 {
     /**
-     * @var string The test directory.
+     * The test directory.
+     *
+     * @var string
      */
     private $_testDir;
 
     /**
-     * @var string Full file path of "WasaCakeTestStart.php".
+     * Full file path of "WasaCakeTestStart.php".
+     *
+     * @var string
      */
     private $_WasaCakeTestStartPagePath;
 
     /**
-     * @var object "\StaticVariableStorage" instance.
+     * "\StaticVariableStorage" instance.
+     *
+     * @var object
      */
     private $_staticVariableStorage;
 
     /**
-     * @var string Unit test window name.
+     * Unit test window name.
+     *
+     * @var string
      */
     private $_unitTestWindowName;
 
     /**
-     * @var bool Does it use "PHPUnit" package?
+     * Does it use "PHPUnit" package?
+     *
+     * @var bool
      */
     private $_phpUnitUse;
 
     /**
-     * @var array Unit test file paths storage.
+     * Unit test file paths storage.
+     *
+     * @var array
      */
     private static $_unitTestFilePathsStorage = array ();
 
     /**
-     * @var int Execution mode.
+     * Execution mode.
+     *
+     * @var int
      */
     static $exeMode;
 
     /**
-     * @var  string Unit test directory.
+     * Unit test directory.
+     *
+     * @var string
      */
     static $unitTestDir;
 
     /**
-     * @var mixed It is relative path of class which see the code coverage, and its current directory must be project directory.
+     * It is relative path of class which see the code coverage, and its current directory must be project directory.
+     *
+     * @var mixed
      */
     private static $_classFilePaths;
 
     /**
-     * @var string The code coverage report directory path.
+     * The code coverage report directory path.
+     *
+     * @var string
      */
     private static $_codeCoverageReportPath;
 
     /**
-     * @var string Separator for display.
+     * Separator for display.
+     *
+     * @var string
      */
     private static $_separator;
 
     /**
-     * @var bool Flag of once.
+     * Flag of once.
+     *
+     * @var bool
      */
     private static $_onceFlag = true;
 
     /**
-     * @var string Unit test result.
+     * Unit test result.
+     *
+     * @var string
      */
     private $_unitTestResult = 'DONE';
 
     /**
-     * @var int The output buffering level.
+     * The output buffering level.
+     *
+     * @var int
      */
     private $_obLevel;
 
     /**
-     * @var string How to test?
+     * How to test?
+     *
+     * @var string
      */
     private static $_codeCoverageKind = 'PHPUNIT';
 
@@ -410,6 +417,9 @@ class BreakpointDebugging_PHPUnit
         self::$_separator = PHP_EOL . '//////////////////////////////////////////////////////////////////////////' . PHP_EOL;
     }
 
+    /**
+     * Sets the start page file path.
+     */
     function __construct()
     {
         $this->_WasaCakeTestStartPagePath = getcwd() . '/WasaCakeTestStart.php';
@@ -429,6 +439,8 @@ class BreakpointDebugging_PHPUnit
 
     /**
      * Gets content of HTML file.
+     *
+     * @return void
      */
     function getHtmlFileContent()
     {
@@ -460,7 +472,7 @@ EOD;
     /**
      * Gets unit test window name.
      *
-     * @param type $phpUnit
+     * @param object $phpUnit "\BreakpointDebugging_PHPUnit" instance.
      *
      * @return string Unit test window name.
      */
@@ -740,10 +752,12 @@ EOD;
      */
     static function deleteCodeCoverageReport()
     {
-        B::limitAccess(array (
+        B::limitAccess(
+            array (
             basename(__FILE__),
             './BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport.php'
-            ), true);
+            ), true
+        );
 
         $codeCoverageReportPath = B::getStatic('$_workDir') . '/CodeCoverageReport/';
         // Deletes code coverage report directory files.
@@ -765,6 +779,8 @@ EOD;
      *
      * @param object $exception Exception object.
      * @param string $message   Message to compare.
+     *
+     * @return void
      */
     static function assertExceptionMessage($exception, $message)
     {
@@ -803,7 +819,6 @@ EOD;
     /**
      * Calls class method for test.
      *
-     * @param array $params Parameters.
      * <pre>
      * ### Template code. ###
      *
@@ -833,6 +848,8 @@ EOD;
      * </code>
      *
      * </pre>
+     *
+     * @param array $params Parameters.
      *
      * @return mixed Return value of called class method.
      */
@@ -961,6 +978,11 @@ EOD;
 
     /**
      * Prepares unit test.
+     *
+     * @param string $howToTest How to test.
+     *
+     * @return bool "false" if failure.
+     * @throws \BreakpointDebugging_ErrorException
      */
     private function _prepareUnitTest($howToTest = 'PHPUNIT')
     {
@@ -1138,7 +1160,7 @@ EOD;
     /**
      * Gets "\StaticVariableStorage" instance.
      *
-     * @return void
+     * @return object "\StaticVariableStorage" instance.
      */
     function getStaticVariableStorageInstance()
     {
@@ -1202,6 +1224,8 @@ EOD;
      * Sets the test directory.
      *
      * @param string $testDir The test directory.
+     *
+     * @return void
      */
     function setTestDir($testDir)
     {
@@ -1216,13 +1240,13 @@ EOD;
      *
      * <code>
      *      <?php
-     *
+     * ;
      *      // Changes current directory to web root.
      *      chdir('../../');
      *      require_once './BreakpointDebugging_Inclusion.php';
-     *
+     * ;
      *      use \BreakpointDebugging as B;
-     *
+     * ;
      *      B::checkExeMode(true);
      *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
      *      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1231,16 +1255,15 @@ EOD;
      *          'SomethingTest.php',
      *          'Something/SubTest.php',
      *      );
-     *
+     * ;
      *      // Specifies the test directory.
      *      $breakpointDebugging_PHPUnit->setTestDir('../../../Plugin/WasaPhpUnit/Test/Case/'); // This directory if unspecify.
      *      // Executes unit tests.
      *      $breakpointDebugging_PHPUnit->executeUnitTest($breakpointDebugging_UnitTestFiles); exit;
-     *
-     *      ?>
      * </code>
      *
      * </pre>
+     *
      * @param array  $testFilePaths       The file paths of unit tests.
      * @param string $commandLineSwitches Command-line-switches except "--stop-on-failure --static-backup".
      * @param string $howToTest           How to test?
@@ -1294,7 +1317,7 @@ EOD;
         if (BREAKPOINTDEBUGGING_IS_CAKE) {
             // Changes autoload class method order.
             spl_autoload_unregister('\BreakpointDebugging::loadClass');
-            require $this->_WasaCakeTestStartPagePath;
+            include $this->_WasaCakeTestStartPagePath;
             spl_autoload_register('\BreakpointDebugging::loadClass');
             if (!BREAKPOINTDEBUGGING_IS_PRODUCTION) { // In case of development server mode.
                 // Checks the fact that "CakeLog" configuration is not defined because "BreakpointDebugging" pear package does logging.
@@ -1365,34 +1388,38 @@ EOD;
     /**
      * Executes unit test files continuously without "PHPUnit" package, and debugs with IDE.
      *
-     * @param array  $testFilePaths       The file paths of unit tests.
-     * @param string $howToTest           How to test?
-     *      'SIMPLE': Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
-     *      'SIMPLE_OWN': This package test.
-     *
-     * @return void
-     *
+     * <pre>
      * Example top page:
-     *      <?php
      *
+     * <code>
+     *      <?php
+     * ;
      *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
      *      unset($matches);
-     *
+     * ;
      *      require_once './BreakpointDebugging_Inclusion.php';
-     *
+     * ;
      *      B::checkExeMode(true);
-     *
+     * ;
      *      // Please, choose unit tests files by customizing.
      *      $unitTestFilePaths = array (
      *          'SomethingTest.php',
      *          'Something/SubTest.php',
      *      );
-     *
+     * ;
      *      // Executes unit tests.
      *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
      *      $breakpointDebugging_PHPUnit->executeUnitTestSimple($unitTestFilePaths); exit;
+     * </code>
      *
-     *      ?>
+     * </pre>
+     *
+     * @param array  $testFilePaths The file paths of unit tests.
+     * @param string $howToTest     How to test?
+     *      'SIMPLE': Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
+     *      'SIMPLE_OWN': This package test.
+     *
+     * @return void
      */
     function executeUnitTestSimple($testFilePaths, $howToTest = 'SIMPLE')
     {
@@ -1402,27 +1429,31 @@ EOD;
     /**
      * Creates code coverage report, then displays in browser.
      *
-     * @param string $testFilePath        Relative path of unit test file.
-     * @param mixed  $classFilePaths      It is relative path of class which see the code coverage, and its current directory must be project directory.
-     * @param string $commandLineSwitches Command-line-switches except "--static-backup --coverage-html".
-     *
-     * @return void
-     *
+     * <pre>
      * Example top page:
-     *      <?php
      *
+     * <code>
+     *      <?php
+     * ;
      *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
      *      unset($matches);
-     *
+     * ;
      *      require_once './BreakpointDebugging_Inclusion.php';
-     *
+     * ;
      *      B::checkExeMode(true);
      *      // Makes up code coverage report, then displays in browser.
      *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
      *      $breakpointDebugging_PHPUnit->displayCodeCoverageReport('BreakpointDebugging-InAllCaseTest.php', 'PEAR/BreakpointDebugging.php'); exit;
      *      // Or, "$breakpointDebugging_PHPUnit->displayCodeCoverageReport('BreakpointDebugging/LockByFileExistingTest.php', array ('PEAR/BreakpointDebugging/Lock.php', 'PEAR/BreakpointDebugging/LockByFileExisting.php')); exit;"
+     * </code>
      *
-     *      ?>
+     * </pre>
+     *
+     * @param string $testFilePath        Relative path of unit test file.
+     * @param mixed  $classFilePaths      It is relative path of class which see the code coverage, and its current directory must be project directory.
+     * @param string $commandLineSwitches Command-line-switches except "--static-backup --coverage-html".
+     *
+     * @return void
      *
      * @codeCoverageIgnore
      * Because "phpunit" command cannot run during "phpunit" command running.
@@ -1462,7 +1493,7 @@ EOD;
         if (BREAKPOINTDEBUGGING_IS_CAKE) {
             // Changes autoload class method order.
             spl_autoload_unregister('\BreakpointDebugging::loadClass');
-            require $this->_WasaCakeTestStartPagePath;
+            include $this->_WasaCakeTestStartPagePath;
             spl_autoload_register('\BreakpointDebugging::loadClass');
         }
 
@@ -1487,6 +1518,26 @@ EOD;
     /**
      * Creates code coverage report without "PHPUnit" package, then displays in browser.
      *
+     * <pre>
+     * Example top page:
+     *
+     * <code>
+     *      <?php
+     * ;
+     *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
+     *      unset($matches);
+     * ;
+     *      require_once './BreakpointDebugging_Inclusion.php';
+     * ;
+     *      B::checkExeMode(true);
+     *      // Makes up code coverage report, then displays in browser.
+     *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
+     *      $breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple('SomethingTest.php', 'Something.php'); exit;
+     *      // Or, "$breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple(array ('Something1Test.php', 'Something2Test.php'), 'Something.php'); exit;"
+     * </code>
+     *
+     * </pre>
+     *
      * @param mixed  $testFilePaths         Relative paths of unit test files.
      * @param string $classFileRelativePath Relative path of class which see the code coverage.
      * @param string $howToTest             How to test?
@@ -1494,22 +1545,6 @@ EOD;
      *      'SIMPLE_OWN': This package test.
      *
      * @return void
-     *
-     * Example top page:
-     *      <?php
-     *
-     *      chdir(str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 2));
-     *      unset($matches);
-     *
-     *      require_once './BreakpointDebugging_Inclusion.php';
-     *
-     *      B::checkExeMode(true);
-     *      // Makes up code coverage report, then displays in browser.
-     *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
-     *      $breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple('SomethingTest.php', 'Something.php'); exit;
-     *      // Or, "$breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple(array ('Something1Test.php', 'Something2Test.php'), 'Something.php'); exit;"
-     *
-     *      ?>
      */
     function displayCodeCoverageReportSimple($testFilePaths, $classFileRelativePath, $howToTest = 'SIMPLE')
     {

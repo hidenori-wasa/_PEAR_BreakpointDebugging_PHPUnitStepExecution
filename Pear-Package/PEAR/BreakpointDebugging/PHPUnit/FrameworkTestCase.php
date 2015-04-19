@@ -3,30 +3,6 @@
 /**
  * Debugs unit tests code continuously by IDE. With "\BreakpointDebugging_PHPUnit::executeUnitTest()" class method. Supports "php" version 5.3.0 since then.
  *
- * This class extends "PHPUnit_Framework_TestCase".
- * Also, we can execute unit test with remote server without installing "PHPUnit".
- *
- * ### About "PHPUnit" package component. ###
- * I copied following "PHPUnit" package files into "BreakpointDebugging/Component/" directory
- * because it avoids "PHPUnit" package version control.
- *      PEAR/PHP/CodeCoverage.php
- *      PEAR/PHP/CodeCoverage/
- *          Copyright (c) 2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
- *      PEAR/PHP/Invoker.php
- *      PEAR/PHP/Invoker/
- *          Copyright (c) 2011-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
- *      PEAR/PHP/Timer.php
- *      PEAR/PHP/Timer/
- *          Copyright (c) 2010-2011 Sebastian Bergmann <sb@sebastian-bergmann.de>
- *      PEAR/PHP/Token.php
- *      PEAR/PHP/Token/
- *          Copyright (c) 2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
- *      PEAR/PHPUnit/
- *          Copyright (c) 2001-2012 Sebastian Bergmann <sebastian@phpunit.de>
- * Then, I added "Hidenori Wasa added." to line which I coded into "BreakpointDebugging/Component/" directory.
- *
- * PHP version 5.3.2-5.4.x
- *
  * Copyright (c) 2001-2015, Sebastian Bergmann <sebastian@phpunit.de>.
  * All rights reserved.
  *
@@ -59,6 +35,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
+ * @category   PHPUnit
  * @package    PHPUnit
  * @subpackage Framework
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
@@ -80,6 +57,31 @@ use \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple as BTCS;
 /**
  * Debugs unit tests code continuously by IDE. With "\BreakpointDebugging_PHPUnit::executeUnitTest()" class method. Supports "php" version 5.3.0 since then.
  *
+ * PHP version 5.3.2-5.4.x
+ *
+ * This class extends "PHPUnit_Framework_TestCase".
+ * Also, we can execute unit test with remote server without installing "PHPUnit".
+ *
+ * ### About "PHPUnit" package component. ###
+ * I copied following "PHPUnit" package files into "BreakpointDebugging/Component/" directory
+ * because it avoids "PHPUnit" package version control.
+ *      PEAR/PHP/CodeCoverage.php
+ *      PEAR/PHP/CodeCoverage/
+ *          Copyright (c) 2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *      PEAR/PHP/Invoker.php
+ *      PEAR/PHP/Invoker/
+ *          Copyright (c) 2011-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *      PEAR/PHP/Timer.php
+ *      PEAR/PHP/Timer/
+ *          Copyright (c) 2010-2011 Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *      PEAR/PHP/Token.php
+ *      PEAR/PHP/Token/
+ *          Copyright (c) 2009-2012 Sebastian Bergmann <sb@sebastian-bergmann.de>
+ *      PEAR/PHPUnit/
+ *          Copyright (c) 2001-2012 Sebastian Bergmann <sebastian@phpunit.de>
+ * Then, I added "Hidenori Wasa added." to line which I coded into "BreakpointDebugging/Component/" directory.
+ *
+ * @category   PHPUnit
  * @package    PHPUnit
  * @subpackage Framework
  * @author     Sebastian Bergmann <sebastian@phpunit.de>
@@ -92,7 +94,9 @@ use \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple as BTCS;
 class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var object "\BreakpointDebugging_PHPUnit" instance.
+     * "\BreakpointDebugging_PHPUnit" instance.
+     *
+     * @var object
      */
     private static $_phpUnit;
 
@@ -100,6 +104,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
      * Sets the "\BreakpointDebugging_PHPUnit" object.
      *
      * @param object $phpUnit "\BreakpointDebugging_PHPUnit".
+     *
+     * @return void
      * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
     static function setPHPUnit($phpUnit)
@@ -207,7 +213,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
 
         // Start output buffering.
         ob_start();
-        $this->outputBufferingActive = TRUE;
+        $this->outputBufferingActive = true;
 
         // Clean up stat cache.
         clearstatcache();
@@ -277,14 +283,14 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         }
 
         // Stop output buffering.
-        if ($this->outputCallback === FALSE) {
+        if ($this->outputCallback === false) {
             $this->output = ob_get_contents();
         } else {
             $this->output = call_user_func_array($this->outputCallback, array (ob_get_contents()));
         }
 
         ob_end_clean();
-        $this->outputBufferingActive = FALSE;
+        $this->outputBufferingActive = false;
 
         // Clean up stat cache.
         clearstatcache();
@@ -304,14 +310,14 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         // Perform assertion on output.
         if (!isset($e)) {
             try {
-                if ($this->outputExpectedRegex !== NULL) {
-                    $this->hasPerformedExpectationsOnOutput = TRUE;
+                if ($this->outputExpectedRegex !== null) {
+                    $this->hasPerformedExpectationsOnOutput = true;
                     $this->assertRegExp($this->outputExpectedRegex, $this->output);
-                    $this->outputExpectedRegex = NULL;
-                } else if ($this->outputExpectedString !== NULL) {
-                    $this->hasPerformedExpectationsOnOutput = TRUE;
+                    $this->outputExpectedRegex = null;
+                } else if ($this->outputExpectedString !== null) {
+                    $this->hasPerformedExpectationsOnOutput = true;
                     $this->assertEquals($this->outputExpectedString, $this->output);
-                    $this->outputExpectedString = NULL;
+                    $this->outputExpectedString = null;
                 }
             } catch (Exception $_e) {
                 $e = $_e;
@@ -344,7 +350,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         }
 
         $name = $this->getName(false);
-        if ($name === NULL) {
+        if ($name === null) {
             throw new PHPUnit_Framework_Exception('PHPUnit_Framework_TestCase::$name must not be NULL.');
         }
 
@@ -390,7 +396,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
             }
             // "@expectedExceptionCode" annotation should be success.
             try {
-                if ($this->expectedExceptionCode !== NULL) {
+                if ($this->expectedExceptionCode !== null) {
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionCode($this->expectedExceptionCode));
                 }
             } catch (Exception $dummy) {
@@ -405,11 +411,11 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
 
             return;
         }
-        if ($this->getExpectedException() !== NULL) {
+        if ($this->getExpectedException() !== null) {
             // "@expectedException" should not exist.
             BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error in "' . $class->name . '::' . $name . '".</b>');
 
-            $this->assertThat(NULL, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
+            $this->assertThat(null, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
         }
 
         if (BU::getCodeCoverageKind() === 'SIMPLE_OWN') {

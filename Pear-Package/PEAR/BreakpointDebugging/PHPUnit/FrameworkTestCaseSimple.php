@@ -3,45 +3,16 @@
 /**
  * Debugs unit test files continuously by IDE.
  *
- * We can use for unit tests of this package and "PHPUnit" package because this class is instance and this class does not use "PHPUnit" package.
- * Also, we can use instead of "*.phpt".
- * See the "BreakpointDebugging_PHPUnit.php" file-level document for usage.
- *
- * PHP version 5.3.2-5.4.x
- *
- * LICENSE OVERVIEW:
- * 1. Do not change license text.
- * 2. Copyrighters do not take responsibility for this file code.
- *
  * LICENSE:
- * Copyright (c) 2014, Hidenori Wasa
+ * Copyright (c) 2014-, Hidenori Wasa
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer
- * in the documentation and/or other materials provided with the distribution.
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * License content is written in "PEAR/BreakpointDebugging/BREAKPOINTDEBUGGING_LICENSE.txt".
  *
  * @category PHP
  * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
- * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
+ * @license  http://opensource.org/licenses/mit-license.php  MIT License
  * @version  Release: @package_version@
  * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
  */
@@ -57,17 +28,25 @@ use \BreakpointDebugging_PHPUnit_StaticVariableStorage as BSS;
 /**
  * Debugs unit test files continuously by IDE.
  *
+ * We can use for unit tests of this package and "PHPUnit" package because this class is instance and this class does not use "PHPUnit" package.
+ * Also, we can use instead of "*.phpt".
+ * See the "BreakpointDebugging_PHPUnit.php" file-level document for usage.
+ *
+ * PHP version 5.3.2-5.4.x
+ * 
  * @category PHP
  * @package  BreakpointDebugging_PHPUnit
  * @author   Hidenori Wasa <public@hidenori-wasa.com>
- * @license  http://www.opensource.org/licenses/bsd-license.php  BSD 2-Clause
+ * @license  http://opensource.org/licenses/mit-license.php  MIT License
  * @version  Release: @package_version@
  * @link     http://pear.php.net/package/BreakpointDebugging_PHPUnit
  */
 class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
 {
     /**
-     * @var object "\BreakpointDebugging_PHPUnit" instance.
+     * "\BreakpointDebugging_PHPUnit" instance.
+     *
+     * @var object
      */
     private static $_phpUnit;
 
@@ -95,6 +74,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
      * Sets the "\BreakpointDebugging_PHPUnit" object.
      *
      * @param object $phpUnit "\BreakpointDebugging_PHPUnit".
+     *
+     * @return void
      */
     static function setPHPUnit($phpUnit)
     {
@@ -118,8 +99,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            )
-            , true
+            ), true
         );
 
         // Checks the autoload functions.
@@ -151,6 +131,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
      * Base of "setUp()" class method.
      *
      * @param object $phpUnit "\BreakpointDebugging_PHPUnit" instance.
+     *
+     * @return void
      */
     static function setUpBase($phpUnit)
     {
@@ -158,8 +140,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
             array (
             'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            )
-            , true);
+            ), true
+        );
 
         B::initializeSync();
         // Stores the output buffering level.
@@ -182,14 +164,16 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
      * Base of "tearDown()" class method.
      *
      * @param object $phpUnit "\BreakpointDebugging_PHPUnit" instance.
+     *
+     * @return void
      */
     static function tearDownBase($phpUnit)
     {
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
             'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            )
-            , true);
+            ), true
+        );
 
         // Restores the output buffering level.
         while (ob_get_level() > $phpUnit->refObLevel()) {

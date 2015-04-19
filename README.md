@@ -26,7 +26,7 @@ The features list
 * We can test in remote by browser display. (This is same in "CakePHP".)
 * We can display a code coverage report in remote by browser display. (This is same in "CakePHP".)
 
-Please, read the file level document block of `PEAR/BreakpointDebugging_PHPUnit.php`.
+Please, read the class level document block of `PEAR/BreakpointDebugging_PHPUnit.php`.
 
 The dependences
 ---------------
