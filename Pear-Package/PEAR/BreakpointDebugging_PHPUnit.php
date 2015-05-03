@@ -824,8 +824,9 @@ EOD;
      *
      * <code>
      * array(
-     *      'objectOrClassName' => ''
-     *      'methodName' => ''
+     *      'objectOrClassName' => '',
+     *      'methodName' => '',
+     *      'params' => array()
      * )
      * </code>
      *
@@ -834,7 +835,8 @@ EOD;
      * <code>
      * array(
      *      'objectOrClassName' => 'ClassName'
-     *      'methodName' => 'staticMethodName'
+     *      'methodName' => '_staticMethodName'
+     *      'params' => array('param1value','param2value')
      * )
      * </code>
      *
@@ -843,21 +845,41 @@ EOD;
      * <code>
      * array(
      *      'objectOrClassName' => $object
-     *      'methodName' => 'autoMethodName'
+     *      'methodName' => '_autoMethodName'
+     *      'params' => array('param1value','param2value')
      * )
      * </code>
      *
      * </pre>
      *
-     * @param array $params Parameters.
+     * @param array $parameters Parameters.
      *
      * @return mixed Return value of called class method.
      */
-    static function callForTest($params)
+    static function callForTest($parameters)
     {
-        extract($params);
-        $objectOrClassName;
-        $methodName;
+        B::assert(func_num_args() === 1);
+        B::assert(is_array($parameters));
+
+        extract($parameters);
+
+        B::assert(is_object($objectOrClassName) || is_string($objectOrClassName));
+        B::assert(is_string($methodName));
+        B::assert(is_array($params));
+
+        if (is_object($objectOrClassName)) {
+            $className = get_class($objectOrClassName);
+        } else {
+            $className = $objectOrClassName;
+        }
+        $classReflection = new \ReflectionClass($className);
+        $methodReflection = $classReflection->getMethod($methodName);
+        $methodReflection->setAccessible(true);
+        if ($methodReflection->isStatic()) {
+            return $methodReflection->invokeArgs(null, $params);
+        } else {
+            return $methodReflection->invokeArgs($objectOrClassName, $params);
+        }
     }
 
     /**
