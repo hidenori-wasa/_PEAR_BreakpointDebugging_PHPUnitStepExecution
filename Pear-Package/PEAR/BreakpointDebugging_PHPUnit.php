@@ -834,8 +834,8 @@ EOD;
      *
      * <code>
      * array(
-     *      'objectOrClassName' => 'ClassName'
-     *      'methodName' => '_staticMethodName'
+     *      'objectOrClassName' => 'ClassName',
+     *      'methodName' => '_staticMethodName',
      *      'params' => array('param1value','param2value')
      * )
      * </code>
@@ -844,8 +844,8 @@ EOD;
      *
      * <code>
      * array(
-     *      'objectOrClassName' => $object
-     *      'methodName' => '_autoMethodName'
+     *      'objectOrClassName' => $object,
+     *      'methodName' => '_autoMethodName',
      *      'params' => array('param1value','param2value')
      * )
      * </code>
