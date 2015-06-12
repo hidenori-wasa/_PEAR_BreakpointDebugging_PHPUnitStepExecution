@@ -734,7 +734,9 @@ EOD;
                 $buffer .= $result;
             }
         }
+        //BW::close(B::ERROR_WINDOW_NAME);
         BW::htmlAddition($this->_unitTestWindowName, 'pre', 0, $buffer);
+        //BW::front($this->_unitTestWindowName);
         BW::scrollBy($this->_unitTestWindowName, $dy);
         flush();
         for (; $count > 0; $count--) {
@@ -1027,8 +1029,9 @@ EOD;
                 $isUnitTestClass = function ($declaredClassName) {
                     set_error_handler('\BreakpointDebugging::handleError', 0);
                     // Excepts unit test classes.
-                    if ('BreakpointDebugging_PHPUnit_StaticVariableStorage' === $declaredClassName //
-                        || 'BreakpointDebugging_Window' === $declaredClassName //
+                    //if ('BreakpointDebugging_PHPUnit_StaticVariableStorage' === $declaredClassName //
+                    //    || 'BreakpointDebugging_Window' === $declaredClassName //
+                    if (preg_match('`^ BreakpointDebugging_ (PHPUnit_StaticVariableStorage | Window)`xX', $declaredClassName) === 1 //
                         || @is_subclass_of($declaredClassName, 'BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple') //
                     ) {
                         restore_error_handler();
@@ -1046,8 +1049,8 @@ EOD;
                         // Required class names.
                         'App' => true, // "CakePHP" class.
                         'BaseCoverageReport' => true, // "CakePHP" class.
-                        'BreakpointDebugging_Window' => true,
-                        'BreakpointDebugging_PHPUnit_StaticVariableStorage' => true,
+                        //'BreakpointDebugging_PHPUnit_StaticVariableStorage' => true,
+                        //'BreakpointDebugging_Window' => true,
                         'CakeBaseReporter' => true, // "CakePHP" class.
                         'CakeFixtureManager' => true, // "CakePHP" class.
                         'CakeHtmlReporter' => true, // "CakePHP" class.
@@ -1133,7 +1136,7 @@ EOD;
 
                     set_error_handler('\BreakpointDebugging::handleError', 0);
                     // Excepts unit test classes.
-                    if (preg_match('`^ (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
+                    if (preg_match('`^ (BreakpointDebugging_ (PHPUnit_StaticVariableStorage | Window)) | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
                         || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
                         || array_key_exists($declaredClassName, $exclusionClassNames)
                     ) {
@@ -1155,7 +1158,7 @@ EOD;
                 $isUnitTestClass = function ($declaredClassName) {
                     set_error_handler('\BreakpointDebugging::handleError', 0);
                     // Excepts unit test classes.
-                    if (preg_match('`^ (BreakpointDebugging_ (Window | PHPUnit_StaticVariableStorage)) | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
+                    if (preg_match('`^ (BreakpointDebugging_ (PHPUnit_StaticVariableStorage | Window)) | (PHP (Unit | (_ (CodeCoverage | Invoker | (T (imer | oken_Stream))))) | File_Iterator | sfYaml | Text_Template )`xX', $declaredClassName) === 1 //
                         || @is_subclass_of($declaredClassName, 'PHPUnit_Framework_Test') //
                         || @is_subclass_of($declaredClassName, 'BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple') //
                     ) {

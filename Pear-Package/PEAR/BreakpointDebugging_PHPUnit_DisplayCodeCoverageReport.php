@@ -106,6 +106,9 @@ class BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport
             ob_start();
 
             $classFilePaths = B::getStatic('$_classFilePaths');
+            if (BREAKPOINTDEBUGGING_IS_CAKE) {
+                $classFilePaths = 'app/webroot/' . $classFilePaths;
+            }
             $thisFileURI = str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 1) . substr(str_replace('\\', '/', __FILE__), strlen($_SERVER['DOCUMENT_ROOT']) + 1);
             if (!is_array($classFilePaths)) {
                 $classFilePaths = array ($classFilePaths);
@@ -166,5 +169,3 @@ EOD;
 }
 
 new \BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport();
-
-?>

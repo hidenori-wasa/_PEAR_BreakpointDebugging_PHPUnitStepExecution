@@ -241,7 +241,8 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
                 self::checkGlobals(self::$_globalRefs, self::$_globals, true);
                 // Checks the change violation of static properties and static property child element references.
-                $this->checkProperties(self::$_staticProperties);
+                //$this->checkProperties(self::$_staticProperties);
+                $this->checkProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
             } else {
                 // Snapshots global variables.
                 self::storeGlobals(self::$_globalRefsSnapshot, self::$_globalsSnapshot, self::$_backupGlobalsBlacklist, true);
@@ -263,7 +264,8 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             // Checks deletion and change violation of global variables and global variable references during autoload.
             self::checkGlobals(self::$_globalRefs, self::$_globals);
             // Checks the change violation of static properties and static property child element references.
-            $this->checkProperties(self::$_staticProperties);
+            //$this->checkProperties(self::$_staticProperties);
+            $this->checkProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
             // Stores global variables before variable value is changed in bootstrap file and "setUpBeforeClass()".
             self::storeGlobals(self::$_globalRefs, self::$_globals, self::$_backupGlobalsBlacklist);
             // Stores static properties before variable value is changed.
@@ -502,11 +504,13 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      * Checks the change violation of static properties and static property child element references.
      *
      * @param array $staticProperties Static properties storage.
+     * @param array $blacklist        The list to except from static properties storage.
      * @param bool  $forAutoload      For autoload?
      *
      * @return void
      */
-    function checkProperties($staticProperties, $forAutoload = true)
+    //function checkProperties($staticProperties, $forAutoload = true)
+    function checkProperties($staticProperties, $blacklist, $forAutoload = true)
     {
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
@@ -534,7 +538,9 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             // Excepts unit test classes.
             if ($isUnitTestClass($declaredClassName) //
                 || $declaredClassName === 'BreakpointDebugging' //
+                || $declaredClassName === 'BreakpointDebugging_BlackList' //
                 || $declaredClassName === 'BreakpointDebugging_InAllCase' //
+                || $declaredClassName === 'BreakpointDebugging_Lock' //
                 || $declaredClassName === 'BreakpointDebugging_PHPUnit' //
                 || $declaredClassName === 'PEAR_Exception' //
                 || $declaredClassName === 'Inflector' // "CakePHP" class.
