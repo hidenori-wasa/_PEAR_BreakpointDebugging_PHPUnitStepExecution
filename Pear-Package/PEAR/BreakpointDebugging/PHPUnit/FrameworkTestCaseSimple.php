@@ -216,7 +216,6 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple
             // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
             BSS::checkGlobals(BSS::refGlobalRefs(), BSS::refGlobals(), true);
             // Checks the change violation of static properties and static property child element references.
-            //self::$_phpUnit->getStaticVariableStorageInstance()->checkProperties(BSS::refStaticProperties2(), false);
             self::$_phpUnit->getStaticVariableStorageInstance()->checkProperties(BSS::refStaticProperties2(), BSS::refBackupStaticPropertiesBlacklist(), false);
             foreach ($methodReflections as $methodReflection) {
                 if (strpos($methodReflection->name, 'test') !== 0) {

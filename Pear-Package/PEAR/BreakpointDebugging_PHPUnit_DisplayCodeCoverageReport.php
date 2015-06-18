@@ -58,8 +58,6 @@ class BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport
     {
         if (isset($_GET['codeCoverageReportDeletion'])) {
             \BreakpointDebugging_PHPUnit::deleteCodeCoverageReport();
-            // Closes this window.
-            BW::close(__CLASS__);
         } else if (isset($_GET['codeCoverageReportPath'])) { // If we pushed "Code coverage report" button.
             $codeCoverageReportPath = $_GET['codeCoverageReportPath'];
             // Opens code coverage report.
@@ -106,9 +104,6 @@ class BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport
             ob_start();
 
             $classFilePaths = B::getStatic('$_classFilePaths');
-            if (BREAKPOINTDEBUGGING_IS_CAKE) {
-                $classFilePaths = 'app/webroot/' . $classFilePaths;
-            }
             $thisFileURI = str_repeat('../', preg_match_all('`/`xX', $_SERVER['PHP_SELF'], $matches) - 1) . substr(str_replace('\\', '/', __FILE__), strlen($_SERVER['DOCUMENT_ROOT']) + 1);
             if (!is_array($classFilePaths)) {
                 $classFilePaths = array ($classFilePaths);
@@ -117,6 +112,9 @@ class BreakpointDebugging_PHPUnit_DisplayCodeCoverageReport
             // Makes the "Code coverage report" buttons.
             foreach ($classFilePaths as $classFilePath) {
                 $classFileName = str_replace(array ('/', '\\'), '_', $classFilePath);
+                if (BREAKPOINTDEBUGGING_IS_CAKE) {
+                    $classFileName = 'app_webroot_' . $classFileName;
+                }
                 $codeCoverageReportPath = str_replace('\\', '/', B::getStatic('$_codeCoverageReportPath')) . $classFileName . '.html';
                 if (!is_file($codeCoverageReportPath)) {
                     echo <<<EOD

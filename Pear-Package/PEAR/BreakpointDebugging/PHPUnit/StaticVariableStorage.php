@@ -241,7 +241,6 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
                 self::checkGlobals(self::$_globalRefs, self::$_globals, true);
                 // Checks the change violation of static properties and static property child element references.
-                //$this->checkProperties(self::$_staticProperties);
                 $this->checkProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
             } else {
                 // Snapshots global variables.
@@ -264,7 +263,6 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             // Checks deletion and change violation of global variables and global variable references during autoload.
             self::checkGlobals(self::$_globalRefs, self::$_globals);
             // Checks the change violation of static properties and static property child element references.
-            //$this->checkProperties(self::$_staticProperties);
             $this->checkProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
             // Stores global variables before variable value is changed in bootstrap file and "setUpBeforeClass()".
             self::storeGlobals(self::$_globalRefs, self::$_globals, self::$_backupGlobalsBlacklist);
@@ -509,7 +507,6 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    //function checkProperties($staticProperties, $forAutoload = true)
     function checkProperties($staticProperties, $blacklist, $forAutoload = true)
     {
         B::limitAccess(
