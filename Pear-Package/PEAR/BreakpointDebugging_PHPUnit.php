@@ -197,8 +197,10 @@ B::limitAccess('BreakpointDebugging.php', true);
  * The special rule of "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple":
  *      We must use try-catch statement instead of annotation.
  *      However, we can use following annotation.
- *          "@codeCoverageSimpleIgnoreStart" (Instead of "@codeCoverageIgnoreStart".)
- *          "@codeCoverageSimpleIgnoreEnd" (Instead of "@codeCoverageIgnoreEnd".)
+ *          //"@codeCoverageSimpleIgnoreStart" (Instead of "@codeCoverageIgnoreStart".)
+ *          "@codeCoverageIgnoreStart"
+ *          //"@codeCoverageSimpleIgnoreEnd" (Instead of "@codeCoverageIgnoreEnd".)
+ *          "@codeCoverageIgnoreEnd"
  *      The class methods and property which can be used are limited below.
  *          \BreakpointDebugging_PHPUnit::$exeMode
  *          \BreakpointDebugging_PHPUnit::getPropertyForTest()
@@ -503,7 +505,8 @@ EOD;
             || !array_key_exists('file', $callStack[1]) //
             || strripos($callStack[1]['file'], 'FrameworkTestCase.php') === strlen($callStack[1]['file']) - strlen('FrameworkTestCase.php') //
         ) {
-            B::iniSet('xdebug.var_display_max_depth', '5', false);
+            //B::iniSet('xdebug.var_display_max_depth', '5', false);
+            B::iniSet('xdebug.var_display_max_depth', '5');
             ob_start();
             var_dump($pException);
             BW::exitForError(ob_get_clean());
@@ -1535,6 +1538,120 @@ EOD;
     }
 
     /**
+     * Checks the lines to ignore in code coverage report.
+     *
+     * @param string   $filename           Filename to parse.
+     * @param resource $pFile              The file pointer to parse.
+     * @param array    $codeCoverageReport The code coverage report.
+     *
+     * @return void
+     */
+    private function _checkLinesToIgnoreInCodeCoverageReport($filename, $pFile, &$codeCoverageReport)
+    {
+        $checkCodeCoverageReport = function($startLineNumber, $endLineNumber, &$codeCoverageReport, $filename) {
+            $codeCoverageReportEndElement = array_slice($codeCoverageReport, count($codeCoverageReport) - 1, 1, true);
+            $key = key($codeCoverageReportEndElement);
+            if ($endLineNumber > $key) {
+                $endLineNumber = $key;
+            }
+            for ($count = $startLineNumber; $count <= $endLineNumber; $count++) {
+                if (array_key_exists($count, $codeCoverageReport)) {
+                    // If a line has been executed.
+                    if ($codeCoverageReport[$count] === 1) {
+                        $errorMessage = <<<EOD
+ERROR MESSAGE: A class of "@codeCoverageIgnore" and a class method of "@codeCoverageIgnore" must not be executed.
+    FILE: $filename
+    LINE: $count
+EOD;
+                        throw new \BreakpointDebugging_ErrorException($errorMessage);
+                    }
+                    // Checks the line.
+                    $codeCoverageReport[$count] = -3;
+                }
+            }
+        };
+
+        $fileContent = '';
+        do {
+            $readData = fread($pFile, 4096);
+            B::assert($readData !== false);
+            $fileContent .= $readData;
+        } while ($readData !== '');
+
+        $state = 'NONE';
+        $tokens = token_get_all($fileContent);
+        foreach ($tokens as $token) {
+            $tokenName = null;
+            $tokenLine = null;
+            $tokenChar = null;
+            if (is_array($token)) {
+                $tokenName = $token[0];
+                $tokenLine = $token[2];
+            } else if (is_string($token)) {
+                $tokenChar = $token;
+            } else {
+                B::assert(false);
+            }
+
+            switch ($state) {
+                case 'NONE':
+                    if ($tokenName === T_DOC_COMMENT) {
+                        $tokenData = $token[1];
+                        if (preg_match('`@codeCoverageIgnore [^_[:alnum:]]`xX', $tokenData) === 1) {
+                            $state = 'SEARCH_START_LINE';
+                        }
+                    }
+                    break;
+                case 'SEARCH_START_LINE':
+                    if ($tokenName === T_CLASS //
+                        || $tokenName === T_FUNCTION //
+                    ) {
+                        $state = 'SEARCH_END_LINE';
+                        $startLineNumber = $tokenLine;
+                        $curlyBracketCount = 0;
+                    }
+                    if ($tokenName === T_DOC_COMMENT) {
+                        throw new \BreakpointDebugging_ErrorException('"@codeCoverageIgnore" must be in document comment of class or class method.');
+                    }
+                    break;
+                case 'SEARCH_END_LINE':
+                    if ($tokenChar === '{') {
+                        $curlyBracketCount++;
+                    } else if ($tokenChar === '}') {
+                        $curlyBracketCount--;
+                        if ($curlyBracketCount === 0) {
+                            $state = 'SEARCH_END_LINE_NUMBER';
+                        }
+                        if ($curlyBracketCount < 0) {
+                            throw new \BreakpointDebugging_ErrorException('Curly bracket count must be positive number.');
+                        }
+                    }
+                    break;
+                case 'SEARCH_END_LINE_NUMBER':
+                    if (is_int($tokenLine)) {
+                        $state = 'NONE';
+                        $endLineNumber = $tokenLine;
+                        // Checks the lines to ignore in code coverage report.
+                        $checkCodeCoverageReport($startLineNumber, $endLineNumber, $codeCoverageReport, $filename);
+                    }
+                    break;
+                default:
+                    B::assert(false);
+            }
+        }
+        switch ($state) {
+            case 'SEARCH_START_LINE':
+                throw new \BreakpointDebugging_ErrorException('"@codeCoverageIgnore" must be in document comment of class or class method.');
+            case 'SEARCH_END_LINE':
+                throw new \BreakpointDebugging_ErrorException('Curly bracket count must become zero.');
+            case 'SEARCH_END_LINE_NUMBER':
+                $endLineNumber = PHP_INT_MAX;
+                // Checks the lines to ignore in code coverage report.
+                $checkCodeCoverageReport($startLineNumber, $endLineNumber, $codeCoverageReport, $filename);
+        }
+    }
+
+    /**
      * Creates code coverage report without "PHPUnit" package, then displays in browser.
      *
      * <pre>
@@ -1552,35 +1669,41 @@ EOD;
      *      // Makes up code coverage report, then displays in browser.
      *      $breakpointDebugging_PHPUnit = new \BreakpointDebugging_PHPUnit();
      *      $breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple('SomethingTest.php', 'Something.php'); exit;
-     *      // Or, "$breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple(array ('Something1Test.php', 'Something2Test.php'), 'Something.php'); exit;"
+     *      // Or, "$breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple(array ('Something1Test.php', 'Something2Test.php'), array ('Something1.php', 'Something2.php')); exit;"
+     *      // Or, "$breakpointDebugging_PHPUnit->displayCodeCoverageReportSimple(array ('Something1Test.php', 'Something2Test.php'), array ('Something1.php', 'Something2.php'), 'PHPUNIT'); exit;"
      * </code>
      *
      * </pre>
      *
-     * @param mixed  $testFilePaths         Relative paths of unit test files.
-     * @param string $classFileRelativePath Relative path of class which see the code coverage.
-     * @param string $howToTest             How to test?
+     * @param mixed  $testFilePaths          Relative paths of unit test files.
+     * @param string $classFileRelativePaths Relative paths of class which see the code coverage.
+     * @param string $howToTest              How to test?
      *      'SIMPLE': Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
      *      'SIMPLE_OWN': This package test.
+     *      'PHPUNIT': The default test.
      *
      * @return void
      */
-    function displayCodeCoverageReportSimple($testFilePaths, $classFileRelativePath, $howToTest = 'SIMPLE')
+    function displayCodeCoverageReportSimple($testFilePaths, $classFileRelativePaths, $howToTest = 'SIMPLE')
     {
         xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
 
         B::assert(func_num_args() <= 3);
         B::assert(is_string($testFilePaths) || is_array($testFilePaths));
-        B::assert(is_string($classFileRelativePath));
+        B::assert(is_string($classFileRelativePaths) || is_array($classFileRelativePaths));
         B::assert(is_string($howToTest));
 
         if (!extension_loaded('xdebug')) {
-            B::exitForError('"\BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()" needs "xdebug" extention.');
+            //B::exitForError('"\BreakpointDebugging_PHPUnit::displayCodeCoverageReportSimple()" needs "xdebug" extention.');
+            B::exitForError('"' . __METHOD__ . '()" needs "xdebug" extention.');
         }
-        B::iniCheck('xdebug.coverage_enable', '1', '');
+        //B::iniCheck('xdebug.coverage_enable', '1', '');
 
         if (is_string($testFilePaths)) {
             $testFilePaths = array ($testFilePaths);
+        }
+        if (is_string($classFileRelativePaths)) {
+            $classFileRelativePaths = array ($classFileRelativePaths);
         }
 
         self::$_codeCoverageKind = $howToTest;
@@ -1588,66 +1711,76 @@ EOD;
         $codeCoverages = xdebug_get_code_coverage();
         xdebug_stop_code_coverage();
 
-        $classFilePath = stream_resolve_include_path($classFileRelativePath);
-        $buffer = '';
-        $isDuringIgnore = false;
-        $errorMessage = PHP_EOL
-            . 'FILE: ' . $classFileRelativePath . PHP_EOL
-            . 'LINE: ';
-        foreach ($codeCoverages as $filePath => $codeCoverage) {
-            if ($filePath === $classFilePath) {
-                $pFile = B::fopen(array ($filePath, 'rb'));
-                $lineNumber = 0;
-                $coveringLineNumber = 0;
-                $notCoveringNumber = 0;
-                while (( $line = fgets($pFile)) !== false) {
-                    $lineNumber++;
-                    $lineNumberString = '<span class="lineNum">' . sprintf('%05d: ', $lineNumber) . '</span>';
-                    $line = $lineNumberString . htmlspecialchars($line, ENT_QUOTES, 'UTF-8');
-                    if (!array_key_exists($lineNumber, $codeCoverage)) {
-                        if ($isDuringIgnore) { // Is during ignoring.
-                            if (preg_match("`@codeCoverageSimpleIgnoreEnd [^_[:alnum:]]`xX", $line)) {
-                                $isDuringIgnore = false;
-                            } else if (preg_match("`@codeCoverageSimpleIgnoreStart [^_[:alnum:]]`xX", $line)) {
-                                B::exitForError('We must not start to ignore during ignoring.' . $errorMessage . $lineNumber);
-                            }
-                        } else { // Is not during ignoring.
-                            if (preg_match("`@codeCoverageSimpleIgnoreEnd [^_[:alnum:]]`xX", $line)) {
-                                B::exitForError('We must not end to ignore during not ignoring.' . $errorMessage . $lineNumber);
-                            } else if (preg_match("`@codeCoverageSimpleIgnoreStart [^_[:alnum:]]`xX", $line)) {
-                                $isDuringIgnore = true;
-                            }
+        $windowNumber = 1;
+        foreach ($classFileRelativePaths as $classFileRelativePath) {
+            $classFilePath = stream_resolve_include_path($classFileRelativePath);
+            B::assert(array_key_exists($classFilePath, $codeCoverages));
+            $codeCoverageReport = $codeCoverages[$classFilePath];
+            $buffer = '';
+            $isDuringIgnore = false;
+            $errorMessage = PHP_EOL
+                . 'FILE: ' . $classFileRelativePath . PHP_EOL
+                . 'LINE: ';
+            $pFile = B::fopen(array ($classFilePath, 'rb'));
+            self::_checkLinesToIgnoreInCodeCoverageReport($classFileRelativePath, $pFile, $codeCoverageReport);
+            $result = rewind($pFile);
+            B::assert($result === true);
+            $lineNumber = 0;
+            $coveringLineNumber = 0;
+            $notCoveringNumber = 0;
+            while (( $line = fgets($pFile)) !== false) {
+                $lineNumber++;
+                $lineNumberString = '<span class="lineNum">' . sprintf('%05d: ', $lineNumber) . '</span>';
+                $line = $lineNumberString . htmlspecialchars($line, ENT_QUOTES, 'UTF-8');
+                // If a comment line.
+                if (!array_key_exists($lineNumber, $codeCoverageReport)) {
+                    if ($isDuringIgnore) { // Is during ignoring.
+                        if (preg_match("`@codeCoverageIgnoreEnd [^_[:alnum:]]`xX", $line)) {
+                            $isDuringIgnore = false;
+                        } else if (preg_match("`@codeCoverageIgnoreStart [^_[:alnum:]]`xX", $line)) {
+                            throw new \BreakpointDebugging_ErrorException('We must not start to ignore during ignoring.' . $errorMessage . $lineNumber);
                         }
-                        $buffer .= '<span>' . $line . '</span>';
-                        continue;
+                    } else { // Is not during ignoring.
+                        if (preg_match("`@codeCoverageIgnoreEnd [^_[:alnum:]]`xX", $line)) {
+                            throw new \BreakpointDebugging_ErrorException('We must not end to ignore during not ignoring.' . $errorMessage . $lineNumber);
+                        } else if (preg_match("`@codeCoverageIgnoreStart [^_[:alnum:]]`xX", $line)) {
+                            $isDuringIgnore = true;
+                        }
                     }
-                    switch ($codeCoverage[$lineNumber]) {
-                        case 1:
-                            if ($isDuringIgnore) { // Is during ignoring.
-                                B::exitForError('We must not ignore covering line.' . $errorMessage . $lineNumber);
-                            } else { // Is not during ignoring.
-                                $coveringLineNumber++;
-                                $buffer .= '<span class="lineCov">' . $line . '</span>';
-                            }
-                            break;
-                        case -1:
-                            if ($isDuringIgnore) { // Is during ignoring.
-                                $buffer .= '<span class="lineIgnoring">' . $line . '</span>';
-                            } else { // Is not during ignoring.
-                                $notCoveringNumber++;
-                                $buffer .= '<span class="lineNoCov">' . $line . '</span>';
-                            }
-                            break;
-                        case -2:
-                            $buffer .= '<span class="lineDeadCode">' . $line . '</span>';
-                            break;
-                        default :
-                            assert(false);
-                    }
+                    $buffer .= '<span>' . $line . '</span>';
+                    continue;
                 }
-                $codeLineNumber = $coveringLineNumber + $notCoveringNumber;
-                $codeCoveragePercent = $coveringLineNumber * 100 / $codeLineNumber;
-                $html = <<<EOD
+                // If a code line.
+                switch ($codeCoverageReport[$lineNumber]) {
+                    case 1: // If a covering line.
+                        if ($isDuringIgnore) { // Is during ignoring.
+                            throw new \BreakpointDebugging_ErrorException('We must not ignore covering line.' . $errorMessage . $lineNumber);
+                        } else { // Is not during ignoring.
+                            $coveringLineNumber++;
+                            $buffer .= '<span class="lineCov">' . $line . '</span>';
+                        }
+                        break;
+                    case -1: // If not covering line.
+                        if ($isDuringIgnore) { // Is during ignoring.
+                            $buffer .= '<span class="lineIgnoring">' . $line . '</span>';
+                        } else { // Is not during ignoring.
+                            $notCoveringNumber++;
+                            $buffer .= '<span class="lineNoCov">' . $line . '</span>';
+                        }
+                        break;
+                    case -2: // If not execution line.
+                        $buffer .= '<span class="lineDeadCode">' . $line . '</span>';
+                        break;
+                    case -3: // If a ignored line by "@codeCoverageIgnore".
+                        $buffer .= '<span class="lineIgnoring">' . $line . '</span>';
+                        break;
+                    default :
+                        assert(false);
+                }
+            }
+            $codeLineNumber = $coveringLineNumber + $notCoveringNumber;
+            $codeCoveragePercent = sprintf('%3.2f', $coveringLineNumber * 100 / $codeLineNumber);
+            $html = <<<EOD
 <!DOCTYPE html>
 <html>
 	<head>
@@ -1736,11 +1869,8 @@ $buffer
 	</body>
 </html>
 EOD;
-                BW::virtualOpen('BreakpointDebugging_displayCodeCoverageReportSimple', $html);
-                exit;
-            }
+            BW::virtualOpen('BreakpointDebugging_displayCodeCoverageReportSimple' . $windowNumber++, $html);
         }
-        B::assert(false);
     }
 
     /**

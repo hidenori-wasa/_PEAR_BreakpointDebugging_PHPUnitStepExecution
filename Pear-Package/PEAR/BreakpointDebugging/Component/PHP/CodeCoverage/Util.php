@@ -271,13 +271,14 @@ class PHP_CodeCoverage_Util
 
                         // if (strpos($docblock, '@codeCoverageIgnore')) {
                         // Hidenori Wasa added. ===>
-                        if (BREAKPOINTDEBUGGING_IS_WINDOWS) {
-                            $phpEol = '\\r\\n';
-                        } else {
-                            $phpEol = '\\n';
-                        }
+                        //if (BREAKPOINTDEBUGGING_IS_WINDOWS) {
+                        //    $phpEol = '\\r\\n';
+                        //} else {
+                        //    $phpEol = '\\n';
+                        //}
                         // To except '@codeCoverageIgnore' and "@codeCoverageIgnore" of character string in code coverage report parse.
-                        if (preg_match("`@codeCoverageIgnore [[:blank:]]* $phpEol`xX", $docblock) === 1) {
+                        //if (preg_match("`@codeCoverageIgnore [[:blank:]]* $phpEol`xX", $docblock) === 1) {
+                        if (preg_match('`@codeCoverageIgnore [^_[:alnum:]]`xX', $docblock) === 1) {
                         // <=== Hidenori Wasa added.
                             $endLine = $token->getEndLine();
 
