@@ -197,9 +197,8 @@ B::limitAccess('BreakpointDebugging.php', true);
  * The special rule of "\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple":
  *      We must use try-catch statement instead of annotation.
  *      However, we can use following annotation.
- *          //"@codeCoverageSimpleIgnoreStart" (Instead of "@codeCoverageIgnoreStart".)
+ *          "@codeCoverageIgnore"
  *          "@codeCoverageIgnoreStart"
- *          //"@codeCoverageSimpleIgnoreEnd" (Instead of "@codeCoverageIgnoreEnd".)
  *          "@codeCoverageIgnoreEnd"
  *      The class methods and property which can be used are limited below.
  *          \BreakpointDebugging_PHPUnit::$exeMode
@@ -505,7 +504,6 @@ EOD;
             || !array_key_exists('file', $callStack[1]) //
             || strripos($callStack[1]['file'], 'FrameworkTestCase.php') === strlen($callStack[1]['file']) - strlen('FrameworkTestCase.php') //
         ) {
-            //B::iniSet('xdebug.var_display_max_depth', '5', false);
             B::iniSet('xdebug.var_display_max_depth', '5');
             ob_start();
             var_dump($pException);
@@ -762,7 +760,7 @@ EOD;
             ), true
         );
 
-        $codeCoverageReportPath = B::getStatic('$_workDir') . '/CodeCoverageReport/';
+        $codeCoverageReportPath = BREAKPOINTDEBUGGING_WORK_DIR_NAME . 'CodeCoverageReport/';
         // Deletes code coverage report directory files.
         if (is_dir($codeCoverageReportPath)) {
             foreach (scandir($codeCoverageReportPath) as $codeCoverageReportDirElement) {
@@ -1375,6 +1373,9 @@ EOD;
             } else {
                 $this->_runPHPUnitCommand($commandLineSwitches . ' --stop-on-failure --static-backup ' . $testFullFilePath);
             }
+            // Moves unit test window in front.
+            BW::front($this->_unitTestWindowName);
+            BW::scrollBy($this->_unitTestWindowName, PHP_INT_MAX, PHP_INT_MAX);
             gc_collect_cycles();
         }
         $this->displayProgress();
@@ -1676,7 +1677,7 @@ EOD;
      * </pre>
      *
      * @param mixed  $testFilePaths          Relative paths of unit test files.
-     * @param string $classFileRelativePaths Relative paths of class which see the code coverage.
+     * @param mixed  $classFileRelativePaths Relative paths of class which see the code coverage.
      * @param string $howToTest              How to test?
      *      'SIMPLE': Does not use "PHPUnit" package. This mode can be used instead of "*.phpt" file.
      *      'SIMPLE_OWN': This package test.
