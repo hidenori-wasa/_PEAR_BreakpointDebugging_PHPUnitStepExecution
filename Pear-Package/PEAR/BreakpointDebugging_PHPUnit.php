@@ -250,7 +250,7 @@ class BreakpointDebugging_Exception extends \BreakpointDebugging_Exception_InAll
         }
 
         // Adds "[[[CLASS=<class name>] FUNCTION=<function name>] ID=<identification number>]" to message in case of unit test.
-        if (B::getStatic('$exeMode') & B::UNIT_TEST) {
+        if (B::getExeMode() & B::UNIT_TEST) {
             B::assert(is_int($omissionCallStackLevel) && $omissionCallStackLevel >= 0);
 
             if ($id === null) {
@@ -332,7 +332,7 @@ class BreakpointDebugging_PHPUnit
     private static $_unitTestFilePathsStorage = array ();
 
     /**
-     * Execution mode.
+     * Execution mode for unit test.
      *
      * @var int
      */
@@ -414,7 +414,7 @@ class BreakpointDebugging_PHPUnit
         $staticPropertyLimitings = &B::refStaticPropertyLimitings();
         $staticPropertyLimitings['$_includePaths'] = '';
         $staticPropertyLimitings['$_valuesToTrace'] = '';
-        self::$exeMode = &B::refStatic('$exeMode'); // This is not rule violation because this property is not stored.
+        self::$exeMode = &B::refExeMode(); // This is not static backup rule violation because this reference is copied once at initialization.
         self::$_separator = PHP_EOL . '//////////////////////////////////////////////////////////////////////////' . PHP_EOL;
     }
 
