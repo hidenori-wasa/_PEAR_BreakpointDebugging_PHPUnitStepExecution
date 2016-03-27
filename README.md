@@ -1,12 +1,6 @@
 BreakpointDebugging_PHPUnit
 ========================================
 
-Notice
-------
-
-* Should not use draft.
-* I have been implementing new feature and unit test yet.
-
 The basic concept
 -----------------
 
@@ -32,3 +26,8 @@ The dependences
 ---------------
 
 * Requires "BreakpointDebugging" package.
+
+Notice
+------
+
+* Same as prev upload part of "CakePHPSamples".

@@ -7,7 +7,7 @@
  * Copyright (c) 2014-, Hidenori Wasa
  * All rights reserved.
  *
- * License content is written in "PEAR/BreakpointDebugging/BREAKPOINTDEBUGGING_LICENSE.txt".
+ * License content is written in "PEAR/BreakpointDebugging/docs/BREAKPOINTDEBUGGING_LICENSE.txt".
  *
  * @category PHP
  * @package  BreakpointDebugging_PHPUnit
@@ -33,6 +33,48 @@ use \BreakpointDebugging_Window as BW;
  */
 class BreakpointDebugging_PHPUnit_StaticVariableStorage
 {
+    /**
+     * Autoload name to display autoload error at top of stack.
+     *
+     * @const string
+     */
+    const AUTOLOAD_NAME = 'BreakpointDebugging_PHPUnit_StaticVariableStorage::displayAutoloadError';
+
+    /**
+     * Restoration class name.
+     *
+     * @var string
+     */
+    private static $_restorationClassName;
+
+    /**
+     * Restoration property name or restoration global variable name.
+     *
+     * @var string
+     */
+    private static $_restorationElementName;
+
+    /**
+     * Current test class name.
+     *
+     * @var string
+     */
+    private static $_currentTestClassName;
+
+    /**
+     * Current test class method name.
+     *
+     * @var string
+     */
+    private static $_currentTestMethodName;
+
+    /**
+     * Memorizes the defined classes.
+     *
+     * @var array
+     */
+    private static $_declaredClasses;
+
     /**
      * Previous declared classes-number storage.
      *
@@ -69,20 +111,6 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     private static $_staticProperties = array ();
 
     /**
-     * Snapshot of global variables references.
-     *
-     * @var array
-     */
-    private static $_globalRefsSnapshot = array ();
-
-    /**
-     * Snapshot of global variables.
-     *
-     * @var array
-     */
-    private static $_globalsSnapshot = array ();
-
-    /**
      * List to except to store global variable.
      *
      * @var array
@@ -90,34 +118,72 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     private static $_backupGlobalsBlacklist = array ();
 
     /**
-     * Static properties's snapshot.
-     *
-     * @var array
-     */
-    private static $_staticPropertiesSnapshot = array ();
-
-    /**
      * List to except to store static properties values.
      *
      * @var array
      */
-    private static $_backupStaticPropertiesBlacklist = array ();
+    private static $_backupStaticPropertiesBlacklist = array (
+        //'BreakpointDebugging_InAllCase' => array ('_callLocations', '_phpUnit'),
+        'BreakpointDebugging_InAllCase' => array ('_callLocations'),
+        //'BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple' => array ('_phpUnit'),
+        'Cache' => array ('_engines'), // "CakePHP" class.
+        'CakeLog' => array ('_Collection'), // "CakePHP" class.
+    );
 
     /**
      * Is it unit test class?
      *
      * @var Closure
      */
-    private $_isUnitTestClass;
+    private static $_isUnitTestClass;
 
     /**
-     * Sets whether or not unit test class is.
+     * Initializes this static class.
      *
      * @param Closure $isUnitTestClass Is it unit test class?
+     *
+     * @return void
      */
-    public function __construct($isUnitTestClass)
+    static function initialize($isUnitTestClass)
     {
-        $this->_isUnitTestClass = $isUnitTestClass;
+        B::limitAccess('BreakpointDebugging_PHPUnit.php');
+
+        // "\Closure" object should be static because of function.
+        self::$_isUnitTestClass = $isUnitTestClass;
+    }
+
+    /**
+     * It references "self::$_currentTestClassName".
+     *
+     * @return string& Reference value.
+     */
+    static function &refCurrentTestClassName()
+    {
+        B::limitAccess(
+            array (
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
+            'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
+            ), true
+        );
+
+        return self::$_currentTestClassName;
+    }
+
+    /**
+     * It references "self::$_currentTestMethodName".
+     *
+     * @return string& Reference value.
+     */
+    static function &refCurrentTestMethodName()
+    {
+        B::limitAccess(
+            array (
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
+            'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
+            ), true
+        );
+
+        return self::$_currentTestMethodName;
     }
 
     /**
@@ -176,7 +242,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return mixed& Reference value.
      */
-    static function &refStaticProperties2()
+    static function &refStaticProperties()
     {
         B::limitAccess(
             array ('BreakpointDebugging_PHPUnit.php',
@@ -207,80 +273,312 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      */
     static function &refBackupStaticPropertiesBlacklist()
     {
-        B::limitAccess('BreakpointDebugging/PHPUnit/FrameworkTestCase.php', true);
+        B::limitAccess(
+            array (
+            'BreakpointDebugging_PHPUnit.php',
+            'BreakpointDebugging/PHPUnit/FrameworkTestCase.php'
+            ), true
+        );
 
         return self::$_backupStaticPropertiesBlacklist;
     }
 
     /**
-     * Stores static status inside autoload handler because static status may be changed.
+     * Display error.
      *
-     * @param string $className The class name which calls class member of static.
-     *                          Or, the class name which creates new instance.
-     *                          Or, the class name when extends base class.
+     * @param bool $isInclude  Is include?
+     * @param bool $classNames The class name or the classes names.
      *
      * @return void
      */
-    function loadClass($className)
+    private static function _displayError($isInclude, $classNames)
     {
-        static $nestLevel = 0;
-
-        // Excepts unit test classes.
-        $isUnitTestClass = $this->_isUnitTestClass;
-        if ($isUnitTestClass($className)) {
-            $exception = B::loadClass($className);
-            if ($exception) {
-                throw $exception;
+        if ($isInclude) {
+            $messageA = '"include"';
+            $messageB = 'file path';
+        } else {
+            $messageA = 'Autoload';
+            $messageB = 'code';
+        }
+        $message = $messageA . ' must not be executed during "setUp()", "test*()" or "tearDown()" because a class is declared newly.' . PHP_EOL;
+        $message .= PHP_EOL;
+        $message .= 'ERROR TEST CLASS: "class ' . self::$_currentTestClassName . '".' . PHP_EOL;
+        $message .= 'ERROR TEST CLASS METHOD: "setUp()", "' . self::$_currentTestMethodName . '()" or "tearDown()".' . PHP_EOL;
+        $message .= PHP_EOL;
+        if ($isInclude) {
+            $message .= '<span style="color:aqua">';
+            foreach ($classNames as $className) {
+                $message .= 'Please, search project files by "<span style="color:orange">class ' . $className . '</span>" for "&lt;include path of "' . $className . '" class>".' . PHP_EOL;
             }
+            $message .= '</span>';
+        }
+        $message .= PHP_EOL;
+        $message .= 'Code the following into "';
+        $message .= '<span style="color:aqua">';
+        $message .= self::$_currentTestClassName . '::setUpBeforeClass()';
+        $message .= '</span>';
+        $message .= '".' . PHP_EOL;
+        $message .= 'Before:' . PHP_EOL;
+        $message .= '    parent::setUpBeforeClass();' . PHP_EOL;
+        $message .= 'After:' . PHP_EOL;
+        $message .= '<span style="color:aqua">';
+        if ($isInclude) {
+            foreach ($classNames as $className) {
+                $message .= '    \BreakpointDebugging_PHPUnit::includeClass(\'&lt;include path of "' . $className . '" class>\');' . PHP_EOL;
+            }
+        } else {
+            $className = $classNames;
+            $message .= '    \BreakpointDebugging_PHPUnit::loadClass(\'' . $className . '\');' . PHP_EOL;
+        }
+        $message .= '</span>';
+        $message .= '    parent::setUpBeforeClass();' . PHP_EOL;
+        BW::exitForError($message);
+    }
+
+    /**
+     * Prohibits autoload not to change static status by autoload during "setUp()", "test*()" or "tearDown()".
+     *
+     * @param string $className The class name for autoload of "new", "extends", "static class method call", "class_implements()", "class_exists()", "class_parents()", "class_uses()", "is_a()" or "is_subclass_of()" etc.
+     *
+     * @return void
+     */
+    static function displayAutoloadError($className)
+    {
+        static $isAutoloadDuringAutoload = false, $onceFlag = false, $serchClassName = '';
+
+        // If this is not autoload during autoload.
+        if (!$isAutoloadDuringAutoload) {
+            // Skips "PHPUnit" pear package classes.
+            if (stripos($className, 'PHPUnit_Framework_') === 0) {
+                return;
+            }
+            // Skips "CakePHP" class.
+            if (BREAKPOINTDEBUGGING_IS_CAKE //
+                && ($className === 'FileLog' //
+                || $className === 'BaseLog') //
+            ) {
+                return;
+            }
+            if ($onceFlag) {
+                B::exitForError('Autoload error must be fixed per a bug. Double click call stack window about "' . $serchClassName . '".');
+            }
+            $onceFlag = true;
+            $serchClassName = $className;
+            $isAutoloadDuringAutoload = true;
+            // Loads classes files to continue step execution.
+            spl_autoload_call($className);
+            // If class file has been loaded completely including dependency files.
+            $isAutoloadDuringAutoload = false;
+            // If the class does not exist.
+            if (!class_exists($className)) {
+                return false;
+            }
+            // If this autoload class method was called.
+            self::_displayError(false, $className);
+        }
+    }
+
+    /**
+     * Restores an object.
+     *
+     * @param object $dest     Destination variable.
+     * @param array  $src      Source value.
+     * @param bool   $forCheck For check?
+     *
+     * @return void
+     */
+    private static function _restoreObject($dest, &$src, $forCheck)
+    {
+        B::assert(is_object($dest));
+        B::assert(is_array($src));
+
+        $objectReflection = new ReflectionObject($dest);
+        if (!$objectReflection->isUserDefined()) {
             return;
         }
+        // Skips an object of "\stdClass" which judges type.
+        list(, $className) = each($src);
+        $className = $className->scalar;
+        if ($className !== $objectReflection->name) {
+            throw new \BreakpointDebugging_ErrorException('"\\' . $className . '" class object was changed the type.');
+        }
+        foreach ($objectReflection->getProperties() as $propertyReflection) {
+            // Excepts static property.
+            if ($propertyReflection->isStatic()) {
+                continue;
+            }
+            $propertyReflection->setAccessible(true);
+            list(, $value) = each($src);
+            if ($forCheck //
+                && $dest !== $value //
+            ) {
+                B::exitForError('"' . self::$_restorationClassName . self::$_restorationElementName . '" must not be changed before storing.');
+            }
+            // Copies an array elements recursively.
+            // Or, copies an object ID.
+            // Or, copies a value of other type.
+            $propertyReflection->setValue($dest, $value);
+            if (is_array($value)) {
+                // Delivers "$value" as array copy recursively.
+                self::_iterateRestorationArrayRecursively($value, $src, $forCheck);
+            } else if (is_object($value)) {
+                // Delivers "$value" as object ID copy.
+                self::_restoreObject($value, $src, $forCheck);
+            }
+        }
+    }
 
-        // If class file has been loaded first.
-        if ($nestLevel === 0) {
-            if (self::$_onceFlagPerTestFile) {
-                // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
-                self::checkGlobals(self::$_globalRefs, self::$_globals, true);
-                // Checks the change violation of static properties and static property child element references.
-                $this->checkProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
-            } else {
-                // Snapshots global variables.
-                self::storeGlobals(self::$_globalRefsSnapshot, self::$_globalsSnapshot, self::$_backupGlobalsBlacklist, true);
-                // Snapshots static properties.
-                $this->storeProperties(self::$_staticPropertiesSnapshot, self::$_backupStaticPropertiesBlacklist, true);
+    /**
+     * Stores an object.
+     *
+     * @param array  $dest Destination variable.
+     * @param object $src  Source value.
+     *
+     * @return void
+     */
+    private static function _storeObject(&$dest, $src)
+    {
+        B::assert(is_array($dest));
+        B::assert(is_object($src));
 
-                // Restores global variables.
-                self::restoreGlobals(self::$_globalRefs, self::$_globals);
-                // Restores static properties.
-                self::restoreProperties(self::$_staticProperties);
+        $objectReflection = new ReflectionObject($src);
+        if (!$objectReflection->isUserDefined()) {
+            return;
+        }
+        // Registers a class name as object type.
+        $dest[] = (object) $objectReflection->name;
+        foreach ($objectReflection->getProperties() as $propertyReflection) {
+            // Excepts static property.
+            if ($propertyReflection->isStatic()) {
+                continue;
             }
-            $nestLevel = 1;
-            $exception = B::loadClass($className);
-            // If class file has been loaded completely including dependency files.
-            $nestLevel = 0;
-            if ($exception) {
-                throw $exception;
+            $propertyReflection->setAccessible(true);
+            $value = $propertyReflection->getValue($src);
+            // Copies an array elements recursively.
+            // Or, copies an object ID.
+            // Or, copies a value of other type.
+            $dest[] = $value;
+            if (is_array($value)) {
+                self::_iterateStoreArrayRecursively($dest, $value);
+            } else if (is_object($value)) {
+                self::_storeObject($dest, $value);
             }
-            // Checks deletion and change violation of global variables and global variable references during autoload.
-            self::checkGlobals(self::$_globalRefs, self::$_globals);
-            // Checks the change violation of static properties and static property child element references.
-            $this->checkProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
-            // Stores global variables before variable value is changed in bootstrap file and "setUpBeforeClass()".
-            self::storeGlobals(self::$_globalRefs, self::$_globals, self::$_backupGlobalsBlacklist);
-            // Stores static properties before variable value is changed.
-            $this->storeProperties(self::$_staticProperties, self::$_backupStaticPropertiesBlacklist);
-            if (!self::$_onceFlagPerTestFile) {
-                // Restores global variables snapshot.
-                self::restoreGlobals(self::$_globalRefsSnapshot, self::$_globalsSnapshot);
-                // Restores static properties snapshot.
-                self::restoreProperties(self::$_staticPropertiesSnapshot);
+        }
+    }
+
+    /**
+     * Iterates restoration array recursively.
+     *
+     * @param array $iterateArray Iteration array.
+     * @param array $src          Source array to restore.
+     * @param bool  $forCheck     For check?
+     *
+     * @return void
+     */
+    private static function _iterateRestorationArrayRecursively($iterateArray, &$src, $forCheck)
+    {
+        B::assert(is_array($iterateArray));
+        B::assert(is_array($src));
+
+        foreach ($iterateArray as $key => $value) {
+            if (is_array($value)) {
+                if ($key === 'GLOBALS') {
+                    continue;
+                }
+                // Delivers "$value" as array copy recursively.
+                self::_iterateRestorationArrayRecursively($value, $src, $forCheck);
+            } else if (is_object($value)) {
+                // Delivers "$value" as object ID copy.
+                self::_restoreObject($value, $src, $forCheck);
             }
-        } else { // In case of auto load inside auto load.
-            $nestLevel++;
-            $exception = B::loadClass($className);
-            $nestLevel--;
-            if ($exception) {
-                throw $exception;
+        }
+    }
+
+    /**
+     * Iterates a store array recursively.
+     *
+     * @param array $dest         Destination variable.
+     * @param array $iterateArray Iteration array.
+     *
+     * @return void
+     */
+    private static function _iterateStoreArrayRecursively(&$dest, $iterateArray)
+    {
+        B::assert(is_array($dest));
+        B::assert(is_array($iterateArray));
+
+        foreach ($iterateArray as $key => $value) {
+            if (is_array($value)) {
+                if ($key === 'GLOBALS') {
+                    continue;
+                }
+                self::_iterateStoreArrayRecursively($dest, $value);
+            } else if (is_object($value)) {
+                self::_storeObject($dest, $value);
             }
+        }
+    }
+
+    /**
+     * Restores a value.
+     *
+     * @param mixed $dest     Destination variable.
+     * @param array $src      Source value.
+     * @param bool  $forCheck For check?
+     * @param bool  $isGlobal Is this a global variable?
+     *
+     * @return void
+     */
+    private static function _restoreValue(&$dest, $src, $forCheck, $isGlobal)
+    {
+        B::assert(is_array($src));
+
+        reset($src);
+        list(, $value) = each($src);
+
+        if ($forCheck //
+            && $isGlobal //
+            && $dest !== $value //
+        ) {
+            B::assert(self::$_restorationClassName === '');
+            B::exitForError('"' . self::$_restorationElementName . '" must not be changed before storing.');
+        }
+
+        // Copies an array elements recursively.
+        // Or, Copies an object ID.
+        // Or, Copies a value of other type.
+        $dest = $value;
+
+        if (is_array($value)) {
+            // Delivers "$value" as array copy recursively.
+            self::_iterateRestorationArrayRecursively($value, $src, $forCheck);
+        } else if (is_object($value)) {
+            // Delivers "$value" as object ID copy.
+            self::_restoreObject($value, $src, $forCheck);
+        }
+        $result = each($src);
+        B::assert($result === false);
+    }
+
+    /**
+     * Stores a value.
+     *
+     * @param mixed $dest Destination variable.
+     * @param mixed $src  Source value.
+     *
+     * @return void
+     */
+    private static function _storeValue(&$dest, $src)
+    {
+        B::checkRecursiveDataError($src);
+        // Copies an array elements recursively.
+        // Or, copies an object ID.
+        // Or, copies a value of other type.
+        $dest[] = $src;
+        if (is_array($src)) {
+            self::_iterateStoreArrayRecursively($dest, $src);
+        } else if (is_object($src)) {
+            self::_storeObject($dest, $src);
         }
     }
 
@@ -306,7 +604,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
         B::assert(is_array($variablesStorage));
 
         if ($isGlobal) {
-            // Deletes "unset()" variable from storage because we can do "unset()" except property definition.
+            // Deletes the deleted global variable by "unset()" from storage.
             foreach ($variablesStorage as $key => $value) {
                 if (!array_key_exists($key, $variables)) {
                     unset($variablesStorage[$key]);
@@ -314,16 +612,15 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             }
         }
 
-        // Stores new variable by autoload or initialization.
+        // Stores the created variables by autoload or "include".
         foreach ($variables as $key => &$value) {
             if (in_array($key, $blacklist) //
                 || array_key_exists($key, $variablesStorage) //
-                || $value instanceof Closure //
             ) {
                 continue;
             }
             $variableRefsStorage[$key] = &$value;
-            $variablesStorage[$key] = $value;
+            self::_storeValue($variablesStorage[$key], $value);
         }
     }
 
@@ -331,113 +628,50 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      * Restores variables.
      *
      * @param array $variables           Variables to restore.
-     * @param array $variableRefsStorage Variable references storage.
+     * @param array $variableRefsStorage Variable references storage. (Reference copy needs array passed by reference because array copy creates different reference at reference copy of array element.)
      * @param array $variablesStorage    Variables storage.
+     * @param bool  $forCheck            For check?
      *
      * @return void
      */
-    private static function _restoreVariables(array &$variables, array $variableRefsStorage, array $variablesStorage)
+    private static function _restoreVariables(array &$variables, array &$variableRefsStorage, array $variablesStorage, $forCheck)
     {
-        $variables = array ();
         if (empty($variablesStorage)) {
             return;
         }
-        foreach ($variablesStorage as $key => $value) {
-            if (array_key_exists($key, $variableRefsStorage)) {
-                // Copies reference of storage to reference of variable itself.
-                $variables[$key] = &$variableRefsStorage[$key];
-            }
-            // Copies value of storage to variable.
-            $variables[$key] = $value;
-        }
-    }
-
-    /**
-     * Checks definition, deletion and change violation of global variables and global variable references.
-     *
-     * @param array $globalRefs          Global variable's references storage.
-     * @param array $globals             Global variables storage.
-     * @param bool  $doesDefinitionCheck Does definition check?
-     *
-     * @return void
-     */
-    static function checkGlobals($globalRefs, $globals, $doesDefinitionCheck = false)
-    {
-        B::limitAccess(
-            array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
-            'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            'BreakpointDebugging/PHPUnit/StaticVariableStorage.php',
-            ), true
-        );
-        $isError = false;
-        if ($doesDefinitionCheck) {
-            // Checks definition.
-            $definitionGlobalVariables = array_diff_key($GLOBALS, $globalRefs);
-            if (!empty($definitionGlobalVariables)) {
-                $isError = true;
-                $defineOrDelete = 'define';
-            }
-
-            $message2 = "\t" . 'The bootstrap file.' . PHP_EOL;
-            $message2 .= "\t" . 'Code which is executed at autoload of unit test file (*Test.php, *TestSimple.php).' . PHP_EOL;
-            $message2 .= "\t" . '"setUpBeforeClass()".' . PHP_EOL;
-        } else {
-            $message2 = "\t" . 'During autoload.' . PHP_EOL;
-        }
-        $message2 .= '</b>' . PHP_EOL;
-
-        if (!$isError) {
-            // Checks deletion.
-            $deletionGlobalVariables = array_diff_key($globalRefs, $GLOBALS);
-            if (!empty($deletionGlobalVariables)) {
-                $isError = true;
-                $defineOrDelete = 'delete';
-            }
-        }
-
-        if ($isError) {
-            // Displays definition or deletion error.
-            $message = '<b>';
-            $message .= 'Global variable has been ' . $defineOrDelete . 'd in the following place!' . PHP_EOL;
-            $message .= $message2;
-            $message .= 'We must not ' . $defineOrDelete . ' global variable in the above place.' . PHP_EOL;
-            $message .= 'Because "php" version 5.3.0 cannot detect ' . $defineOrDelete . 'd global variable realtime.';
-            BW::exitForError($message);
-        }
-
-        // Checks global variables values and global variables child element references.
-        unset($globals['GLOBALS']);
-        foreach ($globals as $key => $value) {
-            if ($value !== $GLOBALS[$key]) {
-                $isError = true;
-                $message3 = 'value';
-                break;
-            }
-        }
-        if (!$isError) {
-            // Checks global variables references.
-            unset($globalRefs['GLOBALS']);
-            foreach ($globalRefs as $key => &$value) {
+        if (!$forCheck // If restoring.
+            && $variables !== array () // If global variables.
+        ) {
+            // Deletes added global variables.
+            foreach (array_diff_key($variables, $variablesStorage) as $key => $value) {
                 if ($key === 'GLOBALS') {
                     continue;
                 }
-                $cmpArray1 = array (&$value);
-                $cmpArray2 = array (&$GLOBALS[$key]);
-                if ($cmpArray1 !== $cmpArray2) {
-                    $isError = true;
-                    $message3 = 'reference';
-                    break;
-                }
+                unset($variables[$key]);
             }
         }
-        if ($isError) {
-            // Displays error of overwritten value or overwritten reference.
-            $message = '<b>';
-            $message .= 'Global variable ' . $message3 . ' has been overwritten in the following place!' . PHP_EOL;
-            $message .= $message2;
-            $message .= 'We must not overwrite global variable ' . $message3 . ' in the above place.' . PHP_EOL;
-            $message .= 'Because "php" version 5.3.0 cannot detect overwritten global variable ' . $message3 . ' realtime.';
-            BW::exitForError($message);
+        foreach ($variablesStorage as $key => $value) {
+            if ($key === 'GLOBALS') {
+                continue;
+            }
+            self::$_restorationElementName = '$' . $key;
+            $isGlobal = false;
+            // If stored global variable.
+            if (array_key_exists($key, $variableRefsStorage)) {
+                // Checks a reference change error.
+                if ($forCheck) {
+                    if (array (&$variables[$key]) !== array (&$variableRefsStorage[$key])) {
+                        B::assert(self::$_restorationClassName === '');
+                        B::exitForError('"&' . self::$_restorationElementName . '" must not be changed before storing.');
+                    }
+                } else {
+                    // Copies storage reference to variable.
+                    $variables[$key] = &$variableRefsStorage[$key];
+                }
+                $isGlobal = true;
+            }
+            // Copies storage value to variable.
+            self::_restoreValue($variables[$key], $value, $forCheck, $isGlobal);
         }
     }
 
@@ -469,12 +703,13 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
     /**
      * Restores global variables.
      *
-     * @param array $globalRefs Global variable's references storage.
+     * @param array $globalRefs Global variable's references storage. (Reference copy needs array passed by reference because array copy creates different reference at reference copy of array element.)
      * @param array $globals    Global variables storage.
+     * @param bool  $forCheck   For check?
      *
      * @return void
      */
-    static function restoreGlobals($globalRefs, $globals)
+    static function restoreGlobals(&$globalRefs, $globals, $forCheck = false)
     {
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
@@ -486,105 +721,41 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
 
         unset($globalRefs['GLOBALS']);
         unset($globals['GLOBALS']);
-        self::_restoreVariables($GLOBALS, $globalRefs, $globals);
+        self::$_restorationClassName = '';
+        self::_restoreVariables($GLOBALS, $globalRefs, $globals, $forCheck);
 
-        $_COOKIE = &$GLOBALS['_COOKIE'];
-        $_ENV = &$GLOBALS['_ENV'];
-        $_FILES = &$GLOBALS['_FILES'];
-        $_GET = &$GLOBALS['_GET'];
-        $_POST = &$GLOBALS['_POST'];
-        $_REQUEST = &$GLOBALS['_REQUEST'];
-        $_SERVER = &$GLOBALS['_SERVER'];
-        $GLOBALS['GLOBALS'] = &$GLOBALS;
-    }
-
-    /**
-     * Checks the change violation of static properties and static property child element references.
-     *
-     * @param array $staticProperties Static properties storage.
-     * @param array $blacklist        The list to except from static properties storage.
-     * @param bool  $forAutoload      For autoload?
-     *
-     * @return void
-     */
-    function checkProperties($staticProperties, $blacklist, $forAutoload = true)
-    {
-        B::limitAccess(
-            array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
-            'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php',
-            'BreakpointDebugging/PHPUnit/StaticVariableStorage.php',
-            ), true
-        );
-
-        if ($forAutoload) {
-            $message2 = "\t" . 'During autoload.' . PHP_EOL;
+        if ($forCheck) {
+            if (array (&$_COOKIE) !== array (&$GLOBALS['_COOKIE'])) {
+                B::exitForError('"&$_COOKIE" must not be changed before storing.');
+            }
+            if (array (&$_ENV) !== array (&$GLOBALS['_ENV'])) {
+                B::exitForError('"&$_ENV" must not be changed before storing.');
+            }
+            if (array (&$_FILES) !== array (&$GLOBALS['_FILES'])) {
+                B::exitForError('"&$_FILES" must not be changed before storing.');
+            }
+            if (array (&$_GET) !== array (&$GLOBALS['_GET'])) {
+                B::exitForError('"&$_GET" must not be changed before storing.');
+            }
+            if (array (&$_POST) !== array (&$GLOBALS['_POST'])) {
+                B::exitForError('"&$_POST" must not be changed before storing.');
+            }
+            if (array (&$_REQUEST) !== array (&$GLOBALS['_REQUEST'])) {
+                B::exitForError('"&$_REQUEST" must not be changed before storing.');
+            }
+            if (array (&$_SERVER) !== array (&$GLOBALS['_SERVER'])) {
+                B::exitForError('"&$_SERVER" must not be changed before storing.');
+            }
+            // "$GLOBALS['GLOBALS']" has been deleted for restoring.
         } else {
-            $message2 = "\t" . 'The bootstrap file.' . PHP_EOL;
-            $message2 .= "\t" . 'Code which is executed at autoload of unit test file (*Test.php, *TestSimple.php).' . PHP_EOL;
-            $message2 .= "\t" . '"setUpBeforeClass()".' . PHP_EOL;
-            $message2 .= "\t" . '"setUp()".' . PHP_EOL;
-        }
-        $message2 .= '</b>' . PHP_EOL;
-
-        // Scans the declared classes.
-        $declaredClasses = get_declared_classes();
-        $currentDeclaredClassesNumber = count($declaredClasses);
-        $isUnitTestClass = $this->_isUnitTestClass;
-        for ($key = $currentDeclaredClassesNumber - 1; $key >= 0; $key--) {
-            $declaredClassName = $declaredClasses[$key];
-            // Excepts unit test classes.
-            if ($isUnitTestClass($declaredClassName) //
-                || $declaredClassName === 'BreakpointDebugging' //
-                || $declaredClassName === 'BreakpointDebugging_BlackList' //
-                || $declaredClassName === 'BreakpointDebugging_InAllCase' //
-                || $declaredClassName === 'BreakpointDebugging_Lock' //
-                || $declaredClassName === 'BreakpointDebugging_PHPUnit' //
-                || $declaredClassName === 'PEAR_Exception' //
-                || $declaredClassName === 'Inflector' // "CakePHP" class.
-                || $declaredClassName === 'Router' // "CakePHP" class.
-                || $declaredClassName === 'CakeEventManager' // "CakePHP" class.
-                || $declaredClassName === 'Configure' // "CakePHP" class.
-            ) {
-                continue;
-            }
-            // Class reflection.
-            $classReflection = new \ReflectionClass($declaredClassName);
-            // If it is not user defined class.
-            if (!$classReflection->isUserDefined()) {
-                continue;
-            }
-            // If class was declared inside unit test code.
-            if (!array_key_exists($declaredClassName, $staticProperties)) {
-                continue;
-            }
-            // Static properties reflection.
-            $staticPropertiesOfClass = $staticProperties[$declaredClassName];
-            foreach ($classReflection->getProperties(\ReflectionProperty::IS_STATIC) as $property) {
-                // If it is not property of base class. Because reference variable cannot be extended.
-                if ($property->class === $declaredClassName) {
-                    $propertyName = $property->name;
-                    // If static property does not exist in black list (PHPUnit_Framework_TestCase::$backupStaticAttributesBlacklist).
-                    if (!isset($blacklist[$declaredClassName]) //
-                        || !in_array($propertyName, $blacklist[$declaredClassName]) //
-                    ) {
-                        $property->setAccessible(true);
-                        $propertyValue = $property->getValue();
-                        if (!$propertyValue instanceof Closure) {
-                            // Checks static property and static property child element references.
-                            if (B::clearRecursiveArrayElement($staticPropertiesOfClass[$propertyName]) === B::clearRecursiveArrayElement($propertyValue)) {
-                                continue;
-                            }
-                            $message = '<b>';
-                            $message .= 'In "class ' . $declaredClassName . '".' . PHP_EOL;
-                            $message .= '"$' . $propertyName . '" static property or reference has been overwritten in the following place!' . PHP_EOL;
-                            $message .= $message2;
-                            $message .= 'We must not overwrite static property or reference in the above place.' . PHP_EOL;
-                            $message .= 'Because "php" version 5.3.0 cannot detect overwritten static property or reference realtime.';
-                            B::exitForError('<pre>' . $message . '</pre>');
-                        }
-                    }
-                }
-            }
+            $_COOKIE = &$GLOBALS['_COOKIE'];
+            $_ENV = &$GLOBALS['_ENV'];
+            $_FILES = &$GLOBALS['_FILES'];
+            $_GET = &$GLOBALS['_GET'];
+            $_POST = &$GLOBALS['_POST'];
+            $_REQUEST = &$GLOBALS['_REQUEST'];
+            $_SERVER = &$GLOBALS['_SERVER'];
+            $GLOBALS['GLOBALS'] = &$GLOBALS;
         }
     }
 
@@ -597,7 +768,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    function storeProperties(array &$staticProperties, array $blacklist, $isSnapshot = false)
+    static function storeProperties(array &$staticProperties, array $blacklist, $isSnapshot = false)
     {
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/StaticVariableStorage.php',
@@ -611,10 +782,11 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
         } else {
             $prevDeclaredClassesNumber = self::$_prevDeclaredClassesNumberStorage;
         }
-        // Scans the declared classes.
-        $declaredClasses = get_declared_classes();
+        // Memorizes the declared classes.
+        $declaredClasses = self::$_declaredClasses = get_declared_classes();
         $currentDeclaredClassesNumber = count($declaredClasses);
-        $isUnitTestClass = $this->_isUnitTestClass;
+        // Copies property to local variable for closure function call.
+        $isUnitTestClass = self::$_isUnitTestClass;
         for ($key = $currentDeclaredClassesNumber - 1; $key >= $prevDeclaredClassesNumber; $key--) {
             $declaredClassName = $declaredClasses[$key];
             // Excepts unit test classes.
@@ -639,10 +811,7 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                         || !in_array($propertyName, $blacklist[$declaredClassName]) //
                     ) {
                         $property->setAccessible(true);
-                        $propertyValue = $property->getValue();
-                        if (!$propertyValue instanceof Closure) {
-                            $storage[$propertyName] = $propertyValue;
-                        }
+                        $storage[$propertyName] = $property->getValue();
                     }
                 }
             }
@@ -662,10 +831,11 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      * Restores static properties.
      *
      * @param array $staticPropertiesStorage Static properties storage.
+     * @param bool  $forCheck                For check?
      *
      * @return void
      */
-    static function restoreProperties($staticPropertiesStorage)
+    static function restoreProperties($staticPropertiesStorage, $forCheck = false)
     {
         B::limitAccess(
             array ('BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
@@ -677,10 +847,17 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
 
         foreach ($staticPropertiesStorage as $className => $staticProperties) {
             $properties = array ();
-            self::_restoreVariables($properties, array (), $staticProperties);
+            self::$_restorationClassName = $className . '::';
+            $dummy = array ();
+            self::_restoreVariables($properties, $dummy, $staticProperties, $forCheck);
             foreach ($staticProperties as $name => $value) {
                 $reflector = new ReflectionProperty($className, $name);
                 $reflector->setAccessible(true);
+                if ($forCheck //
+                    && $reflector->getValue() !== $properties[$name] //
+                ) {
+                    B::exitForError('"' . $className . '::$' . $name . '" must not be changed before storing.');
+                }
                 $reflector->setValue($properties[$name]);
             }
         }
@@ -691,13 +868,14 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    function checkFunctionLocalStaticVariable()
+    static function checkFunctionLocalStaticVariable()
     {
         B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
         $componentFullPath = stream_resolve_include_path('BreakpointDebugging/Component/') . DIRECTORY_SEPARATOR;
         $definedFunctionsName = get_defined_functions();
-        $isUnitTestClass = $this->_isUnitTestClass;
+        // Copies property to local variable for closure function call.
+        $isUnitTestClass = self::$_isUnitTestClass;
         foreach ($definedFunctionsName['user'] as $definedFunctionName) {
             $functionReflection = new ReflectionFunction($definedFunctionName);
             $staticVariables = $functionReflection->getStaticVariables();
@@ -726,14 +904,15 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
      *
      * @return void
      */
-    function checkMethodLocalStaticVariable()
+    static function checkMethodLocalStaticVariable()
     {
         B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
 
         // Scans the declared classes.
         $declaredClasses = get_declared_classes();
         $currentDeclaredClassesNumber = count($declaredClasses);
-        $isUnitTestClass = $this->_isUnitTestClass;
+        // Copies property to local variable for closure function call.
+        $isUnitTestClass = self::$_isUnitTestClass;
         for ($key = $currentDeclaredClassesNumber - 1; $key >= 0; $key--) {
             $declaredClassName = $declaredClasses[$key];
             // Excepts unit test classes.
@@ -746,15 +925,24 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
             if (!$classReflection->isUserDefined()) {
                 continue;
             }
-            // Checks existence of local static variable of static class method.
-            foreach ($classReflection->getMethods(ReflectionMethod::IS_STATIC) as $methodReflection) {
+            // Checks existence of local static variable per class method.
+            foreach ($classReflection->getMethods() as $methodReflection) {
+                // If this class method is not parent class method.
                 if ($methodReflection->class === $declaredClassName) {
                     $result = $methodReflection->getStaticVariables();
-                    // If static variable has been existing.
+                    // If local static variable has been existing.
                     if (!empty($result)) {
+                        if ($methodReflection->isStatic()) {
+                            // Warns that static class method has local static variable.
+                            $messageA = 'static';
+                        } else {
+                            // Warns that auto class method has local static variable.
+                            $messageA = 'auto';
+                        }
                         echo PHP_EOL
-                        . 'Code which is tested must use private static property instead of use local static variable in static class method' . PHP_EOL
+                        . 'Code which is tested must use private ' . $messageA . ' property instead of use local static variable in ' . $messageA . ' class method' . PHP_EOL
                         . 'because "php" version 5.3.0 cannot restore its value.' . PHP_EOL
+                        . 'Also, those variable life time is same.' . PHP_EOL
                         . "\t" . '<b>FILE: ' . $methodReflection->getFileName() . PHP_EOL
                         . "\t" . 'LINE: ' . $methodReflection->getStartLine() . PHP_EOL
                         . "\t" . 'CLASS: ' . $methodReflection->class . PHP_EOL
@@ -763,6 +951,41 @@ class BreakpointDebugging_PHPUnit_StaticVariableStorage
                 }
             }
         }
+    }
+
+    /**
+     * Checks an "include" error at "setUp()", "test*()" or "tearDown()".
+     *
+     * @return void
+     */
+    static function checkIncludeError()
+    {
+        B::limitAccess(
+            array (
+                'BreakpointDebugging/PHPUnit/FrameworkTestCase.php',
+                'BreakpointDebugging/PHPUnit/FrameworkTestCaseSimple.php'
+            )
+        );
+
+        foreach (self::$_declaredClasses as $key => $currentDeclaredClass) {
+            if (stripos($currentDeclaredClass, 'PHPUnit_Framework_') === 0) {
+                unset(self::$_declaredClasses[$key]);
+            }
+        }
+
+        $currentDeclaredClasses = get_declared_classes();
+        foreach ($currentDeclaredClasses as $key => $currentDeclaredClass) {
+            if (stripos($currentDeclaredClass, 'PHPUnit_Framework_') === 0) {
+                unset($currentDeclaredClasses[$key]);
+            }
+        }
+        // If a class has not been declared.
+        if (count($currentDeclaredClasses) === count(self::$_declaredClasses)) {
+            return;
+        }
+        // Gets the included classes because autoloaded classes make error handling.
+        $includedClassNames = array_diff($currentDeclaredClasses, self::$_declaredClasses);
+        self::_displayError(true, $includedClassNames);
     }
 
 }

@@ -44,10 +44,6 @@
  * @link       http://www.phpunit.de/
  * @since      File available since Release 2.0.0
  */
-// File to have "use" keyword does not inherit scope into a file including itself,
-// also it does not inherit scope into a file including,
-// and moreover "use" keyword alias has priority over class definition,
-// therefore "use" keyword alias does not be affected by other files.
 use \BreakpointDebugging as B;
 use \BreakpointDebugging_Window as BW;
 use \BreakpointDebugging_PHPUnit as BU;
@@ -93,26 +89,27 @@ use \BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple as BTCS;
  */
 class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * "\BreakpointDebugging_PHPUnit" instance.
-     *
-     * @var object
-     */
-    private static $_phpUnit;
 
     /**
-     * Sets the "\BreakpointDebugging_PHPUnit" object.
-     *
-     * @param object $phpUnit "\BreakpointDebugging_PHPUnit".
+     * This class method is called first per "*TestSimple.php" file.
      *
      * @return void
-     * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
-    static function setPHPUnit($phpUnit)
+    static function setUpBeforeClass()
     {
-        B::limitAccess('BreakpointDebugging_PHPUnit.php', true);
+        // Loads a class file.
+        class_exists('\PHP_Timer');
+        BTCS::setUpBeforeClass();
+    }
 
-        self::$_phpUnit = $phpUnit;
+    /**
+     * This class method is called lastly per "*Test.php" file.
+     *
+     * @return void
+     */
+    public static function tearDownAfterClass()
+    {
+        BTCS::tearDownAfterClass();
     }
 
     /**
@@ -126,7 +123,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
     {
         parent::setUp();
 
-        BTCS::setUpBase(self::$_phpUnit);
+        BTCS::setUpBase();
     }
 
     /**
@@ -138,18 +135,18 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
      */
     protected function tearDown()
     {
-        BTCS::tearDownBase(self::$_phpUnit);
+        BTCS::tearDownBase();
 
         parent::tearDown();
     }
 
     /**
-     * Checks an annotation.
+     * Checks a document comment existence.
      *
      * @return void
      * @author Hidenori Wasa <public@hidenori-wasa.com>
      */
-    private function _checkAnnotation()
+    private function _checkDocCommentExistence()
     {
         $className = get_class($this);
         $methodName = $this->name;
@@ -158,15 +155,6 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         $docComment = $methodReflection->getDocComment();
         if ($docComment === false) {
             B::exitForError($errorMessage . 'document comment.');
-        }
-
-        if (preg_match('`@covers [[:blank:]]+ \\\\? [_[:alpha:]] [_[:alnum:]]* <extended> [[:space:]]+`xX', $docComment) !== 1) {
-            B::exitForError(
-                PHP_EOL
-                . $errorMessage . '"@covers ...<extended>" annotation' . PHP_EOL
-                . "\t" . 'because we may use code coverage report of base abstract class.' . PHP_EOL
-                . "\t" . 'Also, a test-class method calls a base class method, then its base class method may call a test-class method.' . PHP_EOL
-            );
         }
     }
 
@@ -186,29 +174,28 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
             xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
         }
 
-        self::$_phpUnit->displayProgress(5);
+        BU::displayProgress(5);
 
         $this->numAssertions = 0;
         // Gets test-class-name.
         $classReflection = new \ReflectionClass($this);
-        $testClassName = $classReflection->name;
+        $currentTestClassName = &BSS::refCurrentTestClassName();
+        $currentTestClassName = $testClassName = $classReflection->name;
+        $currentTestMethodName = &BSS::refCurrentTestMethodName();
+        $currentTestMethodName = $this->getName();
 
         $refOnceFlagPerTestFile = &BSS::refOnceFlagPerTestFile();
+        // If this is the first of test file.
         if ($refOnceFlagPerTestFile) {
-            self::$_phpUnit->displayProgress(300);
-            // For autoload.
+            BU::displayProgress(300);
             $refOnceFlagPerTestFile = false;
-            // For autoload.
+            // Adds static backup black list of command line switch.
             $refBackupGlobalsBlacklist = &BSS::refBackupGlobalsBlacklist();
-            $refBackupGlobalsBlacklist = $this->backupGlobalsBlacklist;
+            $refBackupGlobalsBlacklist += $this->backupGlobalsBlacklist;
             $refBackupStaticPropertiesBlacklist = &BSS::refBackupStaticPropertiesBlacklist();
-            $refBackupStaticPropertiesBlacklist = $this->backupStaticAttributesBlacklist;
+            $refBackupStaticPropertiesBlacklist += $this->backupStaticAttributesBlacklist;
             // Checks the autoload functions.
             BTCS::checkAutoloadFunctions($testClassName);
-            // Checks definition, deletion and change violation of global variables and global variable references in "setUp()".
-            BSS::checkGlobals(BSS::refGlobalRefs(), BSS::refGlobals(), true);
-            // Checks the change violation of static properties and static property child element references.
-            self::$_phpUnit->getStaticVariableStorageInstance()->checkProperties(BSS::refStaticProperties2(), $refBackupStaticPropertiesBlacklist, false);
         }
 
         // Start output buffering.
@@ -221,12 +208,8 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         try {
             $this->setExpectedExceptionFromAnnotation();
 
-            // Checks an annotation.
-            $this->_checkAnnotation();
-            // Restores global variables.
-            BSS::restoreGlobals(BSS::refGlobalRefs(), BSS::refGlobals());
-            // Restores static properties.
-            BSS::restoreProperties(BSS::refStaticProperties2());
+            // Checks a document comment existence.
+            $this->_checkDocCommentExistence();
 
             $this->setUp();
 
@@ -281,6 +264,15 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         } catch (Exception $_e) {
             B::exitForError($_e); // Displays error call stack information.
         }
+
+        // Checks an "include" error at "setUp()", "test*()" or "tearDown()".
+        BSS::checkIncludeError();
+
+        // Restores global variables.
+        $refGlobalRefs = &BSS::refGlobalRefs();
+        BSS::restoreGlobals($refGlobalRefs, BSS::refGlobals());
+        // Restores static properties.
+        BSS::restoreProperties(BSS::refStaticProperties());
 
         // Stop output buffering.
         if ($this->outputCallback === false) {
@@ -372,14 +364,14 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
             }
             // If "@expectedException" annotation is not string.
             if (!is_string($this->getExpectedException())) {
-                BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>It is error if this test has been not using "@expectedException" annotation, or it requires "@expectedException" annotation.</b>');
+                BW::htmlAddition(BU::getUnitTestWindowName(), 'pre', 0, '<b>It is error if this test has been not using "@expectedException" annotation, or it requires "@expectedException" annotation.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedException" annotation should be success.
             try {
                 $this->assertThat($e, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
             } catch (Exception $dummy) {
-                BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedException" annotation value.</b>');
+                BW::htmlAddition(BU::getUnitTestWindowName(), 'pre', 0, '<b>Is error, or this test mistook "@expectedException" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedExceptionMessage" annotation should be success.
@@ -391,7 +383,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionMessage($expectedExceptionMessage));
                 }
             } catch (Exception $dummy) {
-                BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionMessage" annotation value.</b>');
+                BW::htmlAddition(BU::getUnitTestWindowName(), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionMessage" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
             // "@expectedExceptionCode" annotation should be success.
@@ -400,7 +392,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
                     $this->assertThat($e, new PHPUnit_Framework_Constraint_ExceptionCode($this->expectedExceptionCode));
                 }
             } catch (Exception $dummy) {
-                BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionCode" annotation value.</b>');
+                BW::htmlAddition(BU::getUnitTestWindowName(), 'pre', 0, '<b>Is error, or this test mistook "@expectedExceptionCode" annotation value.</b>');
                 B::exitForError($e); // Displays error call stack information.
             }
 
@@ -413,7 +405,7 @@ class BreakpointDebugging_PHPUnit_FrameworkTestCase extends \PHPUnit_Framework_T
         }
         if ($this->getExpectedException() !== null) {
             // "@expectedException" should not exist.
-            BW::htmlAddition(BU::getUnitTestWindowName(self::$_phpUnit), 'pre', 0, '<b>Is error in "' . $class->name . '::' . $name . '".</b>');
+            BW::htmlAddition(BU::getUnitTestWindowName(), 'pre', 0, '<b>Is error in "' . $class->name . '::' . $name . '".</b>');
 
             $this->assertThat(null, new PHPUnit_Framework_Constraint_Exception($this->getExpectedException()));
         }

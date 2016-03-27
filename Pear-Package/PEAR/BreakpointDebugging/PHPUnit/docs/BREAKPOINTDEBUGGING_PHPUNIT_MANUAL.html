@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>BreakpointDebugging_PHPUnit-manual</title>
+        <style type="text/css">
+            <!--
+            a:link, a:visited, a:active
+            {
+                color: aqua;
+                text-decoration: underline;
+            }
+
+            .title
+            {
+                color: lime;
+                font-size: 150%;
+                font-weight: bold;
+            }
+
+            .subtitle
+            {
+                color: olivedrab;
+                font-weight: bold;
+            }
+
+            code
+            {
+                display: block;
+                background-color: dimgray;
+            }
+
+            .inline-code
+            {
+                background-color: dimgray;
+            }
+
+            .command
+            {
+                background-color: navy;
+            }
+
+            .attention
+            {
+                color: gold;
+            }
+            -->
+        </style>
+    </head>
+    <body style="background-color: black; color: white; font-size: 25px">
+        <span style="font-size: 200%; font-style: italic">BREAKPOINTDEBUGGING_PHPUNIT MANUAL</span>
+        <hr />
+        The contents links.<br />
+        <a href="#0">Requirements.</a><br />
+        <a href="#1">The basic concept.</a><br />
+        <a href="#2">Procedure which tests.</a><br />
+        <a href="#3">Unit test sample codes.</a><br />
+        <a href="#4">Coding rule.</a><br />
+        <a href="#5">How to run multiprocess unit test.</a><br />
+        <a href="#6">LICENSE:</a><br />
+        <hr />
+        <pre>
+<span class="title"><a id="0">Requirements.</a></span>
+
+"BreakpointDebugging" PEAR-package.
+
+<span class="title"><a id="1">The basic concept.</a></span>
+<span class="attention">
+We can debug with IDE by stopping at breakpoint when an error occurred during unit test
+because we can test each test class method on same process by perfect static backup.
+Also, we can test both a debug and a release code.
+Moreover, we can display code coverage report of plural test files speedily by simple independence code
+because tests is executed on same process.
+</span>
+<span class="title"><a id="2">Procedure which tests.</a></span>
+
+    Please, keep the following procedure.
+    Preparation procedure: Please, see "Running procedure." section of "BREAKPOINTDEBUGGING_MANUAL.html" file.
+    Procedure 1: <a href="#3-1">Code a php file</a> with <a href="#4">coding rule.</a>
+    Procedure 2: <a href="#3-2">Code a unit test php file.</a>
+                 <a href="#3-3">Or, code simple unit test php file.</a>
+    Procedure 3: <a href="#3-4">Code a unit test execution and a code coverage report execution php file.</a>
+    Procedure 4: Choose "<span class="inline-code">define('BREAKPOINTDEBUGGING_MODE', 'DEBUG_UNIT_TEST');</span>"
+                 inside "<span class="command">./BreakpointDebugging_PEAR_Setting/BreakpointDebugging_MySetting.php</span>" file.
+    Procedure 5: Execute the unit test by file of "Procedure 3" with IDE.
+    Option Procedure: Copy from "<span class="command">PEAR/BreakpointDebugging/</span>" directory and "<span class="command">PEAR/BreakpointDebugging_*.php</span>" files
+                      to the project directory of remote server if you want remote unit test.
+    Option Procedure: "CakePHP" framework requires the following files.
+        Customize "<span class="command">app/webroot/WasaCakeTestStart.php</span>" which copied "<span class="command">app/webroot/test.php</span>" as below.
+            <code>            // Hidenori Wasa added. ===>
+            // require_once CAKE . 'TestSuite' . DS . 'CakeTestSuiteDispatcher.php';
+            require_once \CakePlugin::path('WasaPhpUnit') . 'TestSuite/WasaTestArrayDispatcher.php';
+            // CakeTestSuiteDispatcher::run();
+            \WasaTestArrayDispatcher::run();
+            // &lt;=== Hidenori Wasa added.
+            </code>
+        Load "WasaPhpUnit" plugin inside "<span class="command">app/Config/bootstrap.php</span>" as below.
+            <code>            \CakePlugin::load('WasaPhpUnit', array ('bootstrap' => true));
+            </code>
+            If this plugin cannot execute by difference of version, consult the following.
+                Customize "<span class="command">app/Plugin/WasaPhpUnit/TestSuite/WasaTestArrayDispatcher.php</span>"
+                which extends "<span class="command">lib/Cake/TestSuite/CakeTestSuiteDispatcher.php</span>".
+                    Procedure: "<span class="inline-code">dispatch()</span>" override class method must keep instance to static property instead of dispatching.
+                        And, "<span class="inline-code">_checkPHPUnit()</span>" inside of "<span class="inline-code">dispatch()</span>" must not be called because "<span class="inline-code">BreakpointDebugging_PHPUnit</span>" loads "<span class="inline-code">PHPUnit</span>".
+                    Procedure: "<span class="inline-code">run()</span>" override class method must change class for "<span class="inline-code">new</span>".
+                    Procedure: "<span class="inline-code">static function runPHPUnitCommand($commandElements)</span>" must exist
+                            because it is called from "<span class="inline-code">\BreakpointDebugging_PHPUnit::_runPHPUnitCommand()</span>".
+                        And, "<span class="inline-code">--output</span>" command line switch must be deleted because "<span class="inline-code">BreakpointDebugging_PHPUnit</span>" displays.
+                        And, "<span class="inline-code">PHPUnit_Runner_StandardTestSuiteLoader</span>" must be used instead of "<span class="inline-code">CakeTestLoader</span>"
+                            because test file path array must be loaded instead of suite.
+                Customize "<span class="command">app/Plugin/WasaPhpUnit/TestSuite/WasaTestArrayCommand.php</span>" which extends "<span class="command">lib/Cake/TestSuite/CakeTestSuiteCommand.php</span>".
+                    Procedure: "<span class="inline-code">run()</span>" override class method must be able to execute when second parameter is false
+                        because this is called inside test path array loop.
+                        Customize "<span class="command">lib/Cake/TestSuite/CakeTestCase.php</span>" as below.
+            <code>            // abstract class CakeTestCase extends PHPUnit_Framework_TestCase {
+            //
+            // Hidenori Wasa added. ===>
+            $wasaStartPage = debug_backtrace();
+            $wasaStartPage = array_pop($wasaStartPage);
+            if (array_key_exists('class', $wasaStartPage)) {
+                $wasaStartPage = $wasaStartPage['class'];
+            } else {
+                $wasaStartPage = '';
+            }
+            if ($wasaStartPage === 'CakeTestSuiteDispatcher') {
+                // If unit tests start with "app/webroot/test.php".
+                abstract class WasaCakeTestCase extends \PHPUnit_Framework_TestCase {}
+            } else if ($wasaStartPage === 'BreakpointDebugging_PHPUnit') {
+                // If unit tests start with "\BreakpointDebugging_PHPUnit::executeUnitTest()".
+                // (These tests use "app/webroot/WasaCakeTestStart.php" instead of "app/webroot/test.php".)
+                abstract class WasaCakeTestCase extends \BreakpointDebugging_PHPUnit_FrameworkTestCase {}
+            } else {
+                throw new \BreakpointDebugging_ErrorException('Mistaken start page.');
+            }
+            unset($wasaStartPage);
+   ;
+            abstract class CakeTestCase extends \WasaCakeTestCase {
+            // &lt;=== Hidenori Wasa added.
+            </code>
+<span class="title"><a id="3">Unit test sample codes.</a></span>
+
+    <span class="subtitle"><a id="3-1">Code a php file with coding rule.</a></span>
+    <a href="view-source:./examples/Sub/Example.php">"<span class="command">PEAR/BreakpointDebugging/PHPUnit/docs/examples/Sub/Example.php</span>" file.</a>
+
+    <span class="subtitle"><a id="3-2">Code a unit test php file.</a></span>
+    <a href="view-source:./examples/Sub/ExampleTest.php">"<span class="command">PEAR/BreakpointDebugging/PHPUnit/docs/examples/Sub/ExampleTest.php</span>" file.</a>
+
+    <span class="subtitle"><a id="3-3">Or, code simple unit test php file.</a></span>
+    <a href="view-source:./examples/Sub/ExampleTestSimple.php">"<span class="command">PEAR/BreakpointDebugging/PHPUnit/docs/examples/Sub/ExampleTestSimple.php</span>" file.</a>
+
+    <span class="subtitle">Tests auto detection rules of unit test.</span>
+    <a href="view-source:./examples/RuleTest.php">"<span class="command">PEAR/BreakpointDebugging/PHPUnit/docs/examples/RuleTest.php</span>" file.</a>
+
+    <span class="subtitle">Tests auto detection rules of simple unit test.</span>
+    <a href="view-source:./examples/RuleTestSimple.php">"<span class="command">PEAR/BreakpointDebugging/PHPUnit/docs/examples/RuleTestSimple.php</span>" file.</a>
+
+    <span class="subtitle"><a id="3-4">Code a unit test execution and a code coverage report execution php file.</a></span>
+    <a href="view-source:./examples/UnitTestExecutionExample.php">"<span class="command">PEAR/BreakpointDebugging/PHPUnit/docs/examples/UnitTestExecutionExample.php</span>" file.</a>
+
+<span class="title"><a id="4">Coding rule.</a></span>
+
+<a id="4-1">The rule to delete object</a>: "<span class="inline-code">__destruct()</span>" call must be executed by overwritten variable by "<span class="inline-code">null</span>".
+    Because it deletes all reference of its variable.
+    Example:
+<code>        $this->_pTestObject = null;
+</code>
+The rule to keep static status of test code: Static status must not be changed or deleted before "parent::setUpBeforeClass()" class method call.
+    Because its change affects other unit test file.
+
+    Also, top page function call at autoload can avoid as below.
+<code>        if (\BreakpointDebugging::isTopPage()) { // Skips the following if unit test.
+            \AClass::initialize();
+        }
+</code>
+The rule to keep static status of code which is tested:
+    Static status can define at file load.
+    Static status must not be changed at file load. (Autodetects)
+    Static status must not be overwritten with reference at file load. (Autodetects)
+    Static status must not be deleted at file load. (Autodetects)
+        Because static status may differ by file load order.
+
+<a id="4-S-1">The file search detection rule 1</a>: Property array element reference instead of property reference must be used in all code.
+    Because "Reflection-" class cannot get property reference.
+    A rule violation example:
+<code>        ::$something = &amp;...
+        or ::$something = array (&amp;...
+</code>
+    Instead:
+<code>        ::$something[0] = &amp;...
+        or ::$something[0] = array (&amp;...
+</code>
+    Please, search the rule violation of file by the following regular expression.
+<code>        ::\$[_a-zA-Z][_a-zA-Z0-9]*[\x20\t\r\n]*=[^=;][^;]*&amp;
+</code>
+    About reference copy.
+        Reference copy must use "<span class="inline-code">&amp;self::</span>" in case of self class.
+        Reference copy must use "<span class="inline-code">&amp;parent::</span>" in case of parent class above one hierarchy.
+        Except those, Reference copy must use "<span class="inline-code">&amp;&lt;official class name>::</span>".
+        Those is same about "<span class="inline-code">$this</span>".
+
+<a id="4-S-2">The file search detection rule 2</a>: Behind of "<span class="inline-code">@codeCoverageIgnore</span>" must not be coded except "tab and space".
+    Because code coverage report parses except <span class="inline-code">'@codeCoverageIgnore'</span> and <span class="inline-code">"@codeCoverageIgnore"</span> character string.
+    A rule violation example:
+<code>        @codeCoverageIgnore A sentence.
+</code>
+    Instead:
+<code>        @codeCoverageIgnore
+        A sentence.
+</code>
+    Please, search the rule violation of file by the following regular expression.
+<code>        "@codeCoverageIgnore[^SE\r\n][\t\x20]*[^\t\x20].*$"
+</code>
+The file search detection rule 3: "<span class="inline-code">filter_input()</span>" and "<span class="inline-code">filter_input_array()</span>" must not be used.
+    Because unit test must not be executed with super global variable change.
+    Please, search the rule violation of file by the following regular expression.
+<code>        filter_input[\t\x20\r\n]*\(
+        filter_input_array[\t\x20\r\n]*\(
+</code>
+The rule 1 to autodetect: Unit test file name of "PHPUnit" package should be "<span class="command">*Test.php</span>".
+    And, simple unit test file name must be "<span class="command">*TestSimple.php</span>"
+    because "PHPUnit" package searches "<span class="command">*Test.php</span>" file.
+The rule 2 to autodetect: Private auto property instead of local static variable in auto class method must be used
+    because "Reflection-" class cannot restore its value.
+The rule 3 to autodetect: Private static property instead of local static variable in static class method must be used
+    because "Reflection-" class cannot restore its value.
+The rule 4 to autodetect: Private static property instead of local static variable in function must be used
+    because "Reflection-" class cannot restore its value.
+The rule 5 to autodetect: Autoload function at top of stack by "<span class="inline-code">spl_autoload_register()</span>" must not be registered during
+    "<span class="inline-code">setUp()</span>", "<span class="inline-code">test*()</span>" or "<span class="inline-code">tearDown()</span>"
+    because "<span class="inline-code">\BreakpointDebugging_PHPUnit_StaticVariableStorage::displayAutoloadError()</span>" must be at top of stack for autoload ban.
+    A rule violation example:
+<code>        spl_autoload_register('\SomethingClassName::autoloadFunctionName', true, true);
+</code>
+The rule 6 to autodetect: "<span class="command">--process-isolation</span>" command line switch of unit test must not be used.
+    Because IDE cannot detect test process.
+The rule 7 to autodetect: A class must not be declared by "<span class="inline-code">include</span>" or autoload at "<span class="inline-code">setUp()</span>", "<span class="inline-code">test*()</span>" or "<span class="inline-code">tearDown()</span>".
+    Because static status may be changed, also static status of declared classes is not stored.
+    Therefore, a class must be declared by "<span class="inline-code">include</span>" or autoload at "<span class="inline-code">setUpBeforeClass()</span>" unit test class method to avoid it.
+    (This code is displayed automatically.)
+
+Recommendation rule 1: We should destruct a test instance per test in "<span class="inline-code">tearDown()</span>" because it cuts down on production server memory use.
+    Example:
+<code>        protected function tearDown()
+        {
+            // Destructs the test instance.
+            $this->_pTestObject = null;
+
+            // This is required at bottom.
+            parent::tearDown();
+        }
+</code>
+Recommendation rule 2: We should not use global variable to avoid variable crash.
+
+The special rule of "<span class="inline-code">\BreakpointDebugging_PHPUnit_FrameworkTestCaseSimple</span>":
+    "try-catch" statement instead of annotation must be used.
+    However, we can use following annotation.
+<code>        @codeCoverageIgnore
+        @codeCoverageIgnoreStart
+        @codeCoverageIgnoreEnd
+</code>
+    The class methods and property which can be used are limited below.
+<code>        \BreakpointDebugging_PHPUnit::$exeMode
+        \BreakpointDebugging_PHPUnit::loadClass()
+        \BreakpointDebugging_PHPUnit::includeClass()
+        \BreakpointDebugging_PHPUnit::setDebug()
+        \BreakpointDebugging_PHPUnit::setRelease()
+        \BreakpointDebugging_PHPUnit::ignoreBreakpoint()
+        \BreakpointDebugging_PHPUnit::notIgnoreBreakpoint()
+        \BreakpointDebugging_PHPUnit::getPropertyForTest()
+        \BreakpointDebugging_PHPUnit::setPropertyForTest()
+        \BreakpointDebugging_PHPUnit::assertExceptionMessage()
+        \BreakpointDebugging_PHPUnit::markTestSkippedInDebug()
+        \BreakpointDebugging_PHPUnit::markTestSkippedInRelease()
+        parent::assertTrue()
+        parent::fail()
+</code>
+Caution: Don't test an unit when practical use server has been running with synchronization file because synchronization is destroyed.
+
+<span class="title"><a id="5">How to run multiprocess unit test.</a></span>
+
+    Procedure 1: Use "<span class="inline-code">\BreakpointDebugging_CommandLine::popen()</span>" class method in your unit test code.
+    Procedure 2: Use "<span class="inline-code">\BreakpointDebugging_CommandLine::waitForMultipleProcesses()</span>" class method in your unit test code.
+    Please, see "<span class="inline-code">BreakpointDebugging_MultiprocessTest_Main::test()</span>" class method as example.
+
+<span class="title"><a id="6">LICENSE:</a></span>
+
+Copyright (c) 2015-, Hidenori Wasa
+All rights reserved.
+
+License content is written in "<a href="../../../../PEAR/BreakpointDebugging/docs/BREAKPOINTDEBUGGING_LICENSE.txt">PEAR/BreakpointDebugging/docs/BREAKPOINTDEBUGGING_LICENSE.txt</a>".
+
+@category PHP
+@package  BreakpointDebugging
+@author   Hidenori Wasa &lt;public@hidenori-wasa.com>
+@license  http://opensource.org/licenses/mit-license.php  MIT License
+@link     <a href="https://github.com/hidenori-wasa/">https://github.com/hidenori-wasa/</a>
+        </pre>
+    </body>
+</html>
