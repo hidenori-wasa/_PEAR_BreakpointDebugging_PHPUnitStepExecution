@@ -1,6 +1,8 @@
 BreakpointDebugging_PHPUnit
 ========================================
 
+As for procedure, please, refer to `PEAR/BreakpointDebugging/PHPUnit/docs/BREAKPOINTDEBUGGING_PHPUNIT_MANUAL.html`.
+
 The basic concept
 -----------------
 
@@ -19,8 +21,6 @@ The features list
 * We can debug with IDE. (This is same in "CakePHP".)
 * We can test in remote by browser display. (This is same in "CakePHP".)
 * We can display a code coverage report in remote by browser display. (This is same in "CakePHP".)
-
-Please, read the class level document block of `PEAR/BreakpointDebugging_PHPUnit.php`.
 
 The dependences
 ---------------
